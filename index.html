@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="EQUAL English, kelas bahasa Inggris yang membuat proses belajarmu lebih terarah dan lebih percaya diri."
+    />
+    <title>EQUAL English · Your English. Elevated.</title>
+    <script>
+      /* Ditambahkan sebelum render supaya elemen reveal tidak berkedip.
+         Fallback 2,5 detik: kalau script.js gagal dimuat, semua konten
+         tetap muncul dan halaman tidak pernah berakhir kosong. */
+      document.documentElement.classList.add('js');
+      setTimeout(function () {
+        if (!window.__equalRevealReady) {
+          document.documentElement.classList.add('reveal-fallback');
+        }
+      }, 2500);
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Syne:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Langsung ke konten</a>
+
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="#home" aria-label="EQUAL English, kembali ke beranda">
+          <img src="EDITS/Vector.png" alt="EQUAL" />
+          <span>English</span>
+        </a>
+
+        <button class="nav-toggle" type="button" aria-label="Buka menu" aria-expanded="false">
+          <span></span><span></span>
+        </button>
+
+        <nav class="main-nav" aria-label="Navigasi utama">
+          <a href="#kenapa">Kenapa penting</a>
+          <a href="#tentang">Tentang</a>
+          <a href="#program">Materi</a>
+          <a href="#cara-belajar">Cara belajar</a>
+          <a href="#mentor">Mentor</a>
+          <a href="#harga">Harga</a>
+          <a class="nav-cta" href="#mulai">Mulai belajar <span aria-hidden="true">↗</span></a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <section class="hero" id="home" aria-labelledby="hero-title">
+        <canvas class="hero-shader" aria-hidden="true"></canvas>
+        <div class="hero-scrim" aria-hidden="true"></div>
+        <div class="hero-glow hero-glow-one"></div>
+        <div class="hero-glow hero-glow-two"></div>
+        <div class="hero-grid page-shell">
+          <div class="hero-copy" data-reveal-stagger>
+            <p class="eyebrow"><span></span> Naikkan level bahasa Inggrismu.</p>
+            <h1 id="hero-title">Belajar bahasa Inggris,<br /><em>berani jadi diri sendiri.</em></h1>
+            <p class="hero-description">
+              EQUAL English adalah ruang belajar yang membuat bahasa Inggris terasa
+              lebih dekat, lebih terarah, dan menyenangkan untuk dijalani.
+            </p>
+            <div class="hero-actions">
+              <a class="button button-pink" href="#mulai">Mulai perjalananmu <span aria-hidden="true">↗</span></a>
+              <a class="text-link" href="#program">Kenalan dulu <span aria-hidden="true">↓</span></a>
+            </div>
+            <div class="hero-footnote">
+              <div class="mini-avatars" aria-hidden="true">
+                <span>R</span><span>A</span><span>K</span><span>+</span>
+              </div>
+              <p>Ruang tumbuh untuk kamu yang punya target berbeda-beda.</p>
+            </div>
+          </div>
+
+          <div class="hero-art" aria-label="130 siswa sudah dibantu oleh EQUAL English" data-reveal-soft>
+            <div class="orbit orbit-one"></div>
+            <div class="orbit orbit-two"></div>
+            <div class="hero-sticker sticker-top">KAMU<br />PASTI BISA!</div>
+            <div class="speech-card">
+              <span class="speech-dot"></span>
+              <p>"Aku ingin lebih percaya diri<br />berbahasa Inggris!"</p>
+            </div>
+            <div class="stat-orb">
+              <span class="stat-label">SUDAH DIBANTU</span>
+              <strong class="count-up" data-target="130">0</strong>
+              <span class="stat-caption">siswa EQUAL English</span>
+              <div class="starburst" aria-hidden="true">✦</div>
+            </div>
+            <!-- Kata-kata Inggris di gelembung ini sengaja dibiarkan: itu bahasa
+                 yang sedang dipelajari, bukan teks antarmuka. -->
+            <div class="word-bubble" aria-hidden="true">
+              <span>hello</span>
+              <strong>Hi!</strong>
+              <small>let's learn</small>
+            </div>
+            <div class="hero-art-footer">
+              <span>01</span>
+              <p>Jadikan bahasa Inggris<br />terasa milikmu.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="ticker" aria-label="Nilai EQUAL English">
+        <div class="ticker-track">
+          <span>BELAJAR TERARAH</span><i>✦</i><span>KEMAJUAN NYATA</span><i>✦</i>
+          <span>MAKIN PERCAYA DIRI</span><i>✦</i><span>BELAJAR TERARAH</span><i>✦</i>
+          <span>KEMAJUAN NYATA</span><i>✦</i><span>MAKIN PERCAYA DIRI</span><i>✦</i>
+        </div>
+      </section>
+
+      <section class="impact-section" id="kenapa" aria-labelledby="impact-title">
+        <div class="page-shell">
+          <div class="impact-head">
+            <p class="section-kicker section-kicker-light" data-reveal>01 / KENYATAANNYA</p>
+            <h2 id="impact-title" data-reveal>Bahasa Inggris bukan lagi nilai tambah.<br /><em>Sekarang jadi syarat.</em></h2>
+            <p class="impact-lede" data-reveal>
+              Untuk kamu yang sebentar lagi memasuki dunia kerja, bahasa Inggris menjadi
+              saringan pertama. Ini bukan opini. Perusahaannya sendiri yang menyatakan.
+            </p>
+          </div>
+
+          <div class="impact-stats" data-reveal-stagger>
+            <article class="impact-stat">
+              <strong data-target="98.5" data-decimals="1" data-suffix="%">0</strong>
+              <p>perusahaan memiliki proses resmi untuk menilai bahasa Inggris kandidat.</p>
+              <cite>Cambridge English · survei 5.300 perusahaan di 38 negara</cite>
+            </article>
+            <article class="impact-stat">
+              <strong data-target="81" data-suffix="%">0</strong>
+              <p>perusahaan global menyatakan AI justru membuat bahasa Inggris makin dibutuhkan.</p>
+              <cite>TOEIC Global Report 2026 (ETS)</cite>
+            </article>
+            <article class="impact-stat">
+              <strong data-target="46" data-suffix="%">0</strong>
+              <p>perusahaan memberikan kenaikan gaji lebih tinggi bagi karyawan dengan bahasa Inggris yang baik.</p>
+              <cite>Cambridge English · laporan “English at Work”</cite>
+            </article>
+          </div>
+
+          <figure class="gap-figure">
+            <figcaption class="gap-caption" data-reveal>
+              <h3>Dan ini posisi Indonesia.</h3>
+              <p>
+                Skor EF EPI 2025 per kemampuan, pada sumbu 420–520. Garis tegak menandai
+                rata-rata global (488). Indonesia berada di peringkat 80 dari 123 negara.
+              </p>
+            </figcaption>
+
+            <div class="gap-chart" data-reveal-stagger>
+              <p class="gap-axis" aria-hidden="true">
+                <span class="gap-axis-inner">
+                  <span class="gap-axis-min">420</span>
+                  <span class="gap-axis-ref">488 · rata-rata global</span>
+                  <span class="gap-axis-max">520</span>
+                </span>
+              </p>
+
+              <div class="gap-row" style="--v: 491">
+                <span class="gap-skill">Reading</span>
+                <span class="gap-track"><i class="gap-dot"></i></span>
+                <span class="gap-score">491</span>
+              </div>
+              <div class="gap-row gap-row-focus" style="--v: 479">
+                <span class="gap-skill">Writing</span>
+                <span class="gap-track"><i class="gap-dot"></i></span>
+                <span class="gap-score">479</span>
+              </div>
+              <div class="gap-row gap-row-focus" style="--v: 454">
+                <span class="gap-skill">Listening</span>
+                <span class="gap-track"><i class="gap-dot"></i></span>
+                <span class="gap-score">454</span>
+              </div>
+              <div class="gap-row" style="--v: 447">
+                <span class="gap-skill">Speaking</span>
+                <span class="gap-track"><i class="gap-dot"></i></span>
+                <span class="gap-score">447</span>
+              </div>
+            </div>
+
+            <p class="gap-note" data-reveal>
+              <span aria-hidden="true">✦</span>
+              Dari tiga kemampuan yang diajarkan EQUAL, Listening dan Writing masih di
+              bawah rata-rata global. Justru di sanalah kemajuanmu paling terasa.
+            </p>
+          </figure>
+
+          <p class="impact-sources">
+            Sumber:
+            <a href="https://www.ef.com/wwen/epi/regions/asia/indonesia/" target="_blank" rel="noopener">EF English Proficiency Index 2025</a>,
+            <a href="https://www.cambridgeenglish.org/images/english-at-work-full-report.pdf" target="_blank" rel="noopener">Cambridge English “English at Work”</a>,
+            TOEIC Global Report 2026 (ETS).
+          </p>
+        </div>
+      </section>
+
+      <section class="intro-section page-shell" id="tentang" aria-labelledby="intro-title">
+        <div class="section-kicker" data-reveal>02 / KENAPA EQUAL</div>
+        <div class="intro-layout">
+          <div>
+            <h2 id="intro-title" data-reveal>Jangan hanya mengerti.<br /><em>Beranikan diri berbicara.</em></h2>
+          </div>
+          <div class="intro-body" data-reveal>
+            <p>
+              Belajar bahasa bukan soal menghafal sebanyak-banyaknya. Yang terpenting
+              adalah punya dasar yang kuat, menemukan ritmenya, lalu berani memakainya
+              di dunia nyata.
+            </p>
+            <a class="arrow-link" href="#cara-belajar">Lihat cara kami menemani belajarmu <span aria-hidden="true">↘</span></a>
+          </div>
+        </div>
+
+        <!-- Foto ilustratif dari Unsplash, bukan dokumentasi kelas EQUAL.
+             Keterangannya sengaja deskriptif supaya tidak terbaca sebagai klaim. -->
+        <figure class="section-figure" data-reveal>
+          <img
+            src="EDITS/foto-komunitas.jpg"
+            alt="Seorang pembicara berbicara dengan mikrofon di hadapan peserta yang duduk mengikuti sesi belajar"
+            width="1600"
+            height="1064"
+            loading="lazy"
+          />
+          <figcaption>Ruang belajar bersama</figcaption>
+        </figure>
+
+        <div class="value-grid" data-reveal-stagger>
+          <article class="value-card value-card-pink">
+            <span class="card-index">01</span>
+            <div class="card-icon icon-path" aria-hidden="true"><span></span><span></span><span></span></div>
+            <h3>Belajar<br />lebih terarah.</h3>
+            <p>Mulai dari tujuanmu, lalu dipecah menjadi langkah kecil yang masuk akal.</p>
+          </article>
+          <article class="value-card value-card-black">
+            <span class="card-index">02</span>
+            <div class="card-icon icon-spark" aria-hidden="true">✦</div>
+            <h3>Latihan<br />tanpa tekanan.</h3>
+            <p>Ruang untuk bertanya, mencoba, dan keliru tanpa takut dihakimi.</p>
+          </article>
+          <article class="value-card value-card-paper">
+            <span class="card-index">03</span>
+            <div class="card-icon icon-chat" aria-hidden="true">Aa</div>
+            <h3>Kemajuan yang<br />benar-benar terasa.</h3>
+            <p>Fokus pada kemampuan yang benar-benar kamu pakai, bukan sekadar materi.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="program-section" id="program" aria-labelledby="program-title">
+        <div class="page-shell">
+          <div class="program-heading">
+            <div>
+              <p class="section-kicker section-kicker-light" data-reveal>03 / PILIH FOKUSMU</p>
+              <h2 id="program-title" data-reveal>Tiga kemampuan inti.<br /><em>Satu perjalanan belajar.</em></h2>
+            </div>
+            <p data-reveal>
+              Kelas EQUAL berfokus pada listening, reading, dan writing, agar kamu makin
+              paham dan makin percaya diri berbahasa Inggris.
+            </p>
+          </div>
+
+          <div class="program-grid" data-reveal-stagger>
+            <article class="program-card program-card-large">
+              <div class="program-card-top"><span>DENGAR CERMAT</span><span>01</span></div>
+              <div class="program-symbol symbol-listen" aria-hidden="true">L</div>
+              <div>
+                <p class="program-tag">TANGKAP MAKSUDNYA</p>
+                <h3>Listening</h3>
+                <p class="program-copy">
+                  Latih telingamu menangkap inti, detail, dan konteks dari bahasa Inggris yang kamu dengar.
+                </p>
+              </div>
+            </article>
+
+            <article class="program-card program-card-dark">
+              <div class="program-card-top"><span>BACA TELITI</span><span>02</span></div>
+              <div class="program-symbol symbol-read" aria-hidden="true">R</div>
+              <div>
+                <p class="program-tag">PAHAMI UTUH ISINYA</p>
+                <h3>Reading</h3>
+                <p class="program-copy">
+                  Baca teks panjang lebih cepat, tangkap ide utamanya, dan pahami maksud di baliknya.
+                </p>
+              </div>
+            </article>
+
+            <article class="program-card program-card-paper">
+              <div class="program-card-top"><span>TULIS RAPI</span><span>03</span></div>
+              <div class="program-symbol symbol-write" aria-hidden="true">W</div>
+              <div>
+                <p class="program-tag">SUSUN KATA YANG PAS</p>
+                <h3>Writing</h3>
+                <p class="program-copy">
+                  Bangun kemampuan menulis, dari kalimat yang tepat sampai pesan yang mudah dipahami.
+                </p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="journey-section page-shell" id="cara-belajar" aria-labelledby="journey-title">
+        <div class="journey-label-wrap">
+          <p class="section-kicker" data-reveal>04 / CARA BELAJARNYA</p>
+          <p class="journey-side-note" data-reveal>Kelasnya ringkas,<br />aksesnya panjang.</p>
+        </div>
+        <h2 id="journey-title" data-reveal>Satu jam per sesi.<br /><em>Aksesnya satu semester.</em></h2>
+
+        <!-- Foto ilustratif dari Unsplash, bukan dokumentasi kelas EQUAL. -->
+        <figure class="section-figure" data-reveal>
+          <img
+            src="EDITS/foto-kelas-zoom.jpg"
+            alt="Layar laptop menampilkan kelas daring berisi banyak peserta dalam panggilan video"
+            width="1600"
+            height="1200"
+            loading="lazy"
+          />
+          <figcaption>Semua sesi berlangsung lewat Zoom</figcaption>
+        </figure>
+
+        <div class="journey-steps" data-reveal-stagger>
+          <article class="journey-step">
+            <span class="step-number">01</span>
+            <div class="step-marker marker-circle" aria-hidden="true"></div>
+            <h3>Satu jam penuh via Zoom</h3>
+            <p>
+              Setiap sesi berlangsung satu jam penuh lewat Zoom. Ringkas, intensif, dan
+              fokus pada satu bahasan agar tidak melebar.
+            </p>
+          </article>
+          <article class="journey-step">
+            <span class="step-number">02</span>
+            <div class="step-marker marker-line" aria-hidden="true"><i></i><i></i><i></i></div>
+            <h3>Dibimbing mentor top UI</h3>
+            <p>
+              Kamu belajar langsung dengan mentor berskor IELTS 8 dan EPT UI 673,
+              sehingga arahannya datang dari orang yang sudah melewatinya sendiri.
+            </p>
+          </article>
+          <article class="journey-step">
+            <span class="step-number">03</span>
+            <div class="step-marker marker-star" aria-hidden="true">✦</div>
+            <h3>Latihan lewat Quizizz</h3>
+            <p>
+              Setiap materi didampingi kuis latihan soal di Quizizz, agar yang baru
+              dipelajari langsung kamu gunakan di hari yang sama.
+            </p>
+          </article>
+          <article class="journey-step">
+            <span class="step-number">04</span>
+            <div class="step-marker marker-stack" aria-hidden="true"><i></i><i></i><i></i></div>
+            <h3>Akses materi satu semester</h3>
+            <p>
+              Seluruh materi dan rekaman Zoom tersimpan di Google Drive, dan akses
+              penuhnya kamu pegang selama satu semester.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="proof-section" id="mentor" aria-labelledby="proof-title">
+        <div class="page-shell">
+          <div class="proof-head">
+            <div>
+              <p class="section-kicker" data-reveal>05 / MENTORNYA</p>
+              <h2 id="proof-title" data-reveal>Dipandu oleh<br /><em>mentor yang berkualitas.</em></h2>
+            </div>
+            <p class="proof-lede" data-reveal>
+              Mentornya sudah mengambil tes itu sendiri, sehingga ia tahu persis rasanya
+              dikejar target skor.
+            </p>
+          </div>
+
+          <div class="proof-mentors proof-mentors-single" data-reveal-stagger>
+            <!-- Skor IELTS 8 dari 9 dan EPT UI 673 dari 674, keduanya hasil tes asli. -->
+            <article class="proof-mentor">
+              <div class="proof-scores">
+                <p class="proof-score">
+                  <strong data-target="8">0</strong>
+                  <span>IELTS · DARI 9</span>
+                </p>
+                <p class="proof-score">
+                  <strong data-target="673">0</strong>
+                  <span>EPT UI · DARI 674</span>
+                </p>
+              </div>
+              <div>
+                <h3>Satu mentor untuk saat ini.</h3>
+                <p class="proof-role">
+                  Seluruh kelas dipandu langsung oleh mentor yang sama, sehingga arahan
+                  yang kamu terima konsisten dari awal sampai akhir.
+                </p>
+              </div>
+            </article>
+            <article class="proof-mentor proof-mentor-note">
+              <p class="proof-role">
+                Kedua skor ini hasil tes asli, bukan perkiraan. EPT UI setara TOEFL,
+                sehingga latihannya tetap relevan untuk tes apa pun yang kamu tuju.
+              </p>
+              <a class="arrow-link" href="#mulai">Tanyakan kelas bersama mentor <span aria-hidden="true">↘</span></a>
+            </article>
+          </div>
+
+          <!-- ==========================================================
+               SECTION TESTIMONI: SENGAJA DINONAKTIFKAN.
+
+               Disembunyikan sampai kutipan asli dari siswa terkumpul,
+               supaya halaman ini aman dipublikasikan tanpa kartu contoh.
+
+               CARA MENGAKTIFKAN KEMBALI:
+               1. Hapus baris pembuka komentar ini dan baris penutupnya
+                  di bawah blok.
+               2. Ganti isi tiap <blockquote> dengan kutipan asli.
+               3. Ganti <cite> dengan nama dan kelas siswa.
+               4. Hapus <span class="proof-tag">CONTOH</span> di tiap kartu.
+
+               Jangan isi dengan kutipan karangan. Selain menyesatkan
+               calon murid, satu testimoni palsu yang ketahuan akan
+               menjatuhkan kredibilitas skor mentor dan data riset yang
+               ada di halaman ini, yang semuanya asli dan bisa dicek.
+               ==========================================================
+
+          <div class="proof-quotes" data-reveal-stagger>
+            <article class="proof-quote">
+              <blockquote>
+                <p>Kutipan asli dari siswa tentang perubahan yang mereka rasakan.</p>
+              </blockquote>
+              <p class="proof-byline">
+                <span class="proof-tag">CONTOH</span>
+                <cite>Nama siswa · Kelas yang diambil</cite>
+              </p>
+            </article>
+            <article class="proof-quote">
+              <blockquote>
+                <p>Kutipan kedua. Yang paling kuat biasanya menyebut hal spesifik, bukan pujian umum.</p>
+              </blockquote>
+              <p class="proof-byline">
+                <span class="proof-tag">CONTOH</span>
+                <cite>Nama siswa · Kelas yang diambil</cite>
+              </p>
+            </article>
+            <article class="proof-quote">
+              <blockquote>
+                <p>Kutipan ketiga. Sebutkan kondisi sebelum dan sesudahnya bila ada.</p>
+              </blockquote>
+              <p class="proof-byline">
+                <span class="proof-tag">CONTOH</span>
+                <cite>Nama siswa · Kelas yang diambil</cite>
+              </p>
+            </article>
+          </div>
+
+               ========================================================== -->
+        </div>
+      </section>
+
+      <section class="bootcamp-section page-shell" id="bootcamp" aria-labelledby="bootcamp-title">
+        <div class="bootcamp-card">
+          <div class="bootcamp-copy">
+            <p class="section-kicker" data-reveal>06 / PROGRAM INTENSIF</p>
+            <h2 id="bootcamp-title" data-reveal>Bootcamp EPT UI.</h2>
+            <p class="bootcamp-lede" data-reveal>
+              Untuk kamu yang sedang mengejar nilai di semester pertama. Materinya setara
+              TOEFL: listening, structure, dan reading. Semuanya dijalani secara intensif
+              dalam 10 hari, dan terbuka untuk mahasiswa dari fakultas mana pun di
+              Universitas Indonesia.
+            </p>
+            <a class="button button-dark" href="https://wa.me/6285888345058" target="_blank" rel="noopener" data-reveal>
+              Tanyakan jadwal batch berikutnya <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+
+          <ul class="bootcamp-list" data-reveal-stagger>
+            <li><span>01</span> Listening, structure &amp; reading, setara materi TOEFL</li>
+            <li><span>02</span> Dipandu mentor IELTS 8 dan EPT UI 673</li>
+            <li><span>03</span> Akses rekaman sesi Zoom tanpa batas</li>
+            <li><span>04</span> Latihannya lewat fun quiz, sehingga tidak terasa seperti mengerjakan drill soal</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="plan-section" id="harga" aria-labelledby="plan-title">
+        <div class="page-shell">
+          <div class="plan-head">
+            <div>
+              <p class="section-kicker" data-reveal>07 / PILIHAN PAKET</p>
+              <h2 id="plan-title" data-reveal>Makin ramai,<br /><em>makin hemat.</em></h2>
+            </div>
+            <p class="plan-lede" data-reveal>
+              Harga di bawah berlaku untuk Bootcamp EPT UI dan dihitung per orang, jadi
+              semakin banyak teman yang kamu ajak, semakin kecil yang kamu bayar.
+            </p>
+          </div>
+
+          <div class="plan-grid" data-reveal-stagger>
+            <article class="plan-card">
+              <div class="plan-card-top">
+                <span>INDIVIDUAL</span>
+                <span>1 ORANG</span>
+              </div>
+              <div class="plan-people" aria-hidden="true">
+                <span class="plan-person"></span>
+              </div>
+              <p class="plan-price">
+                <strong>Rp59.000</strong>
+                <span>per orang</span>
+              </p>
+              <p class="plan-desc">Untuk kamu yang ingin mengikuti bootcamp sendirian.</p>
+              <p class="plan-save plan-save-base">Harga dasar</p>
+            </article>
+
+            <article class="plan-card">
+              <div class="plan-card-top">
+                <span>PAIR</span>
+                <span>2 ORANG</span>
+              </div>
+              <div class="plan-people" aria-hidden="true">
+                <span class="plan-person"></span>
+                <span class="plan-person"></span>
+              </div>
+              <p class="plan-price">
+                <strong>Rp53.000</strong>
+                <span>per orang</span>
+              </p>
+              <p class="plan-desc">Daftar berdua dan langsung dapat harga yang lebih hemat.</p>
+              <p class="plan-save">Hemat Rp6.000 per orang</p>
+            </article>
+
+            <article class="plan-card plan-card-best">
+              <div class="plan-card-top">
+                <span>GROUP</span>
+                <span>3 ORANG</span>
+              </div>
+              <div class="plan-people" aria-hidden="true">
+                <span class="plan-person"></span>
+                <span class="plan-person"></span>
+                <span class="plan-person"></span>
+              </div>
+              <p class="plan-price">
+                <strong>Rp47.000</strong>
+                <span>per orang</span>
+              </p>
+              <p class="plan-desc">Ajak dua temanmu sekaligus untuk harga terbaik per orang.</p>
+              <p class="plan-save">Hemat Rp12.000 per orang</p>
+            </article>
+          </div>
+
+          <p class="plan-note" data-reveal>
+            Harga berlaku untuk satu batch Bootcamp EPT UI, sudah termasuk seluruh sesi,
+            rekaman Zoom, dan materi di Google Drive.
+          </p>
+        </div>
+      </section>
+
+      <section class="cta-section" id="mulai" aria-labelledby="cta-title">
+        <div class="cta-star cta-star-one" aria-hidden="true">✦</div>
+        <div class="cta-star cta-star-two" aria-hidden="true">✦</div>
+        <div class="page-shell cta-layout" data-reveal-stagger>
+          <p class="section-kicker">SAATNYA MULAI</p>
+          <h2 id="cta-title">Ready to elevate<br />your <em>English?</em></h2>
+          <p class="cta-copy">Mulai dari targetmu. Cari tahu kelas yang paling sesuai untukmu.</p>
+          <div class="cta-actions">
+            <a class="button button-dark" href="https://forms.gle/K2prjksb9XPZbEAs7" target="_blank" rel="noopener">
+              Daftarkan dirimu di sini! <span aria-hidden="true">↗</span>
+            </a>
+            <a class="button button-outline" href="https://wa.me/6285888345058" target="_blank" rel="noopener">
+              Tanya dulu: 0858-8834-5058 <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="page-shell footer-grid">
+        <a class="footer-brand" href="#home" aria-label="EQUAL English, kembali ke beranda">
+          <img src="EDITS/Vector.png" alt="EQUAL" />
+          <span>Your English. Elevated.</span>
+        </a>
+        <p>Untuk kamu yang ingin<br />terus berkembang.</p>
+
+        <div class="footer-contact">
+          <p class="footer-contact-label">Ikuti dan hubungi kami</p>
+          <a href="https://www.instagram.com/equal.english/" target="_blank" rel="noopener">
+            Instagram · @equal.english <span aria-hidden="true">↗</span>
+          </a>
+          <a href="mailto:englishwithequal@gmail.com">
+            Email · englishwithequal@gmail.com <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+
+        <a class="footer-top-link" href="#home">Kembali ke atas <span aria-hidden="true">↑</span></a>
+      </div>
+      <div class="page-shell footer-bottom">
+        <span>© <span id="current-year"></span> EQUAL English</span>
+        <span>Foto oleh Chris Montgomery &amp; Damaris Azócar / Unsplash</span>
+        <span>Belajar. Latihan. Berkembang.</span>
+      </div>
+    </footer>
+
+    <script src="shader-background.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

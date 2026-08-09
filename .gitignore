@@ -1,0 +1,31 @@
+# =====================================================================
+# Repositori ini PUBLIK. Apa pun yang masuk ke sini bisa dilihat siapa
+# saja, dan riwayat Git menyimpannya walau nanti filenya dihapus.
+# =====================================================================
+
+# Buku persiapan TOEFL berhak cipta, sebagian dari shadow library.
+# Tidak dipakai website dan tidak boleh didistribusikan ulang.
+BUKU/
+
+# Guidebook memuat nama dan asal fakultas mentor ("Clarissa FPsi'24"),
+# yang sengaja tidak ditampilkan di website. Jangan dipublikasikan.
+GUIDEBOOK EQUAL.pdf
+Guidebook EQUAL.pptx
+
+# Materi promosi, bukan aset website.
+POST/
+WEB/
+Group 7.png
+EDITS/HEADER GFORM.png
+
+# Foto Unsplash ukuran asli (total ~9 MB). Website memakai versi yang
+# sudah dikecilkan: EDITS/foto-komunitas.jpg dan EDITS/foto-kelas-zoom.jpg
+EDITS/*-unsplash.jpg
+
+# Konfigurasi lokal Claude Code
+.claude/
+
+# Berkas sistem
+Thumbs.db
+desktop.ini
+.DS_Store
