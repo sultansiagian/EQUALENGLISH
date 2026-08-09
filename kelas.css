@@ -40,10 +40,14 @@
 /* logo-equal-black.png adalah lockup lengkap (ikon + "QUAL" + tagline),
    beda dari Vector.png di index.html yang cuma ikon putih untuk duduk
    di atas hero gelap. Di sini latarnya terang, jadi lockup hitam ini
-   yang dipakai supaya tetap kelihatan -- tinggi dikunci, lebar
-   menyesuaikan sendiri. */
+   yang dipakai supaya tetap kelihatan.
+
+   Tingginya disamakan dengan tinggi Vector.png yang sebenarnya dirender
+   di index.html (.brand img { width: 100px }, dan Vector.png 563x158px
+   -> hasilnya 100/3.563 = 28px), supaya bobot visual logo konsisten di
+   kedua halaman meski bentuk filenya beda jauh. */
 .kelas-brand img {
-  height: 34px;
+  height: 28px;
   width: auto;
 }
 
