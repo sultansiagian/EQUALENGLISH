@@ -10,6 +10,18 @@
   background: var(--paper);
 }
 
+/* Atribut [hidden] bawaan browser cuma set display:none lewat UA
+   stylesheet, dan itu SELALU kalah dari aturan display apa pun di
+   sini (mis. .kelas-signin-card { display: flex }), berapa pun
+   spesifisitas selectornya -- stylesheet penulis selalu menang atas
+   stylesheet browser. Tanpa baris ini, kelas.js men-toggle [hidden]
+   dengan benar tapi elemen tetap kelihatan karena display-nya ketiban
+   aturan lain. !important di sini memang perlu, bukan kebiasaan buruk:
+   ini satu-satunya cara [hidden] menang di semua kondisi. */
+[hidden] {
+  display: none !important;
+}
+
 .kelas-header {
   display: flex;
   align-items: center;
@@ -22,19 +34,17 @@
 .kelas-brand {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
   color: var(--black);
 }
 
-.kelas-brand img { width: 84px; height: auto; }
-
-.kelas-brand > span {
-  padding-left: 0.6rem;
-  border-left: 1px solid var(--line);
-  font-family: var(--mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+/* logo-equal-black.png adalah lockup lengkap (ikon + "QUAL" + tagline),
+   beda dari Vector.png di index.html yang cuma ikon putih untuk duduk
+   di atas hero gelap. Di sini latarnya terang, jadi lockup hitam ini
+   yang dipakai supaya tetap kelihatan -- tinggi dikunci, lebar
+   menyesuaikan sendiri. */
+.kelas-brand img {
+  height: 34px;
+  width: auto;
 }
 
 .kelas-back {
@@ -56,7 +66,7 @@
 }
 
 .kelas-shell {
-  width: min(640px, calc(100% - 3rem));
+  width: min(700px, calc(100% - 3rem));
   margin: 0 auto;
 }
 
@@ -94,13 +104,22 @@
   border-radius: 4px;
 }
 
-/* Tombol Google GIS butuh ruang render sendiri; dibungkus supaya
-   sejajar dengan kartu lain, bukan menempel rapat ke tepi. */
-#kelas-signin {
+.kelas-signin-card {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 1rem;
+}
+
+.kelas-signin-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  color: var(--black);
+  background: var(--pink-light);
+  border-radius: 50%;
 }
 
 .kelas-hint {
@@ -110,10 +129,31 @@
 }
 
 .kelas-status {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
   margin: 0;
   color: var(--ink-muted);
   font-family: var(--mono);
   font-size: 0.85rem;
+}
+
+.kelas-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--line);
+  border-top-color: var(--black);
+  border-radius: 50%;
+  animation: kelas-spin 700ms linear infinite;
+}
+
+/* prefers-reduced-motion dihormati lewat aturan global di styles.css
+   (menimpa animation-duration jadi 0.01ms untuk semua elemen), jadi
+   tidak perlu duplikasi aturan itu di sini. */
+@keyframes kelas-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .kelas-welcome {
@@ -122,13 +162,13 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.6rem;
-  margin-bottom: 1.8rem;
-  padding-bottom: 1.4rem;
-  border-bottom: 1px solid var(--line);
+  margin-bottom: 1.4rem;
   font-size: 0.88rem;
 }
 
-.kelas-welcome strong { color: var(--black); }
+.kelas-welcome strong {
+  color: var(--black);
+}
 
 #kelas-signout {
   padding: 0;
@@ -146,15 +186,56 @@
   color: var(--black);
 }
 
-.kelas-materials {
-  display: flex;
-  flex-direction: column;
-  gap: 1.8rem;
+/* ---- Grid dua kartu: gabung Zoom + Drive, dilengkapi ikon masing-
+   masing supaya langsung dikenali tanpa perlu baca judulnya dulu. ---- */
+
+.kelas-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
-.kelas-material + .kelas-material {
-  padding-top: 1.8rem;
-  border-top: 1px solid var(--line);
+.kelas-action-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1.7rem;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  transition: transform 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.kelas-action-card:hover {
+  transform: translateY(-3px);
+}
+
+/* Kartu Zoom ditandai sebagai aksi utama -- border lebih tegas,
+   sejalan dengan tombol button-dark di dalamnya. */
+.kelas-action-primary {
+  border-color: var(--black);
+}
+
+.kelas-action-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 1.1rem;
+  overflow: hidden;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.kelas-action-icon img {
+  display: block;
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  border-radius: 8px;
 }
 
 .kelas-material-label {
@@ -166,24 +247,32 @@
   letter-spacing: 0.12em;
 }
 
-.kelas-material h3 {
-  margin: 0 0 0.9rem;
+.kelas-action-card h3 {
+  margin: 0 0 0.7rem;
   color: var(--black);
   font-family: var(--display);
-  font-size: 1.15rem;
+  font-size: 1.18rem;
   letter-spacing: -0.03em;
-}
-
-.kelas-material-primary h3 {
-  font-size: clamp(1.3rem, 3vw, 1.7rem);
+  line-height: 1.15;
 }
 
 .kelas-material-desc {
   max-width: 420px;
   margin: 0 0 1.3rem;
   color: var(--ink-muted);
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   line-height: 1.55;
+}
+
+.kelas-action-card .button {
+  margin-top: auto;
+}
+
+.kelas-announcement-card {
+  padding: 1.5rem 1.7rem;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 4px;
 }
 
 .kelas-announcement {
@@ -210,9 +299,24 @@
 }
 
 #kelas-denied strong,
-#kelas-error strong { color: var(--black); }
+#kelas-error strong {
+  color: var(--black);
+}
+
+@media (max-width: 640px) {
+  .kelas-actions {
+    grid-template-columns: 1fr;
+  }
+}
 
 @media (max-width: 520px) {
-  .kelas-card { padding: 1.4rem; }
-  .kelas-welcome { flex-direction: column; align-items: flex-start; }
+  .kelas-card,
+  .kelas-action-card,
+  .kelas-announcement-card {
+    padding: 1.4rem;
+  }
+  .kelas-welcome {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
