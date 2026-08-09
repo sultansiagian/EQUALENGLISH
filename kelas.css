@@ -201,13 +201,32 @@
   font-size: 0.8rem;
 }
 
+/* Dipusatkan secara eksplisit lewat flex, bukan mengandalkan text-align
+   warisan -- nama Indonesia sering panjang dan bisa membungkus 3-4
+   baris, jadi pemusatannya harus pasti berapa pun lebar barisnya. */
+#kelas-gate-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
 .kelas-avatar {
-  width: 56px;
-  height: 56px;
-  margin: 0 0 1.4rem;
+  width: 88px;
+  height: 88px;
+  margin: 0 0 1.5rem;
   object-fit: cover;
-  border: 2px solid rgba(255, 255, 255, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.55);
   border-radius: 50%;
+}
+
+/* Lebih kecil daripada .kelas-hero-content h1 biasa (yang dirancang
+   untuk headline pendek seperti "Materi kelasmu, satu langkah lagi").
+   Nama orang bisa jauh lebih panjang, jadi avatar yang jadi fokus
+   utama di sini, bukan ukuran teksnya. */
+#kelas-greeting {
+  max-width: 520px;
+  font-size: clamp(1.6rem, 4vw, 2.3rem);
 }
 
 .kelas-status {

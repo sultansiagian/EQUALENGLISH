@@ -69,7 +69,13 @@ function renderGreeting(profile) {
   const greeting = document.getElementById('kelas-greeting');
   const avatar = document.getElementById('kelas-avatar');
 
-  const firstName = profile.given_name || (profile.name || '').split(' ')[0];
+  // given_name TIDAK dijamin cuma satu kata -- akun Google yang nama
+  // depan/belakangnya tidak diisi terpisah bisa mengembalikan nama
+  // lengkap di sana juga. Makanya kata pertama selalu diambil ulang di
+  // sini, dari sumber mana pun, supaya sapaannya tetap pendek berapa
+  // pun panjang nama aslinya.
+  const rawName = (profile.given_name || profile.name || '').trim();
+  const firstName = rawName ? rawName.split(/\s+/)[0] : '';
   greeting.textContent = firstName ? 'Halo, ' + firstName + '!' : 'Kamu masuk!';
 
   if (profile.picture) {
