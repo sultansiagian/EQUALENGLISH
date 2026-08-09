@@ -101,19 +101,29 @@ async function fetchEnrolledEmails(csvUrl) {
   const rows = csvToRows(text);
   if (rows.length === 0) return new Set();
 
+  // Satu baris respons form bisa mewakili lebih dari satu siswa (paket
+  // Pair/Group didaftarkan oleh satu orang, tapi mencakup 2-3 siswa).
+  // Karena itu SEMUA kolom yang namanya mengandung "email" dikumpulkan
+  // -- misalnya "Email Peserta 1", "Email Peserta 2", "Email Peserta 3"
+  // -- bukan cuma kolom pertama yang ketemu.
   const header = rows[0].map((h) => h.trim().toLowerCase());
-  const emailCol = header.findIndex((h) => h.includes('email'));
-  if (emailCol === -1) {
+  const emailCols = [];
+  header.forEach((h, i) => {
+    if (h.includes('email')) emailCols.push(i);
+  });
+  if (emailCols.length === 0) {
     throw new Error(
-      'Tidak ada kolom email di sheet respons. Pastikan "Collect email ' +
-        'addresses" aktif di pengaturan Google Form.'
+      'Tidak ada kolom email di sheet respons. Pastikan pertanyaan email ' +
+        'ada di form, atau "Collect email addresses" aktif di pengaturan.'
     );
   }
 
   const emails = new Set();
   for (let i = 1; i < rows.length; i++) {
-    const value = (rows[i][emailCol] || '').trim().toLowerCase();
-    if (value) emails.add(value);
+    emailCols.forEach((col) => {
+      const value = (rows[i][col] || '').trim().toLowerCase();
+      if (value) emails.add(value);
+    });
   }
   return emails;
 }
