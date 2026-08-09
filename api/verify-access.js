@@ -102,11 +102,17 @@ async function fetchEnrolledEmails(csvUrl) {
   if (rows.length === 0) return new Set();
 
   // Satu baris respons form bisa mewakili lebih dari satu siswa (paket
-  // Pair/Group didaftarkan oleh satu orang, tapi mencakup 2-3 siswa).
-  // Karena itu SEMUA kolom yang namanya mengandung "email" dikumpulkan
-  // -- misalnya "Email Peserta 1", "Email Peserta 2", "Email Peserta 3"
-  // -- bukan cuma kolom pertama yang ketemu.
-  const header = rows[0].map((h) => h.trim().toLowerCase());
+  // Pair/Group didaftarkan oleh satu orang, tapi mencakup 2-3 siswa,
+  // dengan nama kolom seperti "Person 1 E-mail", "Person 2 E-mail").
+  // Karena itu SEMUA kolom yang berisi email dikumpulkan, bukan cuma
+  // kolom pertama yang ketemu.
+  //
+  // Header dicocokkan dengan huruf saja (angka, spasi, tanda hubung
+  // dibuang) supaya "E-mail" dan "Person 1 E-mail" tetap ketemu --
+  // dicocokkan apa adanya, "e-mail".includes("email") hasilnya false
+  // karena tanda hubung memutus kata itu, kolomnya jadi tidak pernah
+  // kedeteksi.
+  const header = rows[0].map((h) => h.trim().toLowerCase().replace(/[^a-z]/g, ''));
   const emailCols = [];
   header.forEach((h, i) => {
     if (h.includes('email')) emailCols.push(i);
