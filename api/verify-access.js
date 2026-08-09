@@ -71,16 +71,24 @@
 // semuanya digabung jadi satu di dalam folder Drive ini (ditaruh di
 // sana langsung oleh mentor, bukan ditautkan dari sini).
 //
-// zoomJoinUrl adalah link meeting yang dipakai ULANG tiap sesi, bukan
-// rekaman. Sengaja hanya muncul di halaman terlindungi ini (bukan di
-// index.html) supaya tidak ada orang luar yang menyelonong masuk saat
-// sesi live berlangsung.
+// zoomJoinUrl dan communityUrl adalah link yang dipakai ULANG terus-
+// menerus (bukan sekali pakai), sama-sama grup/meeting yang bisa
+// disusupi kalau linknya bocor ke publik. Makanya dua-duanya sengaja
+// cuma muncul di halaman terlindungi ini (bukan di index.html), dan
+// baru dikirim ke browser setelah email pengunjung lolos verifikasi.
+//
+// Quizizz belum ada link-nya (kelasnya masih disiapkan), jadi kartunya
+// di kelas.html sengaja dibiarkan nonaktif ("Segera hadir") dulu. Nanti
+// kalau linknya sudah ada, tambahkan field quizizzUrl di sini lalu ganti
+// markup kartunya di kelas.html dari <button disabled> jadi <a href>
+// mengikuti pola kartu lain di bawah ini.
 // ============================================================
 const CLASS_MATERIALS = {
   zoomJoinUrl:
     'https://ui-ac-id.zoom.us/j/91548748401?pwd=WFhzja7b2aC5iamDQwMNaoHi7maipt.1',
   driveUrl:
     'https://drive.google.com/drive/folders/12HtL4Rchwy6JdPBs3hEa81lgwk5dxluU?usp=sharing',
+  communityUrl: 'https://chat.whatsapp.com/DZsFkQv353M2u3Ue0HKbjJ',
   announcement:
     'Semua materi ada di folder Drive ini. Rekaman Zoom dan link Quizizz akan ditambahkan langsung ke dalamnya setelah tiap sesi.',
 };

@@ -107,6 +107,49 @@
                 Buka folder Drive <span aria-hidden="true">↗</span>
               </a>
             </article>
+
+            <article class="kelas-action-card">
+              <div class="kelas-action-icon">
+                <img src="/EDITS/logo-whatsapp.webp" alt="" width="40" height="40" />
+              </div>
+              <p class="kelas-material-label">KOMUNITAS</p>
+              <h3>Gabung grup WhatsApp kelas.</h3>
+              <p class="kelas-material-desc">
+                Ruang buat nanya di luar jam sesi, kenalan sama teman
+                sekelas, dan dapat info dadakan dari mentor.
+              </p>
+              <a id="kelas-community-link" class="button button-outline" href="#" target="_blank" rel="noopener">
+                Buka WhatsApp <span aria-hidden="true">↗</span>
+              </a>
+            </article>
+
+            <!-- Belum ada link Quizizz (kelasnya masih disiapkan). Kartu
+                 ini sengaja nonaktif dulu -- <button disabled>, bukan
+                 <a>, supaya tidak ada yang kepencet ke tempat kosong.
+                 Begitu link-nya ada: tambahkan quizizzUrl ke
+                 CLASS_MATERIALS di api/verify-access.js, lalu ganti
+                 elemen di bawah ini jadi <a id="kelas-quizizz-link"
+                 class="button button-outline" href="#" target="_blank"
+                 rel="noopener"> mengikuti pola kartu-kartu di atas, dan
+                 tambahkan baris render-nya di kelas.js. -->
+            <article class="kelas-action-card kelas-action-pending">
+              <div class="kelas-action-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M9.2 9.5a2.8 2.8 0 1 1 3.9 2.6c-.9.5-1.4 1-1.4 2" />
+                  <circle cx="12" cy="16.3" r="0.15" fill="currentColor" stroke="none" />
+                </svg>
+              </div>
+              <p class="kelas-material-label">LATIHAN</p>
+              <h3>Kuis Quizizz.</h3>
+              <p class="kelas-material-desc">
+                Lagi disiapkan mentor. Begitu siap, link kuisnya muncul
+                langsung di kartu ini.
+              </p>
+              <button type="button" class="button button-outline" disabled>
+                Segera hadir
+              </button>
+            </article>
           </div>
 
           <article class="kelas-announcement-card">

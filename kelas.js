@@ -25,11 +25,16 @@ function showState(name) {
 function renderMaterials(materials) {
   const zoomLink = document.getElementById('kelas-zoom-link');
   const driveLink = document.getElementById('kelas-drive-link');
+  const communityLink = document.getElementById('kelas-community-link');
   const announcement = document.getElementById('kelas-announcement');
 
   zoomLink.href = materials.zoomJoinUrl || '#';
   driveLink.href = materials.driveUrl || '#';
+  communityLink.href = materials.communityUrl || '#';
   announcement.textContent = materials.announcement || '';
+
+  // Kartu Quizizz sengaja tidak disentuh di sini -- lihat komentar di
+  // kelas.html tentang cara mengaktifkannya begitu link-nya sudah ada.
 }
 
 // Dipanggil otomatis oleh Google Identity Services lewat

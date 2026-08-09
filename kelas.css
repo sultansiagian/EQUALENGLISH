@@ -221,6 +221,34 @@
   border-color: var(--black);
 }
 
+/* Kartu yang materinya belum siap (mis. Quizizz sebelum link-nya ada).
+   Tidak hover-lift seperti kartu aktif lainnya, supaya terasa memang
+   belum bisa diklik sebelum tangan sempat mencoba. */
+.kelas-action-pending {
+  background: var(--paper);
+}
+
+.kelas-action-pending:hover {
+  transform: none;
+}
+
+.kelas-action-pending .kelas-action-icon {
+  color: var(--ink-muted);
+  background: var(--paper);
+}
+
+.kelas-action-card .button[disabled] {
+  color: var(--ink-muted);
+  cursor: not-allowed;
+  background: transparent;
+  border-color: var(--line);
+}
+
+.kelas-action-card .button[disabled]:hover {
+  color: var(--ink-muted);
+  background: transparent;
+}
+
 .kelas-action-icon {
   display: flex;
   align-items: center;
