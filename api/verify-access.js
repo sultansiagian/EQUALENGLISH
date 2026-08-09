@@ -19,9 +19,16 @@
  *
  * ENV VARS yang wajib diisi di Vercel (Project Settings > Environment
  * Variables), bukan di sini, supaya tidak ikut ter-commit ke Git:
- *   GOOGLE_CLIENT_ID   Client ID dari Google Cloud Console
- *   ROSTER_CSV_URL     Link "Publish to web" (format CSV) dari sheet
- *                      respons Google Form pendaftaran
+ *   GOOGLE_CLIENT_ID    Client ID dari Google Cloud Console
+ *   ROSTER_CSV_URLS     Satu atau lebih link "Publish to web" (format
+ *                       CSV), dipisah koma. Bisa lebih dari satu sheet
+ *                       -- misalnya respons Google Form (yang kadang
+ *                       ada human error atau gagal submit) DAN sheet
+ *                       manual berisi orang yang sudah bayar tapi
+ *                       belum sempat isi form. Kalau salah satu sheet
+ *                       gagal diakses, sheet yang lain tetap dipakai;
+ *                       tidak semua orang ikut ditolak gara-gara satu
+ *                       sumber bermasalah.
  */
 
 // ============================================================
@@ -92,14 +99,9 @@ function csvToRows(csvText) {
   return rows;
 }
 
-async function fetchEnrolledEmails(csvUrl) {
-  const res = await fetch(csvUrl);
-  if (!res.ok) {
-    throw new Error('Gagal mengambil daftar siswa, status ' + res.status);
-  }
-  const text = await res.text();
-  const rows = csvToRows(text);
-  if (rows.length === 0) return new Set();
+function extractEmailsFromSheet(csvText) {
+  const rows = csvToRows(csvText);
+  if (rows.length === 0) return [];
 
   // Satu baris respons form bisa mewakili lebih dari satu siswa (paket
   // Pair/Group didaftarkan oleh satu orang, tapi mencakup 2-3 siswa,
@@ -117,20 +119,49 @@ async function fetchEnrolledEmails(csvUrl) {
   header.forEach((h, i) => {
     if (h.includes('email')) emailCols.push(i);
   });
-  if (emailCols.length === 0) {
-    throw new Error(
-      'Tidak ada kolom email di sheet respons. Pastikan pertanyaan email ' +
-        'ada di form, atau "Collect email addresses" aktif di pengaturan.'
-    );
-  }
+  if (emailCols.length === 0) return [];
 
-  const emails = new Set();
+  const emails = [];
   for (let i = 1; i < rows.length; i++) {
     emailCols.forEach((col) => {
       const value = (rows[i][col] || '').trim().toLowerCase();
-      if (value) emails.add(value);
+      if (value) emails.push(value);
     });
   }
+  return emails;
+}
+
+async function fetchEnrolledEmails(csvUrls) {
+  const emails = new Set();
+  const failures = [];
+
+  // Semua sumber diambil paralel. Satu sumber yang gagal (sheet belum
+  // di-publish ulang, jaringan bermasalah, dll.) tidak boleh
+  // menggagalkan sumber lain -- makanya try/catch ada di dalam setiap
+  // iterasi, bukan membungkus semuanya sekaligus.
+  await Promise.all(
+    csvUrls.map(async (url) => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('status ' + res.status);
+        const text = await res.text();
+        extractEmailsFromSheet(text).forEach((email) => emails.add(email));
+      } catch (err) {
+        failures.push(url + ' -> ' + err.message);
+      }
+    })
+  );
+
+  if (failures.length > 0) {
+    // Tidak menghentikan proses selama ada sumber lain yang berhasil,
+    // tapi tetap dicatat supaya kelihatan di Vercel > Functions log
+    // kalau salah satu sheet berhenti bisa diakses.
+    console.error('Sebagian sumber roster gagal dimuat: ' + failures.join('; '));
+  }
+  if (emails.size === 0 && failures.length === csvUrls.length) {
+    throw new Error('Semua sumber daftar siswa gagal diakses: ' + failures.join('; '));
+  }
+
   return emails;
 }
 
@@ -167,13 +198,16 @@ module.exports = async function handler(req, res) {
   }
 
   const clientId = process.env.GOOGLE_CLIENT_ID;
-  const rosterUrl = process.env.ROSTER_CSV_URL;
+  const rosterUrls = (process.env.ROSTER_CSV_URLS || '')
+    .split(',')
+    .map((url) => url.trim())
+    .filter(Boolean);
 
-  if (!clientId || !rosterUrl) {
+  if (!clientId || rosterUrls.length === 0) {
     // Belum di-setup di Vercel. Pesan ini sengaja jelas supaya gampang
     // didiagnosis lewat Vercel dashboard > Deployments > Functions log.
     console.error(
-      'ENV VAR BELUM DIISI: GOOGLE_CLIENT_ID dan/atau ROSTER_CSV_URL ' +
+      'ENV VAR BELUM DIISI: GOOGLE_CLIENT_ID dan/atau ROSTER_CSV_URLS ' +
         'kosong di Vercel Project Settings > Environment Variables.'
     );
     return res.status(500).json({ ok: false, reason: 'server_not_configured' });
@@ -190,7 +224,7 @@ module.exports = async function handler(req, res) {
       return res.status(401).json({ ok: false, reason: verified.reason });
     }
 
-    const enrolledEmails = await fetchEnrolledEmails(rosterUrl);
+    const enrolledEmails = await fetchEnrolledEmails(rosterUrls);
     if (!enrolledEmails.has(verified.email)) {
       return res.status(403).json({ ok: false, reason: 'not_enrolled' });
     }
