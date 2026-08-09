@@ -23,9 +23,11 @@ function showState(name) {
 }
 
 function renderMaterials(materials) {
+  const zoomLink = document.getElementById('kelas-zoom-link');
   const driveLink = document.getElementById('kelas-drive-link');
   const announcement = document.getElementById('kelas-announcement');
 
+  zoomLink.href = materials.zoomJoinUrl || '#';
   driveLink.href = materials.driveUrl || '#';
   announcement.textContent = materials.announcement || '';
 }

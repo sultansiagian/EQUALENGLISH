@@ -32,8 +32,15 @@
 // Rekaman Zoom dan link Quizizz tidak punya field terpisah karena
 // semuanya digabung jadi satu di dalam folder Drive ini (ditaruh di
 // sana langsung oleh mentor, bukan ditautkan dari sini).
+//
+// zoomJoinUrl adalah link meeting yang dipakai ULANG tiap sesi, bukan
+// rekaman. Sengaja hanya muncul di halaman terlindungi ini (bukan di
+// index.html) supaya tidak ada orang luar yang menyelonong masuk saat
+// sesi live berlangsung.
 // ============================================================
 const CLASS_MATERIALS = {
+  zoomJoinUrl:
+    'https://ui-ac-id.zoom.us/j/91548748401?pwd=WFhzja7b2aC5iamDQwMNaoHi7maipt.1',
   driveUrl:
     'https://drive.google.com/drive/folders/12HtL4Rchwy6JdPBs3hEa81lgwk5dxluU?usp=sharing',
   announcement:
