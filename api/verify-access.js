@@ -29,6 +29,25 @@
  *                       gagal diakses, sheet yang lain tetap dipakai;
  *                       tidak semua orang ikut ditolak gara-gara satu
  *                       sumber bermasalah.
+ *
+ * ENV VAR OPSIONAL, untuk buka form yang sama ke beberapa batch tanpa
+ * batch lama ikut kebawa ke kelas batch baru:
+ *   BATCH_CUTOFF_DATE   Tanggal buka batch yang sedang berjalan, format
+ *                       "2026-09-01". Baris di sheet RESPONS FORM yang
+ *                       kolom Timestamp-nya SEBELUM tanggal ini dianggap
+ *                       bukan siswa batch aktif dan tidak dihitung.
+ *                       Dipakai lewat kolom "Timestamp" yang otomatis
+ *                       dibuat Google Form di setiap respons, jadi tidak
+ *                       perlu ubah apa pun di form.
+ *
+ *                       Sheet MANUAL (tidak punya kolom Timestamp) TIDAK
+ *                       ikut difilter tanggal ini -- kosongkan sheet itu
+ *                       secara manual tiap mulai batch baru.
+ *
+ *                       Kosongkan env var ini untuk mematikan filter
+ *                       (semua baris dihitung, seperti sebelum ada
+ *                       konsep batch). Cocok dipakai selama masih
+ *                       satu batch pertama berjalan.
  */
 
 // ============================================================
@@ -104,31 +123,60 @@ function csvToRows(csvText) {
 // salah menganggap nomor telepon atau nama sebagai email.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function extractEmailsFromSheet(csvText) {
-  // Sengaja TIDAK bergantung pada baris header (mis. mencari kolom yang
-  // namanya mengandung "email"). Sheet respons Google Form rapi dan
-  // punya header yang jelas, tapi sheet manual yang diisi tangan bisa
-  // saja baris pertamanya kosong, ada label seperti "MANUAL" di tengah,
-  // atau kolomnya bergeser -- semua itu bikin pencarian lewat header
-  // gagal diam-diam dan seluruh sheet dianggap kosong.
+function findColumnIndex(headerRow, keyword) {
+  // Cocok dengan huruf saja (angka/spasi/tanda hubung dibuang) supaya
+  // variasi kecil di nama kolom tetap ketemu -- lihat bug "E-mail" vs
+  // "email" yang pernah kejadian di sini.
+  const normalized = headerRow.map((h) => h.trim().toLowerCase().replace(/[^a-z]/g, ''));
+  return normalized.findIndex((h) => h.includes(keyword));
+}
+
+function extractEmailsFromSheet(csvText, cutoffDate) {
+  // Sengaja TIDAK bergantung pada baris header untuk KOLOM EMAIL (mis.
+  // mencari kolom yang namanya mengandung "email"). Sheet respons
+  // Google Form rapi dan punya header yang jelas, tapi sheet manual
+  // yang diisi tangan bisa saja baris pertamanya kosong, ada label
+  // seperti "MANUAL" di tengah, atau kolomnya bergeser -- semua itu
+  // bikin pencarian lewat header gagal diam-diam dan seluruh sheet
+  // dianggap kosong. Jadi tiap sel diuji langsung: kalau bentuknya
+  // seperti alamat email, dianggap email, apa pun posisi kolomnya.
   //
-  // Jadi setiap sel di seluruh baris (termasuk baris pertama, yang
-  // aman karena teks header seperti "Nama" atau "Person 1 E-mail"
-  // tidak akan pernah cocok dengan pola alamat email sungguhan) diuji:
-  // kalau bentuknya seperti alamat email, dianggap email. Ini bekerja
-  // untuk sheet rapi maupun berantakan, apa pun urutan kolomnya.
+  // Kolom TIMESTAMP beda cerita: itu nama yang dibuat otomatis oleh
+  // Google Form sendiri (bukan ketikan manual), jadi bisa dipercaya
+  // konsisten. Dipakai untuk memfilter batch lama kalau BATCH_CUTOFF_DATE
+  // diisi. Sheet yang tidak punya kolom ini (mis. sheet manual) sama
+  // sekali tidak kena filter tanggal.
   const rows = csvToRows(csvText);
+  if (rows.length === 0) return [];
+
+  const timestampCol = findColumnIndex(rows[0], 'timestamp');
   const emails = [];
-  rows.forEach((row) => {
+
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+
+    if (cutoffDate && timestampCol !== -1) {
+      const raw = (row[timestampCol] || '').trim();
+      const rowDate = raw ? new Date(raw) : null;
+      const isValidDate = rowDate && !Number.isNaN(rowDate.getTime());
+      // Baris dengan tanggal yang gagal dibaca sengaja DIANGGAP di luar
+      // batch aktif (bukan malah diloloskan). Kalau ini salah mengunci
+      // siswa batch baru, mereka tetap bisa menghubungi lewat WhatsApp
+      // di halaman "belum terdaftar", dan sementara itu ditambahkan ke
+      // sheet manual sambil dicek kenapa tanggalnya tidak terbaca.
+      if (!isValidDate || rowDate < cutoffDate) continue;
+    }
+
     row.forEach((cell) => {
       const value = cell.trim().toLowerCase();
       if (EMAIL_PATTERN.test(value)) emails.push(value);
     });
-  });
+  }
+
   return emails;
 }
 
-async function fetchEnrolledEmails(csvUrls) {
+async function fetchEnrolledEmails(csvUrls, cutoffDate) {
   const emails = new Set();
   const failures = [];
 
@@ -142,7 +190,7 @@ async function fetchEnrolledEmails(csvUrls) {
         const res = await fetch(url);
         if (!res.ok) throw new Error('status ' + res.status);
         const text = await res.text();
-        extractEmailsFromSheet(text).forEach((email) => emails.add(email));
+        extractEmailsFromSheet(text, cutoffDate).forEach((email) => emails.add(email));
       } catch (err) {
         failures.push(url + ' -> ' + err.message);
       }
@@ -200,6 +248,20 @@ module.exports = async function handler(req, res) {
     .map((url) => url.trim())
     .filter(Boolean);
 
+  // Opsional. String kosong/tidak diisi -> tidak ada filter tanggal,
+  // sama seperti perilaku sebelum ada konsep batch. String yang gagal
+  // di-parse juga diperlakukan sama (dianggap tidak diisi) supaya salah
+  // format tidak diam-diam mengunci semua orang keluar.
+  const rawCutoff = (process.env.BATCH_CUTOFF_DATE || '').trim();
+  const cutoffDate = rawCutoff ? new Date(rawCutoff) : null;
+  const validCutoff = cutoffDate && !Number.isNaN(cutoffDate.getTime()) ? cutoffDate : null;
+  if (rawCutoff && !validCutoff) {
+    console.error(
+      'BATCH_CUTOFF_DATE tidak bisa dibaca sebagai tanggal: "' + rawCutoff + '". ' +
+        'Filter batch dinonaktifkan sampai ini diperbaiki (pakai format "2026-09-01").'
+    );
+  }
+
   if (!clientId || rosterUrls.length === 0) {
     // Belum di-setup di Vercel. Pesan ini sengaja jelas supaya gampang
     // didiagnosis lewat Vercel dashboard > Deployments > Functions log.
@@ -221,7 +283,7 @@ module.exports = async function handler(req, res) {
       return res.status(401).json({ ok: false, reason: verified.reason });
     }
 
-    const enrolledEmails = await fetchEnrolledEmails(rosterUrls);
+    const enrolledEmails = await fetchEnrolledEmails(rosterUrls, validCutoff);
     if (!enrolledEmails.has(verified.email)) {
       return res.status(403).json({ ok: false, reason: 'not_enrolled' });
     }
