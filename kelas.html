@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta
+      name="description"
+      content="Ruang kelas EQUAL English, khusus untuk siswa yang sudah terdaftar."
+    />
+    <title>Ruang Kelas · EQUAL English</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Syne:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <!-- styles.css dipakai untuk token warna, font, dan komponen tombol
+         yang sama dengan situs utama. kelas.css khusus untuk layout dan
+         state halaman ini (belum login / diperiksa / berhasil / ditolak). -->
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="kelas.css" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </head>
+  <body class="kelas-body">
+    <header class="kelas-header">
+      <a class="kelas-brand" href="index.html" aria-label="EQUAL English, kembali ke beranda">
+        <img src="EDITS/Vector.png" alt="EQUAL" />
+        <span>English</span>
+      </a>
+      <a class="kelas-back" href="index.html">Kembali ke beranda</a>
+    </header>
+
+    <main class="kelas-main">
+      <div class="kelas-shell">
+        <p class="section-kicker">RUANG KELAS</p>
+        <h1>Materi kelasmu,<br /><em>satu langkah lagi.</em></h1>
+        <p class="kelas-intro">
+          Halaman ini khusus untuk siswa yang sudah terdaftar. Masuk pakai
+          akun Google yang sama dengan email yang kamu daftarkan saat
+          mendaftar bootcamp.
+        </p>
+
+        <!-- STATE 1: belum login -->
+        <section id="kelas-signin" class="kelas-card">
+          <!--
+            PASANG_CLIENT_ID_DI_SINI: ganti dengan Client ID dari Google
+            Cloud Console (Credentials > OAuth client ID). Client ID
+            bukan rahasia, aman ditulis langsung di HTML seperti ini.
+          -->
+          <div
+            id="g_id_onload"
+            data-client_id="PASANG_CLIENT_ID_DI_SINI"
+            data-callback="handleCredentialResponse"
+            data-auto_prompt="false"
+          ></div>
+          <div class="g_id_signin" data-type="standard" data-shape="pill" data-size="large"></div>
+          <p class="kelas-hint">Login gagal? Pastikan kamu pakai email yang benar saat daftar.</p>
+        </section>
+
+        <!-- STATE 2: lagi memeriksa akses ke server -->
+        <section id="kelas-loading" class="kelas-card kelas-state" hidden>
+          <p class="kelas-status">Memeriksa akses kamu…</p>
+        </section>
+
+        <!-- STATE 3: berhasil, tampilkan materi -->
+        <section id="kelas-content" class="kelas-card kelas-state" hidden>
+          <div class="kelas-welcome">
+            <p>Masuk sebagai <strong id="kelas-email"></strong></p>
+            <button type="button" id="kelas-signout" class="text-link">Bukan kamu? Ganti akun</button>
+          </div>
+
+          <div class="kelas-materials">
+            <article class="kelas-material kelas-material-primary">
+              <p class="kelas-material-label">SEMUA MATERI KELASMU</p>
+              <h3>Materi, rekaman Zoom &amp; Quizizz, satu folder.</h3>
+              <p class="kelas-material-desc">
+                Rekaman tiap sesi dan link Quizizz ditambahkan langsung ke
+                folder ini oleh mentor, jadi selalu cek di sini kalau ada
+                yang baru.
+              </p>
+              <a id="kelas-drive-link" class="button button-dark" href="#" target="_blank" rel="noopener">
+                Buka folder Drive <span aria-hidden="true">↗</span>
+              </a>
+            </article>
+
+            <article class="kelas-material">
+              <p class="kelas-material-label">PENGUMUMAN</p>
+              <p id="kelas-announcement" class="kelas-announcement"></p>
+            </article>
+          </div>
+        </section>
+
+        <!-- STATE 4: login berhasil tapi email tidak terdaftar sebagai siswa -->
+        <section id="kelas-denied" class="kelas-card kelas-state" hidden>
+          <h3>Email ini belum terdaftar.</h3>
+          <p>
+            Email <strong id="kelas-denied-email"></strong> belum ada di daftar siswa
+            EQUAL English. Kalau kamu baru saja daftar, coba lagi dalam beberapa
+            menit. Kalau menurutmu ini keliru, hubungi kami langsung.
+          </p>
+          <a class="button button-outline" href="https://wa.me/6285888345058" target="_blank" rel="noopener">
+            Hubungi lewat WhatsApp <span aria-hidden="true">↗</span>
+          </a>
+        </section>
+
+        <!-- STATE 5: gangguan teknis -->
+        <section id="kelas-error" class="kelas-card kelas-state" hidden>
+          <h3>Ada gangguan teknis.</h3>
+          <p>
+            Halaman ini lagi bermasalah di sisi kami, bukan di akunmu. Coba muat
+            ulang halaman, atau hubungi kami kalau masih gagal.
+          </p>
+          <a class="button button-outline" href="https://wa.me/6285888345058" target="_blank" rel="noopener">
+            Hubungi lewat WhatsApp <span aria-hidden="true">↗</span>
+          </a>
+        </section>
+      </div>
+    </main>
+
+    <script src="kelas.js"></script>
+  </body>
+</html>

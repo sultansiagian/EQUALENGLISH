@@ -1,0 +1,180 @@
+/**
+ * Endpoint terlindungi untuk halaman kelas EQUAL English.
+ *
+ * INI YANG BIKIN PROTEKSINYA NYATA: fungsi ini jalan di server Vercel,
+ * bukan di browser pengunjung. Materi (link Drive, Zoom, Quizizz, jadwal)
+ * tidak pernah dikirim ke browser sampai email pengunjung terverifikasi
+ * ada di daftar siswa. Kalau proteksinya cuma dicek di JavaScript sisi
+ * klien, siapa pun bisa buka "View Page Source" dan lihat semua link
+ * tanpa login sama sekali.
+ *
+ * Alur:
+ *   1. Klien mengirim ID token dari tombol "Sign in with Google".
+ *   2. Fungsi ini memverifikasi token itu ke server Google (memastikan
+ *      token asli, belum kedaluwarsa, dan dibuat untuk app ini).
+ *   3. Fungsi ini mengambil daftar siswa dari Google Sheet yang sudah
+ *      di-publish sebagai CSV, lalu mencocokkan email yang sudah
+ *      terverifikasi tadi.
+ *   4. Materi dikembalikan hanya jika keduanya cocok.
+ *
+ * ENV VARS yang wajib diisi di Vercel (Project Settings > Environment
+ * Variables), bukan di sini, supaya tidak ikut ter-commit ke Git:
+ *   GOOGLE_CLIENT_ID   Client ID dari Google Cloud Console
+ *   ROSTER_CSV_URL     Link "Publish to web" (format CSV) dari sheet
+ *                      respons Google Form pendaftaran
+ */
+
+// ============================================================
+// ISI MATERI KELAS DI SINI. Aman ditaruh di sini (bukan di kode
+// yang dikirim ke browser) karena file ini hanya berjalan di server.
+// Update, commit, push seperti biasa setiap ada perubahan.
+//
+// Rekaman Zoom dan link Quizizz tidak punya field terpisah karena
+// semuanya digabung jadi satu di dalam folder Drive ini (ditaruh di
+// sana langsung oleh mentor, bukan ditautkan dari sini).
+// ============================================================
+const CLASS_MATERIALS = {
+  driveUrl:
+    'https://drive.google.com/drive/folders/12HtL4Rchwy6JdPBs3hEa81lgwk5dxluU?usp=sharing',
+  announcement:
+    'Semua materi ada di folder Drive ini. Rekaman Zoom dan link Quizizz akan ditambahkan langsung ke dalamnya setelah tiap sesi.',
+};
+
+function csvToRows(csvText) {
+  // Parser CSV sederhana yang menangani nilai berkoma di dalam tanda
+  // kutip (format standar yang dipakai Google Sheets saat publish).
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < csvText.length; i++) {
+    const char = csvText[i];
+    const next = csvText[i + 1];
+
+    if (inQuotes) {
+      if (char === '"' && next === '"') {
+        field += '"';
+        i++;
+      } else if (char === '"') {
+        inQuotes = false;
+      } else {
+        field += char;
+      }
+    } else if (char === '"') {
+      inQuotes = true;
+    } else if (char === ',') {
+      row.push(field);
+      field = '';
+    } else if (char === '\n' || char === '\r') {
+      if (field !== '' || row.length > 0) {
+        row.push(field);
+        rows.push(row);
+        row = [];
+        field = '';
+      }
+      if (char === '\r' && next === '\n') i++;
+    } else {
+      field += char;
+    }
+  }
+  if (field !== '' || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+  return rows;
+}
+
+async function fetchEnrolledEmails(csvUrl) {
+  const res = await fetch(csvUrl);
+  if (!res.ok) {
+    throw new Error('Gagal mengambil daftar siswa, status ' + res.status);
+  }
+  const text = await res.text();
+  const rows = csvToRows(text);
+  if (rows.length === 0) return new Set();
+
+  const header = rows[0].map((h) => h.trim().toLowerCase());
+  const emailCol = header.findIndex((h) => h.includes('email'));
+  if (emailCol === -1) {
+    throw new Error(
+      'Tidak ada kolom email di sheet respons. Pastikan "Collect email ' +
+        'addresses" aktif di pengaturan Google Form.'
+    );
+  }
+
+  const emails = new Set();
+  for (let i = 1; i < rows.length; i++) {
+    const value = (rows[i][emailCol] || '').trim().toLowerCase();
+    if (value) emails.add(value);
+  }
+  return emails;
+}
+
+async function verifyGoogleToken(idToken, expectedClientId) {
+  const res = await fetch(
+    'https://oauth2.googleapis.com/tokeninfo?id_token=' +
+      encodeURIComponent(idToken)
+  );
+  if (!res.ok) return { valid: false, reason: 'token_invalid' };
+
+  const payload = await res.json();
+
+  if (payload.aud !== expectedClientId) {
+    return { valid: false, reason: 'wrong_audience' };
+  }
+  if (payload.email_verified !== 'true' && payload.email_verified !== true) {
+    return { valid: false, reason: 'email_unverified' };
+  }
+  const expiresAt = Number(payload.exp) * 1000;
+  if (!expiresAt || Date.now() > expiresAt) {
+    return { valid: false, reason: 'token_expired' };
+  }
+
+  return { valid: true, email: String(payload.email || '').toLowerCase() };
+}
+
+// CommonJS (module.exports), bukan `export default`: proyek ini tidak
+// punya package.json, jadi Vercel menjalankan file .js sebagai CommonJS
+// secara default. Sintaks ES Module di sini akan gagal saat runtime.
+module.exports = async function handler(req, res) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ ok: false, reason: 'method_not_allowed' });
+  }
+
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const rosterUrl = process.env.ROSTER_CSV_URL;
+
+  if (!clientId || !rosterUrl) {
+    // Belum di-setup di Vercel. Pesan ini sengaja jelas supaya gampang
+    // didiagnosis lewat Vercel dashboard > Deployments > Functions log.
+    console.error(
+      'ENV VAR BELUM DIISI: GOOGLE_CLIENT_ID dan/atau ROSTER_CSV_URL ' +
+        'kosong di Vercel Project Settings > Environment Variables.'
+    );
+    return res.status(500).json({ ok: false, reason: 'server_not_configured' });
+  }
+
+  const idToken = req.body && req.body.credential;
+  if (!idToken) {
+    return res.status(400).json({ ok: false, reason: 'missing_credential' });
+  }
+
+  try {
+    const verified = await verifyGoogleToken(idToken, clientId);
+    if (!verified.valid) {
+      return res.status(401).json({ ok: false, reason: verified.reason });
+    }
+
+    const enrolledEmails = await fetchEnrolledEmails(rosterUrl);
+    if (!enrolledEmails.has(verified.email)) {
+      return res.status(403).json({ ok: false, reason: 'not_enrolled' });
+    }
+
+    return res.status(200).json({ ok: true, materials: CLASS_MATERIALS });
+  } catch (err) {
+    console.error('verify-access error:', err.message);
+    return res.status(502).json({ ok: false, reason: 'upstream_error' });
+  }
+}

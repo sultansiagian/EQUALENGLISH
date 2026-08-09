@@ -1,0 +1,218 @@
+/* ============================================================
+   RUANG KELAS
+   Memakai token warna/font dari styles.css (:root, .button-dark,
+   .button-outline, .text-link, .section-kicker sudah didefinisikan
+   di sana). File ini hanya berisi layout dan state khusus halaman ini.
+   ============================================================ */
+
+.kelas-body {
+  min-height: 100vh;
+  background: var(--paper);
+}
+
+.kelas-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(1180px, calc(100% - 3rem));
+  margin: 0 auto;
+  padding: 1.6rem 0;
+}
+
+.kelas-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--black);
+}
+
+.kelas-brand img { width: 84px; height: auto; }
+
+.kelas-brand > span {
+  padding-left: 0.6rem;
+  border-left: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.kelas-back {
+  color: var(--black);
+  font-family: var(--body);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.kelas-back:hover,
+.kelas-back:focus-visible {
+  text-decoration: underline;
+  text-decoration-color: var(--pink);
+  text-underline-offset: 0.2em;
+}
+
+.kelas-main {
+  padding: 2.4rem 0 6rem;
+}
+
+.kelas-shell {
+  width: min(640px, calc(100% - 3rem));
+  margin: 0 auto;
+}
+
+.kelas-shell h1 {
+  margin: 1.1rem 0 1.2rem;
+  color: var(--black);
+  font-family: var(--display);
+  font-size: clamp(2.1rem, 5vw, 2.9rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 1.06;
+}
+
+.kelas-shell h1 em {
+  color: var(--black);
+  font-style: normal;
+  text-decoration: underline;
+  text-decoration-color: var(--pink);
+  text-decoration-thickness: 0.14em;
+  text-underline-offset: 0.06em;
+}
+
+.kelas-intro {
+  max-width: 480px;
+  margin: 0 0 2.4rem;
+  color: var(--ink-muted);
+  font-size: 0.98rem;
+  line-height: 1.65;
+}
+
+.kelas-card {
+  padding: 2rem;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+/* Tombol Google GIS butuh ruang render sendiri; dibungkus supaya
+   sejajar dengan kartu lain, bukan menempel rapat ke tepi. */
+#kelas-signin {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.kelas-hint {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+}
+
+.kelas-status {
+  margin: 0;
+  color: var(--ink-muted);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+
+.kelas-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1.8rem;
+  padding-bottom: 1.4rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.88rem;
+}
+
+.kelas-welcome strong { color: var(--black); }
+
+#kelas-signout {
+  padding: 0;
+  color: var(--ink-muted);
+  background: none;
+  border: none;
+  font-family: var(--body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#kelas-signout:hover,
+#kelas-signout:focus-visible {
+  color: var(--black);
+}
+
+.kelas-materials {
+  display: flex;
+  flex-direction: column;
+  gap: 1.8rem;
+}
+
+.kelas-material + .kelas-material {
+  padding-top: 1.8rem;
+  border-top: 1px solid var(--line);
+}
+
+.kelas-material-label {
+  margin: 0 0 0.5rem;
+  color: var(--ink-muted);
+  font-family: var(--body);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.kelas-material h3 {
+  margin: 0 0 0.9rem;
+  color: var(--black);
+  font-family: var(--display);
+  font-size: 1.15rem;
+  letter-spacing: -0.03em;
+}
+
+.kelas-material-primary h3 {
+  font-size: clamp(1.3rem, 3vw, 1.7rem);
+}
+
+.kelas-material-desc {
+  max-width: 420px;
+  margin: 0 0 1.3rem;
+  color: var(--ink-muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.kelas-announcement {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+#kelas-denied h3,
+#kelas-error h3 {
+  margin: 0 0 0.8rem;
+  font-family: var(--display);
+  font-size: 1.3rem;
+  letter-spacing: -0.04em;
+}
+
+#kelas-denied p,
+#kelas-error p {
+  margin: 0 0 1.4rem;
+  color: var(--ink-muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+#kelas-denied strong,
+#kelas-error strong { color: var(--black); }
+
+@media (max-width: 520px) {
+  .kelas-card { padding: 1.4rem; }
+  .kelas-welcome { flex-direction: column; align-items: flex-start; }
+}
