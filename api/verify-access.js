@@ -48,6 +48,18 @@
  *                       (semua baris dihitung, seperti sebelum ada
  *                       konsep batch). Cocok dipakai selama masih
  *                       satu batch pertama berjalan.
+ *
+ *                       SEDANG DI-HOLD, belum dipakai aktif (lihat
+ *                       REVOKED_MARKER di bawah untuk cara yang sedang
+ *                       dipakai). Kodenya dibiarkan menyala, tidak
+ *                       dihapus, kalau-kalau nanti dibutuhkan lagi.
+ *
+ * CARA YANG SEDANG DIPAKAI untuk mencabut akses satu siswa (tanpa env
+ * var, tanpa mikirin tanggal): ketik kata "done" di sel PALING KANAN
+ * baris orang itu, di sheet form atau sheet manual, kapan saja. Lihat
+ * konstanta REVOKED_MARKER di bawah. Baris yang ditandai langsung
+ * tidak dihitung lagi di request berikutnya (tidak perlu redeploy,
+ * roster diambil ulang setiap kali ada yang login).
  */
 
 // ============================================================
@@ -123,6 +135,12 @@ function csvToRows(csvText) {
 // salah menganggap nomor telepon atau nama sebagai email.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Cara mencabut akses satu siswa (atau satu baris pendaftaran Pair/
+// Group, yang otomatis mencabut semua nama di baris itu): ketik kata
+// ini persis di sel PALING KANAN baris tersebut di sheet mana pun
+// (form atau manual). Tidak perlu ubah tanggal atau env var apa pun.
+const REVOKED_MARKER = 'done';
+
 function findColumnIndex(headerRow, keyword) {
   // Cocok dengan huruf saja (angka/spasi/tanda hubung dibuang) supaya
   // variasi kecil di nama kolom tetap ketemu -- lihat bug "E-mail" vs
@@ -150,10 +168,18 @@ function extractEmailsFromSheet(csvText, cutoffDate) {
   if (rows.length === 0) return [];
 
   const timestampCol = findColumnIndex(rows[0], 'timestamp');
+  // Dihitung dari baris TERPANJANG di seluruh sheet, bukan panjang baris
+  // saat itu -- supaya "kolom paling kanan" konsisten sama untuk semua
+  // baris, walau ada baris yang pendek/tidak lengkap (lihat sheet manual,
+  // yang barisnya suka tidak rata).
+  const rightmostCol = Math.max(...rows.map((r) => r.length)) - 1;
   const emails = [];
 
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
+
+    const marker = (row[rightmostCol] || '').trim().toLowerCase();
+    if (marker === REVOKED_MARKER) continue;
 
     if (cutoffDate && timestampCol !== -1) {
       const raw = (row[timestampCol] || '').trim();
