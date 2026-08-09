@@ -99,35 +99,32 @@ function csvToRows(csvText) {
   return rows;
 }
 
+// Cocok untuk "nama@domain.tld" secara umum: tidak boleh ada spasi atau
+// "@" ganda, dan domainnya harus punya titik. Cukup ketat untuk tidak
+// salah menganggap nomor telepon atau nama sebagai email.
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function extractEmailsFromSheet(csvText) {
-  const rows = csvToRows(csvText);
-  if (rows.length === 0) return [];
-
-  // Satu baris respons form bisa mewakili lebih dari satu siswa (paket
-  // Pair/Group didaftarkan oleh satu orang, tapi mencakup 2-3 siswa,
-  // dengan nama kolom seperti "Person 1 E-mail", "Person 2 E-mail").
-  // Karena itu SEMUA kolom yang berisi email dikumpulkan, bukan cuma
-  // kolom pertama yang ketemu.
+  // Sengaja TIDAK bergantung pada baris header (mis. mencari kolom yang
+  // namanya mengandung "email"). Sheet respons Google Form rapi dan
+  // punya header yang jelas, tapi sheet manual yang diisi tangan bisa
+  // saja baris pertamanya kosong, ada label seperti "MANUAL" di tengah,
+  // atau kolomnya bergeser -- semua itu bikin pencarian lewat header
+  // gagal diam-diam dan seluruh sheet dianggap kosong.
   //
-  // Header dicocokkan dengan huruf saja (angka, spasi, tanda hubung
-  // dibuang) supaya "E-mail" dan "Person 1 E-mail" tetap ketemu --
-  // dicocokkan apa adanya, "e-mail".includes("email") hasilnya false
-  // karena tanda hubung memutus kata itu, kolomnya jadi tidak pernah
-  // kedeteksi.
-  const header = rows[0].map((h) => h.trim().toLowerCase().replace(/[^a-z]/g, ''));
-  const emailCols = [];
-  header.forEach((h, i) => {
-    if (h.includes('email')) emailCols.push(i);
-  });
-  if (emailCols.length === 0) return [];
-
+  // Jadi setiap sel di seluruh baris (termasuk baris pertama, yang
+  // aman karena teks header seperti "Nama" atau "Person 1 E-mail"
+  // tidak akan pernah cocok dengan pola alamat email sungguhan) diuji:
+  // kalau bentuknya seperti alamat email, dianggap email. Ini bekerja
+  // untuk sheet rapi maupun berantakan, apa pun urutan kolomnya.
+  const rows = csvToRows(csvText);
   const emails = [];
-  for (let i = 1; i < rows.length; i++) {
-    emailCols.forEach((col) => {
-      const value = (rows[i][col] || '').trim().toLowerCase();
-      if (value) emails.push(value);
+  rows.forEach((row) => {
+    row.forEach((cell) => {
+      const value = cell.trim().toLowerCase();
+      if (EMAIL_PATTERN.test(value)) emails.push(value);
     });
-  }
+  });
   return emails;
 }
 
