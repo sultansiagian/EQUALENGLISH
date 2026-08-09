@@ -584,10 +584,18 @@ void main() {
     };
   }
 
+  // Dipakai di lebih dari satu halaman (index.html dan kelas.html), jadi
+  // "container yang perlu ditandai .has-shader" tidak di-hardcode ke
+  // nama class tertentu (mis. .hero) -- dipakai parentElement canvas-nya
+  // langsung, siapa pun dia. Kalau untuk beberapa alasan canvas tidak
+  // punya parent (tidak mungkin dalam praktik, tapi tetap dijaga),
+  // optional chaining ini diam saja, bukan crash yang menghentikan
+  // window.initShaderBackground di bawah dari ke-set.
   const canvas = document.querySelector('.hero-shader');
   if (canvas && initShaderBackground(canvas)) {
-    // Sukses: glow CSS lama tidak lagi diperlukan.
-    document.querySelector('.hero').classList.add('has-shader');
+    // Sukses: glow CSS fallback pada container ini (kalau ada) tidak
+    // lagi perlu tampil.
+    canvas.parentElement?.classList.add('has-shader');
   }
 
   window.initShaderBackground = initShaderBackground;

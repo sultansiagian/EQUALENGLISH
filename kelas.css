@@ -1,8 +1,15 @@
 /* ============================================================
    RUANG KELAS
    Memakai token warna/font dari styles.css (:root, .button-dark,
-   .button-outline, .text-link, .section-kicker sudah didefinisikan
-   di sana). File ini hanya berisi layout dan state khusus halaman ini.
+   .button-outline, .button-pink, .text-link, .section-kicker, dan
+   mekanisme reveal [data-reveal] sudah didefinisikan di sana). File
+   ini hanya berisi layout dan state khusus halaman ini.
+
+   Struktur dua zona:
+   - .kelas-hero   gelap, ber-shader (dipakai ulang dari index.html),
+                   isinya gerbang login lalu sapaan personal
+   - .kelas-functional  terang, isinya kartu-kartu aksi -- kontras
+                   tinggi karena di sinilah orang benar-benar mengklik
    ============================================================ */
 
 .kelas-body {
@@ -10,49 +17,112 @@
   background: var(--paper);
 }
 
-/* Atribut [hidden] bawaan browser cuma set display:none lewat UA
-   stylesheet, dan itu SELALU kalah dari aturan display apa pun di
-   sini (mis. .kelas-signin-card { display: flex }), berapa pun
-   spesifisitas selectornya -- stylesheet penulis selalu menang atas
-   stylesheet browser. Tanpa baris ini, kelas.js men-toggle [hidden]
-   dengan benar tapi elemen tetap kelihatan karena display-nya ketiban
-   aturan lain. !important di sini memang perlu, bukan kebiasaan buruk:
-   ini satu-satunya cara [hidden] menang di semua kondisi. */
+/* Atribut [hidden] bawaan browser kalah dari class display apa pun di
+   sini (kelas-signin-box dst pakai display:flex), berapa pun spesifik
+   selectornya -- stylesheet penulis selalu menang atas stylesheet
+   browser. Tanpa baris ini, state yang harusnya tersembunyi tetap
+   kelihatan walau kelas.js sudah benar men-toggle atribut hidden-nya.
+   Bug ini sudah pernah kejadian sekali di halaman ini. */
 [hidden] {
   display: none !important;
 }
 
+/* ============================================================
+   ZONA GERBANG (gelap, ber-shader)
+   ============================================================ */
+
+.kelas-hero {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--black);
+}
+
+.hero-shader {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Scrim menjaga teks putih tetap terbaca berapa pun terangnya keluaran
+   shader -- perhitungan sama seperti di index.html: worst-case warna
+   shader (#ffd7ef) dikomposit dengan alpha ini masih kontras tinggi
+   terhadap teks putih. Sengaja lebih gelap/redup daripada hero
+   index.html; halaman ini "ruang privat", bukan halaman jualan. */
+.kelas-hero-scrim {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.88) 0%,
+    rgba(0, 0, 0, 0.7) 45%,
+    rgba(0, 0, 0, 0.9) 100%
+  );
+  pointer-events: none;
+}
+
+/* Fallback CSS murni kalau WebGL tidak tersedia. shader-background.js
+   menambahkan .has-shader ke parentElement canvas begitu berhasil,
+   yang mematikan glow ini karena shader sudah menyediakan gerakan
+   serupa. */
+.kelas-hero-glow {
+  position: absolute;
+  z-index: 0;
+  top: -20%;
+  left: 50%;
+  width: 60rem;
+  height: 60rem;
+  background: radial-gradient(circle, rgba(255, 172, 223, 0.16), rgba(255, 172, 223, 0) 70%);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.kelas-hero.has-shader .kelas-hero-glow {
+  opacity: 0;
+}
+
 .kelas-header {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: min(1180px, calc(100% - 3rem));
   margin: 0 auto;
   padding: 1.6rem 0;
+  color: var(--white);
 }
 
 .kelas-brand {
   display: flex;
   align-items: center;
-  color: var(--black);
+  gap: 0.6rem;
+  color: var(--white);
 }
 
-/* logo-equal-black.png adalah lockup lengkap (ikon + "QUAL" + tagline),
-   beda dari Vector.png di index.html yang cuma ikon putih untuk duduk
-   di atas hero gelap. Di sini latarnya terang, jadi lockup hitam ini
-   yang dipakai supaya tetap kelihatan.
-
-   Tingginya disamakan dengan tinggi Vector.png yang sebenarnya dirender
-   di index.html (.brand img { width: 100px }, dan Vector.png 563x158px
-   -> hasilnya 100/3.563 = 28px), supaya bobot visual logo konsisten di
-   kedua halaman meski bentuk filenya beda jauh. */
 .kelas-brand img {
-  height: 28px;
-  width: auto;
+  width: 84px;
+  height: auto;
+}
+
+.kelas-brand > span {
+  padding-left: 0.6rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.4);
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .kelas-back {
-  color: var(--black);
+  color: rgba(255, 255, 255, 0.82);
   font-family: var(--body);
   font-size: 0.82rem;
   font-weight: 600;
@@ -60,76 +130,84 @@
 
 .kelas-back:hover,
 .kelas-back:focus-visible {
+  color: var(--white);
   text-decoration: underline;
   text-decoration-color: var(--pink);
   text-underline-offset: 0.2em;
 }
 
-.kelas-main {
-  padding: 2.4rem 0 6rem;
+.kelas-hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8rem 0 6rem;
+  text-align: center;
 }
 
-.kelas-shell {
-  width: min(700px, calc(100% - 3rem));
-  margin: 0 auto;
+.kelas-hero-content .section-kicker {
+  margin-bottom: 1.3rem;
 }
 
-.kelas-shell h1 {
-  margin: 1.1rem 0 1.2rem;
-  color: var(--black);
+.kelas-hero-content h1 {
+  max-width: 720px;
+  margin: 0 0 1.3rem;
+  color: var(--white);
   font-family: var(--display);
-  font-size: clamp(2.1rem, 5vw, 2.9rem);
+  font-size: clamp(2.6rem, 6vw, 4.4rem);
   font-weight: 800;
   letter-spacing: -0.05em;
-  line-height: 1.06;
+  line-height: 1.04;
 }
 
-.kelas-shell h1 em {
-  color: var(--black);
+.kelas-hero-content h1 em {
+  color: var(--white);
   font-style: normal;
   text-decoration: underline;
   text-decoration-color: var(--pink);
-  text-decoration-thickness: 0.14em;
-  text-underline-offset: 0.06em;
+  text-decoration-thickness: 0.1em;
+  text-underline-offset: 0.08em;
 }
 
-.kelas-intro {
-  max-width: 480px;
-  margin: 0 0 2.4rem;
-  color: var(--ink-muted);
-  font-size: 0.98rem;
+.kelas-hero-desc {
+  max-width: 460px;
+  margin: 0 0 2.2rem;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 1rem;
   line-height: 1.65;
 }
 
-.kelas-card {
-  padding: 2rem;
-  background: var(--white);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-}
-
-.kelas-signin-card {
-  display: flex;
+/* Kartu kaca tipis di sekitar tombol Google -- menahan tombol putih
+   Google agar tidak terasa mengambang begitu saja di atas shader. */
+.kelas-signin-box {
+  display: inline-flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 1rem;
-}
-
-.kelas-signin-icon {
-  display: flex;
   align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  color: var(--black);
-  background: var(--pink-light);
-  border-radius: 50%;
+  gap: 0;
+  padding: 1.6rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  backdrop-filter: blur(6px);
 }
 
 .kelas-hint {
-  margin: 0;
-  color: var(--ink-muted);
+  max-width: 380px;
+  margin: 1.6rem 0 0;
+  color: rgba(255, 255, 255, 0.5);
   font-size: 0.8rem;
+}
+
+.kelas-avatar {
+  width: 56px;
+  height: 56px;
+  margin: 0 0 1.4rem;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
 }
 
 .kelas-status {
@@ -137,16 +215,16 @@
   align-items: center;
   gap: 0.65rem;
   margin: 0;
-  color: var(--ink-muted);
+  color: rgba(255, 255, 255, 0.75);
   font-family: var(--mono);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
 .kelas-spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--line);
-  border-top-color: var(--black);
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: var(--pink);
   border-radius: 50%;
   animation: kelas-spin 700ms linear infinite;
 }
@@ -160,17 +238,81 @@
   }
 }
 
-.kelas-welcome {
+.kelas-scroll-cue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  color: var(--white);
+  font-family: var(--body);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.kelas-scroll-cue span {
+  display: inline-block;
+  color: var(--pink);
+  animation: kelas-bob 1.6s ease-in-out infinite;
+}
+
+@keyframes kelas-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+}
+
+.kelas-scroll-cue:hover,
+.kelas-scroll-cue:focus-visible {
+  text-decoration: underline;
+  text-decoration-color: var(--pink);
+  text-underline-offset: 0.22em;
+}
+
+#kelas-gate-denied h1,
+#kelas-gate-error h1 {
+  max-width: 560px;
+  margin: 0 0 1rem;
+  color: var(--white);
+  font-family: var(--display);
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  letter-spacing: -0.04em;
+}
+
+#kelas-gate-denied strong,
+#kelas-gate-error strong {
+  color: var(--white);
+}
+
+/* ============================================================
+   ZONA FUNGSIONAL (terang)
+   ============================================================ */
+
+.kelas-functional {
+  padding: 4.2rem 0 6rem;
+}
+
+.kelas-shell {
+  width: min(700px, calc(100% - 3rem));
+  margin: 0 auto;
+}
+
+.kelas-welcome-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.6rem;
-  margin-bottom: 1.4rem;
+  margin-bottom: 1.8rem;
+  padding-bottom: 1.4rem;
+  border-bottom: 1px solid var(--line);
   font-size: 0.88rem;
 }
 
-.kelas-welcome strong {
+.kelas-welcome-bar strong {
   color: var(--black);
 }
 
@@ -190,9 +332,6 @@
   color: var(--black);
 }
 
-/* ---- Grid dua kartu: gabung Zoom + Drive, dilengkapi ikon masing-
-   masing supaya langsung dikenali tanpa perlu baca judulnya dulu. ---- */
-
 .kelas-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -208,45 +347,23 @@
   background: var(--white);
   border: 1px solid var(--line);
   border-radius: 4px;
-  transition: transform 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition: transform 240ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    box-shadow 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .kelas-action-card:hover {
-  transform: translateY(-3px);
+  box-shadow: 0 16px 32px -20px rgba(0, 0, 0, 0.35);
+  transform: translateY(-4px);
+}
+
+.kelas-action-card:hover .kelas-action-icon {
+  transform: scale(1.06);
 }
 
 /* Kartu Zoom ditandai sebagai aksi utama -- border lebih tegas,
    sejalan dengan tombol button-dark di dalamnya. */
 .kelas-action-primary {
   border-color: var(--black);
-}
-
-/* Kartu yang materinya belum siap (mis. Quizizz sebelum link-nya ada).
-   Tidak hover-lift seperti kartu aktif lainnya, supaya terasa memang
-   belum bisa diklik sebelum tangan sempat mencoba. */
-.kelas-action-pending {
-  background: var(--paper);
-}
-
-.kelas-action-pending:hover {
-  transform: none;
-}
-
-.kelas-action-pending .kelas-action-icon {
-  color: var(--ink-muted);
-  background: var(--paper);
-}
-
-.kelas-action-card .button[disabled] {
-  color: var(--ink-muted);
-  cursor: not-allowed;
-  background: transparent;
-  border-color: var(--line);
-}
-
-.kelas-action-card .button[disabled]:hover {
-  color: var(--ink-muted);
-  background: transparent;
 }
 
 .kelas-action-icon {
@@ -260,6 +377,7 @@
   background: var(--white);
   border: 1px solid var(--line);
   border-radius: 12px;
+  transition: transform 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .kelas-action-icon img {
@@ -300,6 +418,39 @@
   margin-top: auto;
 }
 
+/* Kartu yang materinya belum siap (mis. Quizizz sebelum link-nya ada).
+   Tidak hover-lift seperti kartu aktif lainnya, supaya terasa memang
+   belum bisa diklik sebelum tangan sempat mencoba. */
+.kelas-action-pending {
+  background: var(--paper);
+}
+
+.kelas-action-pending:hover {
+  box-shadow: none;
+  transform: none;
+}
+
+.kelas-action-pending:hover .kelas-action-icon {
+  transform: none;
+}
+
+.kelas-action-pending .kelas-action-icon {
+  color: var(--ink-muted);
+  background: var(--paper);
+}
+
+.kelas-action-card .button[disabled] {
+  color: var(--ink-muted);
+  cursor: not-allowed;
+  background: transparent;
+  border-color: var(--line);
+}
+
+.kelas-action-card .button[disabled]:hover {
+  color: var(--ink-muted);
+  background: transparent;
+}
+
 .kelas-announcement-card {
   padding: 1.5rem 1.7rem;
   background: var(--white);
@@ -314,40 +465,29 @@
   line-height: 1.6;
 }
 
-#kelas-denied h3,
-#kelas-error h3 {
-  margin: 0 0 0.8rem;
-  font-family: var(--display);
-  font-size: 1.3rem;
-  letter-spacing: -0.04em;
-}
+/* ============================================================
+   RESPONSIF
+   ============================================================ */
 
-#kelas-denied p,
-#kelas-error p {
-  margin: 0 0 1.4rem;
-  color: var(--ink-muted);
-  font-size: 0.92rem;
-  line-height: 1.6;
-}
-
-#kelas-denied strong,
-#kelas-error strong {
-  color: var(--black);
+@media (max-width: 900px) {
+  .kelas-hero-content { padding: 7.4rem 0 5rem; }
+  .kelas-header { width: min(100% - 2rem, 1180px); }
 }
 
 @media (max-width: 640px) {
-  .kelas-actions {
-    grid-template-columns: 1fr;
-  }
+  .kelas-hero { min-height: 92vh; }
+  .kelas-hero-content { padding: 6.6rem 0 4.4rem; }
+  .kelas-brand > span { display: none; }
+  .kelas-actions { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 520px) {
-  .kelas-card,
+  .kelas-signin-box { padding: 1.2rem; }
   .kelas-action-card,
   .kelas-announcement-card {
     padding: 1.4rem;
   }
-  .kelas-welcome {
+  .kelas-welcome-bar {
     flex-direction: column;
     align-items: flex-start;
   }

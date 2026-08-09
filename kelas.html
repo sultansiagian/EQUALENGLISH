@@ -9,182 +9,214 @@
       content="Ruang kelas EQUAL English, khusus untuk siswa yang sudah terdaftar."
     />
     <title>Ruang Kelas · EQUAL English</title>
+    <script>
+      /* Sama seperti index.html: ditambahkan sebelum render supaya elemen
+         reveal tidak berkedip, dengan fallback kalau kelas.js gagal dimuat. */
+      document.documentElement.classList.add('js');
+      setTimeout(function () {
+        if (!window.__kelasRevealReady) {
+          document.documentElement.classList.add('reveal-fallback');
+        }
+      }, 2500);
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Syne:wght@600;700;800&display=swap"
       rel="stylesheet"
     />
-    <!-- styles.css dipakai untuk token warna, font, dan komponen tombol
-         yang sama dengan situs utama. kelas.css khusus untuk layout dan
-         state halaman ini (belum login / diperiksa / berhasil / ditolak). -->
+    <!-- styles.css dipakai untuk token warna, font, komponen tombol, dan
+         mekanisme reveal [data-reveal] yang sama dengan situs utama.
+         kelas.css khusus untuk layout dan state halaman ini. -->
     <link rel="stylesheet" href="/styles.css" />
     <link rel="stylesheet" href="/kelas.css" />
     <script src="https://accounts.google.com/gsi/client" async defer></script>
   </head>
   <body class="kelas-body">
-    <header class="kelas-header">
-      <!-- Vector.png (mark putih) dipakai di header index.html karena
-           duduk di atas hero gelap. Di sini latarnya terang, jadi versi
-           lockup hitam yang dipakai supaya tidak hilang. -->
-      <a class="kelas-brand" href="/" aria-label="EQUAL English, kembali ke beranda">
-        <img src="/EDITS/logo-equal-black.png" alt="EQUAL English" />
-      </a>
-      <a class="kelas-back" href="/">Kembali ke beranda</a>
-    </header>
+    <!-- ============================================================
+         GERBANG: zona gelap ber-shader (dipakai ulang dari index.html).
+         Isinya berubah wujud tergantung state -- sebelum login jadi
+         gerbang masuk, setelah berhasil jadi sapaan personal. Cuma satu
+         dari lima blok di bawah yang tampil dalam satu waktu.
+         ============================================================ -->
+    <div class="kelas-hero">
+      <canvas class="hero-shader" aria-hidden="true"></canvas>
+      <div class="kelas-hero-scrim" aria-hidden="true"></div>
+      <div class="kelas-hero-glow" aria-hidden="true"></div>
 
-    <main class="kelas-main">
-      <div class="kelas-shell">
-        <p class="section-kicker">RUANG KELAS</p>
-        <h1>Materi kelasmu,<br /><em>satu langkah lagi.</em></h1>
-        <p class="kelas-intro">
-          Halaman ini khusus untuk siswa yang sudah terdaftar. Masuk pakai
-          akun Google yang sama dengan email yang kamu daftarkan saat
-          mendaftar bootcamp.
-        </p>
+      <header class="kelas-header">
+        <a class="kelas-brand" href="/" aria-label="EQUAL English, kembali ke beranda">
+          <img src="/EDITS/Vector.png" alt="EQUAL" />
+          <span>English</span>
+        </a>
+        <a class="kelas-back" href="/">Kembali ke beranda</a>
+      </header>
+
+      <div class="kelas-hero-content page-shell">
+        <p class="section-kicker section-kicker-light" data-reveal>RUANG KELAS</p>
 
         <!-- STATE 1: belum login -->
-        <section id="kelas-signin" class="kelas-card kelas-signin-card">
-          <div class="kelas-signin-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6">
-              <rect x="4" y="10" width="16" height="10" rx="2" />
-              <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-            </svg>
+        <div id="kelas-gate-signin" data-reveal-stagger>
+          <h1>Materi kelasmu,<br /><em>satu langkah lagi.</em></h1>
+          <p class="kelas-hero-desc">
+            Halaman ini khusus untuk siswa yang sudah terdaftar. Masuk pakai
+            akun Google yang sama dengan email yang kamu daftarkan saat
+            mendaftar bootcamp.
+          </p>
+          <div class="kelas-signin-box">
+            <div
+              id="g_id_onload"
+              data-client_id="367439644430-4t8r204v4h6ufouinpd2ctdftgndbehf.apps.googleusercontent.com"
+              data-callback="handleCredentialResponse"
+              data-auto_prompt="false"
+            ></div>
+            <div class="g_id_signin" data-type="standard" data-shape="pill" data-size="large"></div>
           </div>
-          <div
-            id="g_id_onload"
-            data-client_id="367439644430-4t8r204v4h6ufouinpd2ctdftgndbehf.apps.googleusercontent.com"
-            data-callback="handleCredentialResponse"
-            data-auto_prompt="false"
-          ></div>
-          <div class="g_id_signin" data-type="standard" data-shape="pill" data-size="large"></div>
           <p class="kelas-hint">Login gagal? Pastikan kamu pakai email yang benar saat daftar.</p>
-        </section>
+        </div>
 
         <!-- STATE 2: lagi memeriksa akses ke server -->
-        <section id="kelas-loading" class="kelas-card kelas-state" hidden>
+        <div id="kelas-gate-loading" hidden>
           <p class="kelas-status">
             <span class="kelas-spinner" aria-hidden="true"></span>
             Memeriksa akses kamu…
           </p>
-        </section>
+        </div>
 
-        <!-- STATE 3: berhasil, tampilkan materi -->
-        <section id="kelas-content" class="kelas-state" hidden>
-          <div class="kelas-welcome">
-            <p>Masuk sebagai <strong id="kelas-email"></strong></p>
-            <button type="button" id="kelas-signout" class="text-link">Bukan kamu? Ganti akun</button>
-          </div>
-
-          <div class="kelas-actions">
-            <article class="kelas-action-card kelas-action-primary">
-              <div class="kelas-action-icon">
-                <img src="/EDITS/logo-zoom.jpg" alt="" width="40" height="40" />
-              </div>
-              <p class="kelas-material-label">SESI LIVE</p>
-              <h3>Gabung kelas Zoom hari ini.</h3>
-              <p class="kelas-material-desc">
-                Link yang sama dipakai setiap sesi, jadi simpan halaman ini
-                dan buka lagi tiap mau kelas dimulai.
-              </p>
-              <a id="kelas-zoom-link" class="button button-dark" href="#" target="_blank" rel="noopener">
-                Buka Zoom <span aria-hidden="true">↗</span>
-              </a>
-            </article>
-
-            <article class="kelas-action-card">
-              <div class="kelas-action-icon">
-                <img src="/EDITS/logo-drive.png" alt="" width="40" height="40" />
-              </div>
-              <p class="kelas-material-label">SEMUA MATERI KELASMU</p>
-              <h3>Materi, rekaman Zoom &amp; Quizizz, satu folder.</h3>
-              <p class="kelas-material-desc">
-                Rekaman tiap sesi dan link Quizizz ditambahkan langsung ke
-                folder ini oleh mentor, jadi selalu cek di sini kalau ada
-                yang baru.
-              </p>
-              <a id="kelas-drive-link" class="button button-outline" href="#" target="_blank" rel="noopener">
-                Buka folder Drive <span aria-hidden="true">↗</span>
-              </a>
-            </article>
-
-            <article class="kelas-action-card">
-              <div class="kelas-action-icon">
-                <img src="/EDITS/logo-whatsapp.webp" alt="" width="40" height="40" />
-              </div>
-              <p class="kelas-material-label">KOMUNITAS</p>
-              <h3>Gabung grup WhatsApp kelas.</h3>
-              <p class="kelas-material-desc">
-                Ruang buat nanya di luar jam sesi, kenalan sama teman
-                sekelas, dan dapat info dadakan dari mentor.
-              </p>
-              <a id="kelas-community-link" class="button button-outline" href="#" target="_blank" rel="noopener">
-                Buka WhatsApp <span aria-hidden="true">↗</span>
-              </a>
-            </article>
-
-            <!-- Belum ada link Quizizz (kelasnya masih disiapkan). Kartu
-                 ini sengaja nonaktif dulu -- <button disabled>, bukan
-                 <a>, supaya tidak ada yang kepencet ke tempat kosong.
-                 Begitu link-nya ada: tambahkan quizizzUrl ke
-                 CLASS_MATERIALS di api/verify-access.js, lalu ganti
-                 elemen di bawah ini jadi <a id="kelas-quizizz-link"
-                 class="button button-outline" href="#" target="_blank"
-                 rel="noopener"> mengikuti pola kartu-kartu di atas, dan
-                 tambahkan baris render-nya di kelas.js. -->
-            <article class="kelas-action-card kelas-action-pending">
-              <div class="kelas-action-icon">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6">
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M9.2 9.5a2.8 2.8 0 1 1 3.9 2.6c-.9.5-1.4 1-1.4 2" />
-                  <circle cx="12" cy="16.3" r="0.15" fill="currentColor" stroke="none" />
-                </svg>
-              </div>
-              <p class="kelas-material-label">LATIHAN</p>
-              <h3>Kuis Quizizz.</h3>
-              <p class="kelas-material-desc">
-                Lagi disiapkan mentor. Begitu siap, link kuisnya muncul
-                langsung di kartu ini.
-              </p>
-              <button type="button" class="button button-outline" disabled>
-                Segera hadir
-              </button>
-            </article>
-          </div>
-
-          <article class="kelas-announcement-card">
-            <p class="kelas-material-label">PENGUMUMAN</p>
-            <p id="kelas-announcement" class="kelas-announcement"></p>
-          </article>
-        </section>
+        <!-- STATE 3: berhasil -- sapaan personal, materi ada di bawah -->
+        <div id="kelas-gate-welcome" data-reveal-stagger hidden>
+          <img id="kelas-avatar" class="kelas-avatar" alt="" hidden />
+          <h1 id="kelas-greeting">Kamu masuk!</h1>
+          <p class="kelas-hero-desc">Materi kelasmu udah siap, tinggal scroll ke bawah.</p>
+          <a class="kelas-scroll-cue" href="#kelas-functional">
+            Lihat materi <span aria-hidden="true">↓</span>
+          </a>
+        </div>
 
         <!-- STATE 4: login berhasil tapi email tidak terdaftar sebagai siswa -->
-        <section id="kelas-denied" class="kelas-card kelas-state" hidden>
-          <h3>Email ini belum terdaftar.</h3>
-          <p>
-            Email <strong id="kelas-denied-email"></strong> belum ada di daftar siswa
-            EQUAL English. Kalau kamu baru saja daftar, coba lagi dalam beberapa
-            menit. Kalau menurutmu ini keliru, hubungi kami langsung.
+        <div id="kelas-gate-denied" data-reveal-stagger hidden>
+          <h1>Email ini belum terdaftar.</h1>
+          <p class="kelas-hero-desc">
+            Email <strong id="kelas-denied-email"></strong> belum ada di daftar
+            siswa EQUAL English. Kalau kamu baru saja daftar, coba lagi dalam
+            beberapa menit. Kalau menurutmu ini keliru, hubungi kami langsung.
           </p>
-          <a class="button button-outline" href="https://wa.me/6285888345058" target="_blank" rel="noopener">
+          <a class="button button-pink" href="https://wa.me/6285888345058" target="_blank" rel="noopener">
             Hubungi lewat WhatsApp <span aria-hidden="true">↗</span>
           </a>
-        </section>
+        </div>
 
         <!-- STATE 5: gangguan teknis -->
-        <section id="kelas-error" class="kelas-card kelas-state" hidden>
-          <h3>Ada gangguan teknis.</h3>
-          <p>
-            Halaman ini lagi bermasalah di sisi kami, bukan di akunmu. Coba muat
-            ulang halaman, atau hubungi kami kalau masih gagal.
+        <div id="kelas-gate-error" data-reveal-stagger hidden>
+          <h1>Ada gangguan teknis.</h1>
+          <p class="kelas-hero-desc">
+            Halaman ini lagi bermasalah di sisi kami, bukan di akunmu. Coba
+            muat ulang halaman, atau hubungi kami kalau masih gagal.
           </p>
-          <a class="button button-outline" href="https://wa.me/6285888345058" target="_blank" rel="noopener">
+          <a class="button button-pink" href="https://wa.me/6285888345058" target="_blank" rel="noopener">
             Hubungi lewat WhatsApp <span aria-hidden="true">↗</span>
           </a>
-        </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         ZONA FUNGSIONAL: terang, cepat dibaca. Cuma tampil begitu
+         login berhasil (state "welcome" di atas). Ini tempat siswa
+         benar-benar melakukan sesuatu, jadi kontras tinggi dan minim
+         basa-basi jadi prioritas, bukan atmosfer.
+         ============================================================ -->
+    <main id="kelas-functional" class="kelas-functional" hidden>
+      <div class="kelas-shell">
+        <div class="kelas-welcome-bar">
+          <p>Masuk sebagai <strong id="kelas-email"></strong></p>
+          <button type="button" id="kelas-signout" class="text-link">Bukan kamu? Ganti akun</button>
+        </div>
+
+        <div class="kelas-actions" data-reveal-stagger>
+          <article class="kelas-action-card kelas-action-primary">
+            <div class="kelas-action-icon">
+              <img src="/EDITS/logo-zoom.jpg" alt="" width="40" height="40" />
+            </div>
+            <p class="kelas-material-label">SESI LIVE</p>
+            <h3>Gabung kelas Zoom hari ini.</h3>
+            <p class="kelas-material-desc">
+              Link yang sama dipakai setiap sesi, jadi simpan halaman ini
+              dan buka lagi tiap mau kelas dimulai.
+            </p>
+            <a id="kelas-zoom-link" class="button button-dark" href="#" target="_blank" rel="noopener">
+              Buka Zoom <span aria-hidden="true">↗</span>
+            </a>
+          </article>
+
+          <article class="kelas-action-card">
+            <div class="kelas-action-icon">
+              <img src="/EDITS/logo-drive.png" alt="" width="40" height="40" />
+            </div>
+            <p class="kelas-material-label">SEMUA MATERI KELASMU</p>
+            <h3>Materi, rekaman Zoom &amp; Quizizz, satu folder.</h3>
+            <p class="kelas-material-desc">
+              Rekaman tiap sesi dan link Quizizz ditambahkan langsung ke
+              folder ini oleh mentor, jadi selalu cek di sini kalau ada
+              yang baru.
+            </p>
+            <a id="kelas-drive-link" class="button button-outline" href="#" target="_blank" rel="noopener">
+              Buka folder Drive <span aria-hidden="true">↗</span>
+            </a>
+          </article>
+
+          <article class="kelas-action-card">
+            <div class="kelas-action-icon">
+              <img src="/EDITS/logo-whatsapp.webp" alt="" width="40" height="40" />
+            </div>
+            <p class="kelas-material-label">KOMUNITAS</p>
+            <h3>Gabung grup WhatsApp kelas.</h3>
+            <p class="kelas-material-desc">
+              Ruang buat nanya di luar jam sesi, kenalan sama teman
+              sekelas, dan dapat info dadakan dari mentor.
+            </p>
+            <a id="kelas-community-link" class="button button-outline" href="#" target="_blank" rel="noopener">
+              Buka WhatsApp <span aria-hidden="true">↗</span>
+            </a>
+          </article>
+
+          <!-- Belum ada link Quizizz (kelasnya masih disiapkan). Kartu
+               ini sengaja nonaktif dulu -- <button disabled>, bukan
+               <a>, supaya tidak ada yang kepencet ke tempat kosong.
+               Begitu link-nya ada: tambahkan quizizzUrl ke
+               CLASS_MATERIALS di api/verify-access.js, lalu ganti
+               elemen di bawah ini jadi <a id="kelas-quizizz-link"
+               class="button button-outline" href="#" target="_blank"
+               rel="noopener"> mengikuti pola kartu-kartu di atas, dan
+               tambahkan baris render-nya di kelas.js. -->
+          <article class="kelas-action-card kelas-action-pending">
+            <div class="kelas-action-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M9.2 9.5a2.8 2.8 0 1 1 3.9 2.6c-.9.5-1.4 1-1.4 2" />
+                <circle cx="12" cy="16.3" r="0.15" fill="currentColor" stroke="none" />
+              </svg>
+            </div>
+            <p class="kelas-material-label">LATIHAN</p>
+            <h3>Kuis Quizizz.</h3>
+            <p class="kelas-material-desc">
+              Lagi disiapkan mentor. Begitu siap, link kuisnya muncul
+              langsung di kartu ini.
+            </p>
+            <button type="button" class="button button-outline" disabled>
+              Segera hadir
+            </button>
+          </article>
+        </div>
+
+        <article class="kelas-announcement-card" data-reveal>
+          <p class="kelas-material-label">PENGUMUMAN</p>
+          <p id="kelas-announcement" class="kelas-announcement"></p>
+        </article>
       </div>
     </main>
 
+    <script src="/shader-background.js"></script>
     <script src="/kelas.js"></script>
   </body>
 </html>
