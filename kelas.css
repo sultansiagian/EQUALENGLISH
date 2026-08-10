@@ -484,10 +484,10 @@
   color: var(--black);
   background: var(--pink);
   border-radius: 999px;
-  font-family: var(--mono);
-  font-size: 0.6rem;
+  font-family: var(--body);
+  font-size: 0.64rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
 }
 
 .kelas-tile-badge-quiet {
@@ -606,8 +606,8 @@
   color: var(--black);
   background: var(--white);
   border-radius: 10px;
-  font-family: var(--mono);
-  font-size: 0.78rem;
+  font-family: var(--body);
+  font-size: 0.82rem;
   font-weight: 600;
 }
 
@@ -735,8 +735,8 @@
   color: var(--black);
   background: var(--pink);
   border-radius: 999px;
-  font-family: var(--mono);
-  font-size: 0.6rem;
+  font-family: var(--body);
+  font-size: 0.64rem;
   font-weight: 700;
   letter-spacing: 0.08em;
 }
