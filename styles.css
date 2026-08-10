@@ -2273,6 +2273,23 @@ section[id] {
   .program-heading > p { margin-top: 1.5rem; }
   .program-grid { grid-template-columns: 1fr; }
   .program-card, .program-card-paper { min-height: 400px; grid-column: auto; }
+  /* Huruf raksasa (18rem) dirancang untuk card lebar di desktop, di
+     mana dia dan div konten (label+judul+deskripsi) punya ruang
+     sendiri-sendiri lewat justify-content:space-between. Begitu card
+     menyempit jadi satu kolom di mobile, huruf itu jadi hampir sebesar
+     seluruh card dan menabrak teksnya (kejadian nyata di kartu
+     Writing). Dikecilkan sekaligus dibuat jauh lebih transparan --
+     tetap kelihatan sebagai dekorasi, tidak pernah bersaing dengan
+     keterbacaan teks di atasnya. */
+  .symbol-listen,
+  .symbol-write {
+    font-size: 9rem;
+    color: rgba(0, 0, 0, 0.1);
+  }
+  .symbol-read {
+    font-size: 9rem;
+    color: rgba(255, 172, 223, 0.4);
+  }
   .journey-section { padding: 5.5rem 0; }
   .journey-side-note { display: none; }
   .journey-section h2 { margin-bottom: 3.1rem; }
