@@ -139,53 +139,54 @@
           <button type="button" id="kelas-signout" class="text-link">Bukan kamu? Ganti akun</button>
         </div>
 
-        <div class="kelas-actions" data-reveal-stagger>
-          <article class="kelas-action-card kelas-action-primary">
-            <div class="kelas-action-icon">
+        <div class="kelas-materi-head" data-reveal>
+          <h2 class="kelas-materi-title">Ruang kelasmu,<br /><em>siap dipakai.</em></h2>
+          <p class="kelas-materi-lede">Semua yang kamu butuh buat belajar, satu halaman aja.</p>
+        </div>
+
+        <div class="kelas-tile-grid" data-reveal-stagger>
+          <article class="kelas-tile kelas-tile-live">
+            <div class="kelas-tile-icon">
               <img src="/EDITS/logo-zoom.jpg" alt="" width="40" height="40" />
             </div>
-            <p class="kelas-material-label">SESI LIVE</p>
-            <h3>Gabung kelas Zoom hari ini.</h3>
-            <p class="kelas-material-desc">
-              Link yang sama dipakai setiap sesi, jadi simpan halaman ini
-              dan buka lagi tiap mau kelas dimulai.
-            </p>
-            <p id="kelas-zoom-timer" class="kelas-zoom-timer" hidden></p>
-            <a id="kelas-zoom-link" class="button button-dark" href="#" target="_blank" rel="noopener">
-              Buka Zoom <span aria-hidden="true">↗</span>
+            <div class="kelas-tile-live-body">
+              <div class="kelas-tile-top">
+                <span class="kelas-tile-badge">LIVE</span>
+              </div>
+              <h3>Kelas Zoom <em>hari ini</em></h3>
+              <p class="kelas-tile-desc">Link yang sama tiap sesi, simpan halaman ini.</p>
+              <p id="kelas-zoom-timer" class="kelas-zoom-timer" hidden></p>
+              <a id="kelas-zoom-link" class="kelas-tile-link" href="#" target="_blank" rel="noopener">
+                Buka Zoom <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+          </article>
+
+          <article class="kelas-tile">
+            <div class="kelas-tile-top">
+              <div class="kelas-tile-icon">
+                <img src="/EDITS/logo-drive.png" alt="" width="40" height="40" />
+              </div>
+            </div>
+            <h3>Materi &amp; <em>rekaman</em></h3>
+            <p class="kelas-tile-desc">Rekaman tiap sesi ditambahkan mentor ke sini.</p>
+            <a id="kelas-drive-link" class="kelas-tile-link" href="#" target="_blank" rel="noopener">
+              Buka Drive <span aria-hidden="true">↗</span>
             </a>
           </article>
 
-          <article class="kelas-action-card">
-            <div class="kelas-action-icon">
-              <img src="/EDITS/logo-drive.png" alt="" width="40" height="40" />
+          <article class="kelas-tile">
+            <div class="kelas-tile-top">
+              <div class="kelas-tile-icon">
+                <img src="/EDITS/logo-whatsapp.webp" alt="" width="40" height="40" />
+              </div>
             </div>
-            <p class="kelas-material-label">SEMUA MATERI KELASMU</p>
-            <h3>Materi dan rekaman Zoom, satu folder.</h3>
-            <p class="kelas-material-desc">
-              Rekaman tiap sesi ditambahkan langsung ke folder ini oleh
-              mentor, jadi selalu cek di sini kalau ada yang baru.
-            </p>
-            <a id="kelas-drive-link" class="button button-outline" href="#" target="_blank" rel="noopener">
-              Buka folder Drive <span aria-hidden="true">↗</span>
-            </a>
-          </article>
-
-          <article class="kelas-action-card">
-            <div class="kelas-action-icon">
-              <img src="/EDITS/logo-whatsapp.webp" alt="" width="40" height="40" />
-            </div>
-            <p class="kelas-material-label">KOMUNITAS</p>
-            <h3>Gabung grup WhatsApp kelas.</h3>
-            <p class="kelas-material-desc">
-              Ruang buat nanya di luar jam sesi, kenalan sama teman
-              sekelas, dan dapat info dadakan dari mentor.
-            </p>
-            <a id="kelas-community-link" class="button button-outline" href="#" target="_blank" rel="noopener">
+            <h3>Gabung <em>komunitas</em></h3>
+            <p class="kelas-tile-desc">Nanya, kenalan, info dadakan dari mentor.</p>
+            <a id="kelas-community-link" class="kelas-tile-link" href="#" target="_blank" rel="noopener">
               Buka WhatsApp <span aria-hidden="true">↗</span>
             </a>
           </article>
-
         </div>
 
         <!-- Jadwal diambil dari sheet utama EQUAL (SCHEDULE_CSV_URL di
@@ -193,56 +194,62 @@
              sesi yang belum lewat yang dikirim ke browser. Kalau env
              var itu kosong atau sheet-nya gagal diparsing, daftar ini
              kosong dan kelas.js otomatis menampilkan pesan fallback. -->
-        <article class="kelas-schedule-card" data-reveal>
-          <p class="kelas-material-label">JADWAL KELAS</p>
-          <h3>Sesi yang akan datang.</h3>
-          <p id="kelas-schedule-empty" class="kelas-material-desc" hidden>
-            Belum ada jadwal terbaru di sini. Cek pengumuman atau tanya
-            lewat grup WhatsApp kalau kamu butuh kepastian jadwal.
-          </p>
-          <ul id="kelas-schedule-list" class="kelas-schedule-list"></ul>
-        </article>
+        <div class="kelas-wide-stack" data-reveal-stagger>
+          <article class="kelas-tile kelas-tile-wide">
+            <div class="kelas-tile-top">
+              <span class="kelas-tile-badge kelas-tile-badge-quiet">JADWAL</span>
+            </div>
+            <h3>Sesi yang akan <em>datang</em></h3>
+            <p id="kelas-schedule-empty" class="kelas-tile-desc" hidden>
+              Belum ada jadwal terbaru di sini. Cek pengumuman atau tanya
+              lewat grup WhatsApp kalau kamu butuh kepastian jadwal.
+            </p>
+            <ul id="kelas-schedule-list" class="kelas-schedule-list"></ul>
+          </article>
 
-        <!-- Link Wayground (rebrand dari Quizizz) cuma hidup di server,
-             sama seperti Zoom/Drive/WhatsApp -- lihat CLASS_MATERIALS
-             di api/verify-access.js. Tidak pernah ada di HTML/JS
-             statis, baru terkirim ke browser setelah email pengunjung
-             terverifikasi. -->
-        <article class="kelas-practice-card" data-reveal>
-          <p class="kelas-material-label">LATIHAN SOAL EPT UI</p>
-          <h3>Uji kemampuanmu lewat kuis interaktif.</h3>
-          <p class="kelas-material-desc">
-            Tiga kuis latihan, satu buat tiap kemampuan yang diuji di EPT UI.
-          </p>
-          <div class="kelas-practice-grid">
-            <div class="kelas-practice-item">
-              <span class="kelas-practice-letter">R</span>
-              <span class="kelas-practice-name">Reading<br />Comprehension</span>
-              <a id="kelas-practice-reading" class="button button-dark" href="#" target="_blank" rel="noopener">
-                Mulai <span aria-hidden="true">↗</span>
-              </a>
+          <!-- Link Wayground (rebrand dari Quizizz) cuma hidup di server,
+               sama seperti Zoom/Drive/WhatsApp -- lihat CLASS_MATERIALS
+               di api/verify-access.js. Tidak pernah ada di HTML/JS
+               statis, baru terkirim ke browser setelah email pengunjung
+               terverifikasi. -->
+          <article class="kelas-tile kelas-tile-wide">
+            <div class="kelas-tile-top">
+              <span class="kelas-tile-badge kelas-tile-badge-quiet">LATIHAN SOAL</span>
             </div>
-            <div class="kelas-practice-item">
-              <span class="kelas-practice-letter">L</span>
-              <span class="kelas-practice-name">Listening<br />Comprehension</span>
-              <a id="kelas-practice-listening" class="button button-dark" href="#" target="_blank" rel="noopener">
-                Mulai <span aria-hidden="true">↗</span>
-              </a>
+            <h3>Uji kemampuanmu lewat <em>kuis interaktif</em></h3>
+            <p class="kelas-tile-desc">Tiga kuis, satu buat tiap kemampuan yang diuji di EPT UI.</p>
+            <div class="kelas-practice-grid">
+              <div class="kelas-practice-item">
+                <span class="kelas-practice-letter">R</span>
+                <span class="kelas-practice-name">Reading<br />Comprehension</span>
+                <a id="kelas-practice-reading" class="button button-dark" href="#" target="_blank" rel="noopener">
+                  Mulai <span aria-hidden="true">↗</span>
+                </a>
+              </div>
+              <div class="kelas-practice-item">
+                <span class="kelas-practice-letter">L</span>
+                <span class="kelas-practice-name">Listening<br />Comprehension</span>
+                <a id="kelas-practice-listening" class="button button-dark" href="#" target="_blank" rel="noopener">
+                  Mulai <span aria-hidden="true">↗</span>
+                </a>
+              </div>
+              <div class="kelas-practice-item">
+                <span class="kelas-practice-letter">W</span>
+                <span class="kelas-practice-name">Writing<br />Comprehension</span>
+                <a id="kelas-practice-writing" class="button button-dark" href="#" target="_blank" rel="noopener">
+                  Mulai <span aria-hidden="true">↗</span>
+                </a>
+              </div>
             </div>
-            <div class="kelas-practice-item">
-              <span class="kelas-practice-letter">W</span>
-              <span class="kelas-practice-name">Writing<br />Comprehension</span>
-              <a id="kelas-practice-writing" class="button button-dark" href="#" target="_blank" rel="noopener">
-                Mulai <span aria-hidden="true">↗</span>
-              </a>
-            </div>
-          </div>
-        </article>
+          </article>
 
-        <article class="kelas-announcement-card" data-reveal>
-          <p class="kelas-material-label">PENGUMUMAN</p>
-          <p id="kelas-announcement" class="kelas-announcement"></p>
-        </article>
+          <article class="kelas-tile kelas-tile-wide kelas-tile-quiet">
+            <div class="kelas-tile-top">
+              <span class="kelas-tile-badge kelas-tile-badge-quiet">PENGUMUMAN</span>
+            </div>
+            <p id="kelas-announcement" class="kelas-announcement"></p>
+          </article>
+        </div>
       </div>
     </main>
 

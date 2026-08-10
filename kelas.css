@@ -316,6 +316,22 @@
 
 /* ============================================================
    ZONA FUNGSIONAL (terang)
+
+   Bahasa visual di sini terinspirasi dari layout grid kartu ala Hims
+   (headline besar + kata aksen berwarna, grid kartu bulat dengan ikon
+   dan chevron) -- tapi warnanya tetap palet EQUAL sendiri (pink/hitam/
+   paper), bukan cream/oranye Hims, supaya konsisten sama .kelas-hero
+   di atas (yang sengaja TIDAK diubah) dan index.html.
+
+   Kartu "aksen pink" pada kata di judul (h3 em) sengaja dibikin sebagai
+   HIGHLIGHT BACKGROUND (bukan warna teks pink), karena pink (#ffacdf)
+   sebagai warna TEKS di atas putih/paper kontrasnya jauh di bawah
+   standar WCAG (~1.75:1, minimum 3:1 untuk teks besar) -- baru cocok
+   dipakai di headline raksasa index.html yang skalanya jauh lebih
+   besar. Di skala judul kartu (h3, ~1.1-1.3rem) itu bakal kebaca pudar
+   dan susah dibaca, jadi solusinya: teks tetap hitam, pink jadi
+   BACKGROUND highlight di belakangnya -- kontras tetap penuh, efek
+   "kata beraksen" tetap dapat.
    ============================================================ */
 
 .kelas-functional {
@@ -323,7 +339,7 @@
 }
 
 .kelas-shell {
-  width: min(700px, calc(100% - 3rem));
+  width: min(720px, calc(100% - 3rem));
   margin: 0 auto;
 }
 
@@ -333,10 +349,11 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.6rem;
-  margin-bottom: 1.8rem;
-  padding-bottom: 1.4rem;
+  margin-bottom: 2.6rem;
+  padding-bottom: 1.2rem;
   border-bottom: 1px solid var(--line);
-  font-size: 0.88rem;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
 }
 
 .kelas-welcome-bar strong {
@@ -359,137 +376,261 @@
   color: var(--black);
 }
 
-.kelas-actions {
+/* ---- Headline "Ruang kelasmu, siap dipakai." -- satu-satunya
+   headline besar di zona fungsional, ganti peran .kelas-welcome-bar
+   sebagai pembuka visual (welcome-bar sekarang cuma strip kecil di
+   atasnya, bukan lagi elemen utama). ---- */
+
+.kelas-materi-head {
+  margin-bottom: 2.4rem;
+}
+
+.kelas-materi-title {
+  margin: 0 0 0.6rem;
+  color: var(--black);
+  font-family: var(--display);
+  font-size: clamp(2rem, 5vw, 2.7rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.kelas-materi-title em {
+  /* color eksplisit HITAM di sini -- bukan cuma estetika. Aturan
+     global "h2 em { color: var(--pink) }" di styles.css otomatis
+     kena ke elemen ini juga (judul ini memang <h2>), dan cascade CSS
+     jalan per-PROPERTY, bukan per-selector -- jadi tanpa baris ini,
+     teks pink itu tetap kepasang DI ATAS background pink-light di
+     bawahnya, nyaris tak terbaca (pink-di-atas-pink). Ketauan lewat
+     tes langsung di browser, bukan cuma baca kode. */
+  color: var(--black);
+  font-style: normal;
+  background: var(--pink-light);
+  padding: 0.03em 0.25em;
+  border-radius: 8px;
+}
+
+.kelas-materi-lede {
+  margin: 0;
+  max-width: 420px;
+  color: var(--ink-muted);
+  font-size: 0.96rem;
+  line-height: 1.55;
+}
+
+/* ---- Bahasa kartu bersama: dipakai baik oleh kartu Zoom (hero),
+   kartu standar (Drive/WhatsApp), maupun kartu lebar (Jadwal/Latihan/
+   Pengumuman) di bawah. Radius lebih besar (20px, dari 4px versi
+   lama) dan tanpa border tegas -- kesan lebih lunak/ramah, sejalan
+   dengan referensi. ---- */
+
+.kelas-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1.6rem;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  transition: transform 240ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    box-shadow 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.kelas-tile:hover {
+  box-shadow: 0 20px 40px -24px rgba(0, 0, 0, 0.28);
+  transform: translateY(-3px);
+}
+
+.kelas-tile:hover .kelas-tile-icon {
+  transform: scale(1.06);
+}
+
+.kelas-tile-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 1.1rem;
+}
+
+.kelas-tile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  background: var(--paper);
+  border-radius: 14px;
+  transition: transform 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.kelas-tile-icon img {
+  display: block;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+/* Badge pink solid (kontras tinggi, hitam-di-atas-pink sudah teruji
+   -- lihat pola yang sama di .kelas-schedule-badge) dipakai buat
+   penanda "LIVE" di kartu Zoom. Varian "quiet" (garis tipis, tanpa
+   isian) dipakai buat label kategori kartu lebar yang tidak butuh
+   urgensi (Jadwal/Latihan Soal/Pengumuman). */
+.kelas-tile-badge {
+  padding: 0.28rem 0.62rem;
+  color: var(--black);
+  background: var(--pink);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.kelas-tile-badge-quiet {
+  color: var(--ink-muted);
+  background: transparent;
+  border: 1px solid var(--line);
+}
+
+.kelas-tile h3 {
+  margin: 0 0 0.5rem;
+  color: var(--black);
+  font-family: var(--display);
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.kelas-tile h3 em {
+  font-style: normal;
+  background: var(--pink-light);
+  padding: 0.03em 0.25em;
+  border-radius: 5px;
+}
+
+.kelas-tile-desc {
+  margin: 0 0 1.2rem;
+  color: var(--ink-muted);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+/* Link bergaya chevron (bukan tombol solid seperti sebelumnya) --
+   lebih ringan, cocok buat kartu yang isinya cuma "satu tujuan, satu
+   link". Anak panah "↗" (bukan ">" ala referensi) sengaja dipertahankan
+   -- sudah jadi konvensi seluruh situs buat link yang buka tab baru,
+   ganti ke ">" di sini doang bakal bikin dua bahasa link berbeda di
+   satu situs yang sama. */
+.kelas-tile-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: auto;
+  padding-top: 0.2rem;
+  color: var(--black);
+  font-family: var(--body);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.kelas-tile-link span {
+  transition: transform 200ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.kelas-tile:hover .kelas-tile-link span,
+.kelas-tile-link:focus-visible span {
+  transform: translate(2px, -2px);
+}
+
+.kelas-tile-link:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+/* ---- Grid utama: Zoom jadi tile "hero" selebar penuh (paling
+   nonjol, sesuai timer live di dalamnya butuh ruang), Drive & WhatsApp
+   berbagi baris standar di bawahnya. ---- */
+
+.kelas-tile-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   margin-bottom: 1rem;
 }
 
-.kelas-action-card {
-  display: flex;
-  flex-direction: column;
+.kelas-tile-live {
+  grid-column: 1 / -1;
+  flex-direction: row;
   align-items: flex-start;
-  padding: 1.7rem;
-  background: var(--white);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  transition: transform 240ms cubic-bezier(0.22, 0.61, 0.36, 1),
-    box-shadow 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-
-.kelas-action-card:hover {
-  box-shadow: 0 16px 32px -20px rgba(0, 0, 0, 0.35);
-  transform: translateY(-4px);
-}
-
-.kelas-action-card:hover .kelas-action-icon {
-  transform: scale(1.06);
-}
-
-/* Kartu Zoom ditandai sebagai aksi utama -- border lebih tegas,
-   sejalan dengan tombol button-dark di dalamnya. */
-.kelas-action-primary {
+  gap: 1.4rem;
+  background: var(--pink-light);
   border-color: var(--black);
 }
 
-.kelas-action-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  margin-bottom: 1.1rem;
-  overflow: hidden;
+.kelas-tile-live .kelas-tile-icon {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
   background: var(--white);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  transition: transform 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-.kelas-action-icon img {
-  display: block;
-  width: 38px;
-  height: 38px;
-  object-fit: contain;
-  border-radius: 8px;
+.kelas-tile-live .kelas-tile-icon img {
+  width: 42px;
+  height: 42px;
 }
 
-.kelas-material-label {
-  margin: 0 0 0.5rem;
-  color: var(--ink-muted);
-  font-family: var(--body);
-  font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+.kelas-tile-live-body {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.kelas-action-card h3 {
-  margin: 0 0 0.7rem;
-  color: var(--black);
-  font-family: var(--display);
-  font-size: 1.18rem;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
+.kelas-tile-live-body .kelas-tile-top {
+  margin-bottom: 0.7rem;
 }
 
-.kelas-material-desc {
-  max-width: 420px;
-  margin: 0 0 1.3rem;
-  color: var(--ink-muted);
-  font-size: 0.86rem;
-  line-height: 1.55;
-}
-
-.kelas-action-card .button {
-  margin-top: auto;
-}
-
-/* Chip timer di kartu Zoom -- pink-light supaya kelihatan "hidup"
-   (angka jalan tiap detik) tanpa bersaing sama tombol button-dark di
-   bawahnya untuk perhatian utama. */
+/* Chip timer -- putih di atas dasar pink-light kartu, supaya angka
+   yang jalan tiap detik ("2 jam 13 menit lagi...") tetap kelihatan
+   "hidup" dan beda dari dasar kartunya sendiri. */
 .kelas-zoom-timer {
   margin: 0 0 1.2rem;
   padding: 0.5rem 0.75rem;
   color: var(--black);
-  background: var(--pink-light);
-  border-radius: 4px;
+  background: var(--white);
+  border-radius: 10px;
   font-family: var(--mono);
   font-size: 0.78rem;
   font-weight: 600;
 }
 
-/* Kartu yang materinya belum siap (mis. Quizizz sebelum link-nya ada).
-   Tidak hover-lift seperti kartu aktif lainnya, supaya terasa memang
-   belum bisa diklik sebelum tangan sempat mencoba. */
-.kelas-action-pending {
-  background: var(--paper);
+/* ---- Tumpukan kartu lebar: Jadwal, Latihan Soal, Pengumuman --
+   masing-masing butuh lebar penuh karena isinya panjang/variabel
+   (daftar sesi, tiga sub-item kuis, teks bebas pengumuman). ---- */
+
+.kelas-wide-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.kelas-action-pending:hover {
+.kelas-tile-wide {
+  width: 100%;
+}
+
+/* Pengumuman: kartu paling "diam" -- isinya teks bebas, bukan ajakan
+   bertindak, jadi sengaja tidak ikut hover-lift seperti kartu aksi
+   lainnya supaya tidak terasa "bisa diklik" padahal bukan. */
+.kelas-tile-quiet:hover {
   box-shadow: none;
   transform: none;
-}
-
-.kelas-action-pending:hover .kelas-action-icon {
-  transform: none;
-}
-
-.kelas-action-pending .kelas-action-icon {
-  color: var(--ink-muted);
-  background: var(--paper);
-}
-
-.kelas-action-card .button[disabled] {
-  color: var(--ink-muted);
-  cursor: not-allowed;
-  background: transparent;
-  border-color: var(--line);
-}
-
-.kelas-action-card .button[disabled]:hover {
-  color: var(--ink-muted);
-  background: transparent;
 }
 
 /* ---- Latihan soal EPT UI (Wayground): satu kotak, tiga tombol.
@@ -497,29 +638,9 @@
    raksasa di section Materi index.html, yang justru pernah jadi
    sumber bug menabrak teks di mobile (lihat commit sebelumnya). ---- */
 
-.kelas-practice-card {
-  padding: 1.7rem;
-  margin-bottom: 1rem;
-  background: var(--white);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-}
-
-.kelas-practice-card h3 {
-  margin: 0 0 0.6rem;
-  color: var(--black);
-  font-family: var(--display);
-  font-size: 1.3rem;
-  letter-spacing: -0.03em;
-}
-
-.kelas-practice-card .kelas-material-desc {
-  max-width: none;
-  margin-bottom: 1.6rem;
-}
-
 .kelas-practice-grid {
   display: grid;
+  width: 100%;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
 }
@@ -532,7 +653,7 @@
   padding: 1.4rem 1rem;
   text-align: center;
   background: var(--paper);
-  border-radius: 4px;
+  border-radius: 14px;
 }
 
 .kelas-practice-letter {
@@ -561,13 +682,6 @@
   font-size: 0.8rem;
 }
 
-.kelas-announcement-card {
-  padding: 1.5rem 1.7rem;
-  background: var(--white);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-}
-
 .kelas-announcement {
   margin: 0;
   color: var(--ink-muted);
@@ -579,24 +693,9 @@
    utama EQUAL. Sesi pertama (is-next) ditonjolkan dengan badge dan
    warna beda -- itu juga sesi yang jadi acuan timer di kartu Zoom. ---- */
 
-.kelas-schedule-card {
-  padding: 1.7rem;
-  margin-bottom: 1rem;
-  background: var(--white);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-}
-
-.kelas-schedule-card h3 {
-  margin: 0 0 1rem;
-  color: var(--black);
-  font-family: var(--display);
-  font-size: 1.3rem;
-  letter-spacing: -0.03em;
-}
-
 .kelas-schedule-list {
   display: flex;
+  width: 100%;
   flex-direction: column;
   gap: 0.6rem;
   margin: 0;
@@ -611,7 +710,7 @@
   gap: 0.5rem 0.8rem;
   padding: 0.85rem 1rem;
   background: var(--paper);
-  border-radius: 4px;
+  border-radius: 14px;
 }
 
 .kelas-schedule-item.is-next {
@@ -655,17 +754,23 @@
   .kelas-hero { min-height: 92vh; }
   .kelas-hero-content { padding: 6.6rem 0 4.4rem; }
   .kelas-brand > span { display: none; }
-  .kelas-actions { grid-template-columns: 1fr; }
+  .kelas-tile-grid { grid-template-columns: 1fr; }
   .kelas-practice-grid { grid-template-columns: 1fr; }
+}
+
+/* Tile Zoom (kelas-tile-live) turun jadi tumpukan vertikal di layar
+   sempit -- ikon 60px + body di sampingnya kebentur lebar kalau tetap
+   dipaksa horizontal di bawah ~480px. */
+@media (max-width: 480px) {
+  .kelas-tile-live {
+    flex-direction: column;
+  }
 }
 
 @media (max-width: 520px) {
   .kelas-signin-box { padding: 1.2rem; }
-  .kelas-action-card,
-  .kelas-practice-card,
-  .kelas-schedule-card,
-  .kelas-announcement-card {
-    padding: 1.4rem;
+  .kelas-tile {
+    padding: 1.3rem;
   }
   .kelas-welcome-bar {
     flex-direction: column;
