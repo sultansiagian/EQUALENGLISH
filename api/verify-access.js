@@ -43,6 +43,21 @@
  *                       menemukan datanya (gagal diam-diam, kartu jadwal
  *                       cuma jadi kosong, bukan error yang menghentikan
  *                       login).
+ *   MATERIALS_CSV_URL   OPSIONAL. Link "Publish to web" (format CSV) dari
+ *                       sheet 2 kolom (Nama | Isi/Link) berisi link Zoom/
+ *                       Drive/WhatsApp/kuis dan teks pengumuman -- supaya
+ *                       hal-hal yang paling sering berubah (mis. link
+ *                       Drive tiap ganti batch) bisa diedit langsung di
+ *                       Sheets tanpa commit/push kode. Baris yang
+ *                       namanya cocok sama salah satu keyword di
+ *                       MATERIALS_FIELDS di bawah menimpa nilai
+ *                       DEFAULT_MATERIALS untuk field itu; baris yang
+ *                       kosong/tidak dikenali diabaikan, dan field yang
+ *                       sama sekali tidak ada di sheet tetap pakai nilai
+ *                       DEFAULT_MATERIALS. Kosongkan env var ini untuk
+ *                       matikan fitur ini sepenuhnya (semua materi balik
+ *                       ke DEFAULT_MATERIALS, sama seperti sebelum ada
+ *                       sheet ini).
  *
  * ENV VAR OPSIONAL, untuk buka form yang sama ke beberapa batch tanpa
  * batch lama ikut kebawa ke kelas batch baru:
@@ -77,9 +92,16 @@
  */
 
 // ============================================================
-// ISI MATERI KELAS DI SINI. Aman ditaruh di sini (bukan di kode
-// yang dikirim ke browser) karena file ini hanya berjalan di server.
-// Update, commit, push seperti biasa setiap ada perubahan.
+// NILAI CADANGAN MATERI KELAS. Dipakai kalau MATERIALS_CSV_URL kosong,
+// gagal diakses, ATAU sheet-nya tidak punya baris untuk field tertentu
+// (field itu jatuh balik ke sini, field lain di sheet tetap dipakai).
+// Aman ditaruh di sini (bukan di kode yang dikirim ke browser) karena
+// file ini hanya berjalan di server.
+//
+// Cara mengubah materi SEHARI-HARI (link Drive ganti batch, dst): edit
+// langsung di Google Sheet lewat MATERIALS_CSV_URL, TIDAK perlu commit/
+// push kode. Nilai di bawah ini cuma jaring pengaman kalau sheet-nya lagi
+// kosong/error/belum diisi -- bukan cara utama lagi buat update materi.
 //
 // Rekaman Zoom tidak punya field terpisah karena ditaruh langsung oleh
 // mentor ke dalam folder Drive di bawah (bukan ditautkan dari sini).
@@ -93,7 +115,7 @@
 // Ketiga practiceXxxUrl mengarah ke kuis latihan EPT UI di Wayground
 // (rebrand dari Quizizz), satu link per kemampuan yang diuji.
 // ============================================================
-const CLASS_MATERIALS = {
+const DEFAULT_MATERIALS = {
   zoomJoinUrl:
     'https://ui-ac-id.zoom.us/j/91548748401?pwd=WFhzja7b2aC5iamDQwMNaoHi7maipt.1',
   driveUrl:
@@ -398,6 +420,68 @@ async function fetchSchedule(url) {
   }
 }
 
+// Kolom A di sheet materi = nama field dalam bahasa manusia (bebas, boleh
+// beda-beda kata asal masih mengandung salah satu keyword di sini).
+// Kolom B = isinya (link atau teks pengumuman). Urutan array menentukan
+// prioritas kalau ada label ambigu yang cocok ke lebih dari satu field
+// (dicek dari atas ke bawah, yang pertama cocok yang menang) -- makanya
+// 'reading'/'listening'/'writing' ditaruh sebelum keyword umum apa pun
+// yang bisa tumpang tindih.
+const MATERIALS_FIELDS = [
+  { key: 'zoomJoinUrl', keywords: ['zoom'] },
+  { key: 'driveUrl', keywords: ['drive'] },
+  { key: 'communityUrl', keywords: ['whatsapp', 'grup'] },
+  { key: 'practiceReadingUrl', keywords: ['reading'] },
+  { key: 'practiceListeningUrl', keywords: ['listening'] },
+  { key: 'practiceWritingUrl', keywords: ['writing'] },
+  { key: 'announcement', keywords: ['pengumuman', 'announcement'] },
+];
+
+function extractMaterials(csvText) {
+  // Sheet ini sengaja dibuat baru dari nol (bukan nebeng sheet lama yang
+  // berantakan kayak roster), jadi posisi kolom dianggap tetap: kolom A
+  // nama field, kolom B isinya. Yang FLEKSIBEL cuma teks nama fieldnya --
+  // dicocokkan lewat keyword, bukan harus persis sama -- supaya salah
+  // ketik kecil atau variasi kata (mis. "Link Zoom" vs "Zoom Meeting")
+  // tetap kebaca.
+  const rows = csvToRows(csvText);
+  const found = {};
+
+  for (const row of rows) {
+    const label = (row[0] || '').trim().toLowerCase();
+    if (!label) continue;
+    const value = (row[1] || '').trim();
+    if (!value) continue;
+
+    const field = MATERIALS_FIELDS.find((f) => f.keywords.some((kw) => label.includes(kw)));
+    if (field) found[field.key] = value;
+  }
+
+  return found;
+}
+
+async function fetchMaterialsOverrides(url) {
+  // Sama seperti roster & jadwal: gagal diakses atau tidak ada baris yang
+  // kebaca TIDAK BOLEH menggagalkan login. Field yang tidak ketemu di
+  // sini otomatis jatuh balik ke DEFAULT_MATERIALS di pemanggil.
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('status ' + res.status);
+    const text = await res.text();
+    const found = extractMaterials(text);
+    console.log(
+      'extractMaterials: ketemu ' + Object.keys(found).length + ' dari ' +
+        MATERIALS_FIELDS.length + ' field di MATERIALS_CSV_URL (' +
+        Object.keys(found).join(', ') + '). Field yang tidak ketemu pakai ' +
+        'nilai DEFAULT_MATERIALS.'
+    );
+    return found;
+  } catch (err) {
+    console.error('Gagal memuat sheet materi dari MATERIALS_CSV_URL: ' + err.message);
+    return {};
+  }
+}
+
 async function verifyGoogleToken(idToken, expectedClientId) {
   const res = await fetch(
     'https://oauth2.googleapis.com/tokeninfo?id_token=' +
@@ -436,6 +520,7 @@ module.exports = async function handler(req, res) {
     .map((url) => url.trim())
     .filter(Boolean);
   const scheduleUrl = (process.env.SCHEDULE_CSV_URL || '').trim();
+  const materialsUrl = (process.env.MATERIALS_CSV_URL || '').trim();
 
   // Opsional. String kosong/tidak diisi -> tidak ada filter tanggal,
   // sama seperti perilaku sebelum ada konsep batch. String yang gagal
@@ -479,9 +564,16 @@ module.exports = async function handler(req, res) {
     if (!scheduleUrl) {
       console.log('SCHEDULE_CSV_URL kosong/belum diisi -- kartu jadwal & timer akan kosong.');
     }
-    const [enrolledEmails, scheduleResult] = await Promise.all([
+    if (!materialsUrl) {
+      console.log(
+        'MATERIALS_CSV_URL kosong/belum diisi -- semua materi pakai ' +
+          'DEFAULT_MATERIALS di kode, sheet materi belum aktif.'
+      );
+    }
+    const [enrolledEmails, scheduleResult, materialsOverrides] = await Promise.all([
       fetchEnrolledEmails(rosterUrls, validCutoff),
       scheduleUrl ? fetchSchedule(scheduleUrl) : Promise.resolve({ sessions: [] }),
+      materialsUrl ? fetchMaterialsOverrides(materialsUrl) : Promise.resolve({}),
     ]);
     if (!enrolledEmails.has(verified.email)) {
       return res.status(403).json({ ok: false, reason: 'not_enrolled' });
@@ -505,7 +597,8 @@ module.exports = async function handler(req, res) {
       );
     }
     const materials = {
-      ...CLASS_MATERIALS,
+      ...DEFAULT_MATERIALS,
+      ...materialsOverrides,
       schedule: upcomingSessions,
       nextSessionAt: upcomingSessions.length > 0 ? upcomingSessions[0].isoDatetime : null,
     };
