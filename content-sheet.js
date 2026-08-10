@@ -37,7 +37,8 @@
  * Paket 1, tidak perlu diisi manual.
  */
 
-const CONTENT_SHEET_URL = ''; // TODO: isi link "Publish to web" (CSV) di sini
+const CONTENT_SHEET_URL =
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vQjE1luf9piLi9IVdrkkYcAK51RBFcvB1D1E48V7F-fhay3GhPvnsoyPZekaGzd8EIPXjkdTJbIYyeO/pub?gid=823129166&single=true&output=csv';
 
 function contentNormalize(str) {
   return (str || '').trim().toLowerCase();
