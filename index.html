@@ -468,7 +468,7 @@
           <div class="bootcamp-copy">
             <p class="section-kicker" data-reveal>06 / PROGRAM INTENSIF</p>
             <h2 id="bootcamp-title" data-reveal>Bootcamp EPT UI.</h2>
-            <p class="bootcamp-lede" data-reveal>
+            <p id="bootcamp-desc" class="bootcamp-lede" data-reveal>
               Untuk kamu yang sedang mengejar nilai di semester pertama. Materinya setara
               TOEFL: listening, structure, dan reading. Semuanya dijalani secara intensif
               dalam 10 hari, dan terbuka untuk mahasiswa dari fakultas mana pun di
@@ -479,11 +479,15 @@
             </a>
           </div>
 
+          <!-- Judul, deskripsi di atas, dan 4 poin ini bisa ditimpa lewat
+               Google Sheet -- lihat content-sheet.js. ID di sini yang
+               jadi target-nya, jangan dihapus/diganti nama tanpa update
+               content-sheet.js juga. -->
           <ul class="bootcamp-list" data-reveal-stagger>
-            <li><span>01</span> Listening, structure &amp; reading, setara materi TOEFL</li>
-            <li><span>02</span> Dipandu mentor IELTS 8 dan EPT UI 673</li>
-            <li><span>03</span> Akses rekaman sesi Zoom tanpa batas</li>
-            <li><span>04</span> Latihannya lewat fun quiz, sehingga tidak terasa seperti mengerjakan drill soal</li>
+            <li><span>01</span> <span id="bootcamp-point-1">Listening, structure &amp; reading, setara materi TOEFL</span></li>
+            <li><span>02</span> <span id="bootcamp-point-2">Dipandu mentor IELTS 8 dan EPT UI 673</span></li>
+            <li><span>03</span> <span id="bootcamp-point-3">Akses rekaman sesi Zoom tanpa batas</span></li>
+            <li><span>04</span> <span id="bootcamp-point-4">Latihannya lewat fun quiz, sehingga tidak terasa seperti mengerjakan drill soal</span></li>
           </ul>
         </div>
       </section>
@@ -501,26 +505,32 @@
             </p>
           </div>
 
+          <!-- Nama paket, harga, dan status "Tidak Tersedia" tiap kartu
+               bisa ditimpa lewat Google Sheet -- lihat content-sheet.js.
+               ID di sini yang jadi target-nya, jangan dihapus/diganti
+               nama tanpa update content-sheet.js juga. Deskripsi & label
+               "1/2/3 ORANG" sengaja TIDAK ikut jadi target sheet (masih
+               hardcode di sini). -->
           <div class="plan-grid" data-reveal-stagger>
-            <article class="plan-card">
+            <article id="plan-card-1" class="plan-card">
               <div class="plan-card-top">
-                <span>INDIVIDUAL</span>
+                <span id="plan-name-1">INDIVIDUAL</span>
                 <span>1 ORANG</span>
               </div>
               <div class="plan-people" aria-hidden="true">
                 <span class="plan-person"></span>
               </div>
               <p class="plan-price">
-                <strong>Rp59.000</strong>
+                <strong id="plan-price-1">Rp59.000</strong>
                 <span>per orang</span>
               </p>
               <p class="plan-desc">Untuk kamu yang ingin mengikuti bootcamp sendirian.</p>
-              <p class="plan-save plan-save-base">Harga dasar</p>
+              <p id="plan-save-1" class="plan-save plan-save-base">Harga dasar</p>
             </article>
 
-            <article class="plan-card">
+            <article id="plan-card-2" class="plan-card">
               <div class="plan-card-top">
-                <span>PAIR</span>
+                <span id="plan-name-2">PAIR</span>
                 <span>2 ORANG</span>
               </div>
               <div class="plan-people" aria-hidden="true">
@@ -528,16 +538,16 @@
                 <span class="plan-person"></span>
               </div>
               <p class="plan-price">
-                <strong>Rp53.000</strong>
+                <strong id="plan-price-2">Rp53.000</strong>
                 <span>per orang</span>
               </p>
               <p class="plan-desc">Daftar berdua dan langsung dapat harga yang lebih hemat.</p>
-              <p class="plan-save">Hemat Rp6.000 per orang</p>
+              <p id="plan-save-2" class="plan-save">Hemat Rp6.000 per orang</p>
             </article>
 
-            <article class="plan-card plan-card-best">
+            <article id="plan-card-3" class="plan-card plan-card-best">
               <div class="plan-card-top">
-                <span>GROUP</span>
+                <span id="plan-name-3">GROUP</span>
                 <span>3 ORANG</span>
               </div>
               <div class="plan-people" aria-hidden="true">
@@ -546,11 +556,11 @@
                 <span class="plan-person"></span>
               </div>
               <p class="plan-price">
-                <strong>Rp47.000</strong>
+                <strong id="plan-price-3">Rp47.000</strong>
                 <span>per orang</span>
               </p>
               <p class="plan-desc">Ajak dua temanmu sekaligus untuk harga terbaik per orang.</p>
-              <p class="plan-save">Hemat Rp12.000 per orang</p>
+              <p id="plan-save-3" class="plan-save">Hemat Rp12.000 per orang</p>
             </article>
           </div>
 
@@ -624,6 +634,7 @@
 
     <script src="/shader-background.js"></script>
     <script src="/script.js"></script>
+    <script src="/content-sheet.js"></script>
     <!-- Vercel Analytics. Endpoint ini cuma ada kalau situsnya di-serve
          lewat platform Vercel — tidak fungsional di hosting lain (mis.
          GitHub Pages), tapi juga tidak error, cuma diam saja. -->

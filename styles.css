@@ -6,6 +6,11 @@
   --black: #000000;
   --ink-muted: #5c5b5b;
   --line: rgba(0, 0, 0, 0.14);
+  /* Dipakai cuma buat penanda "Tidak Tersedia" di kartu paket harga
+     (lihat .plan-save-unavailable) -- satu-satunya tempat di situs ini
+     yang butuh warna merah/status, jadi sengaja dipisah dari palet
+     pink/hitam/putih di atas. */
+  --red: #e5484d;
   --display: "Syne", "Arial Black", sans-serif;
   --body: "DM Sans", Arial, sans-serif;
   --mono: "DM Mono", "Courier New", monospace;
@@ -1971,6 +1976,31 @@ section[id] {
   color: var(--ink-muted);
   background: transparent;
   border: 1px solid var(--line);
+}
+
+/* Ditambahkan/dilepas oleh content-sheet.js kalau kolom "Tersedia" di
+   Google Sheet diisi "Tidak" untuk paket itu -- lihat CONTENT_SHEET_URL
+   di content-sheet.js. Selector sengaja 3 kelas (bukan cuma
+   .plan-save-unavailable) supaya spesifisitasnya PASTI menang atas
+   ".plan-card-best .plan-save" (2 kelas) -- paket yang ditandai
+   "terbaik" (kartu pink) kebetulan sering juga paket yang paling
+   mungkin kehabisan duluan, jadi dua state ini harus bisa tabrakan
+   tanpa salah satu diam-diam kalah. */
+.plan-card-unavailable .plan-save.plan-save-unavailable {
+  color: var(--white);
+  background: var(--red);
+}
+
+.plan-card-unavailable {
+  transition: opacity 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.plan-card-unavailable:hover {
+  transform: none;
+}
+
+.plan-card-unavailable .plan-price {
+  opacity: 0.4;
 }
 
 .plan-note {
