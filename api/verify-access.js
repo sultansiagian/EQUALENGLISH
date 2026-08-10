@@ -29,6 +29,20 @@
  *                       gagal diakses, sheet yang lain tetap dipakai;
  *                       tidak semua orang ikut ditolak gara-gara satu
  *                       sumber bermasalah.
+ *   SCHEDULE_CSV_URL    OPSIONAL. Link "Publish to web" (format CSV) dari
+ *                       sheet utama EQUAL yang berisi tabel "TANGGAL FIX"
+ *                       (bulan, tanggal, topik materi) dan keterangan jam
+ *                       mulai kelas ("MULAI JAM 20.00 WIB"). Dipakai untuk
+ *                       kartu jadwal + timer sesi berikutnya di kelas.html.
+ *                       Kosongkan untuk mematikan kedua fitur itu (materi
+ *                       lain tetap jalan seperti biasa). Lihat
+ *                       extractSchedule() di bawah untuk detail parsing --
+ *                       posisi kolomnya mengikuti bentuk sheet apa adanya,
+ *                       jadi kalau tabel "TANGGAL FIX" dipindah/diubah
+ *                       strukturnya di sheet, parsing ini bisa berhenti
+ *                       menemukan datanya (gagal diam-diam, kartu jadwal
+ *                       cuma jadi kosong, bukan error yang menghentikan
+ *                       login).
  *
  * ENV VAR OPSIONAL, untuk buka form yang sama ke beberapa batch tanpa
  * batch lama ikut kebawa ke kelas batch baru:
@@ -243,6 +257,122 @@ async function fetchEnrolledEmails(csvUrls, cutoffDate) {
   return emails;
 }
 
+// Nama bulan Indonesia dipakai buat cocokin sel seperti "AGUSTUS" atau
+// "SEPTEMBER" di sheet jadwal. Daftar manual, bukan lewat locale bawaan
+// JS (mis. toLocaleDateString('id-ID')), karena arahnya kebalik -- di sini
+// yang perlu diubah adalah TEKS jadi ANGKA bulan, dan environment server
+// tidak dijamin punya data locale id-ID lengkap terpasang.
+const INDONESIAN_MONTHS = [
+  'januari', 'februari', 'maret', 'april', 'mei', 'juni',
+  'juli', 'agustus', 'september', 'oktober', 'november', 'desember',
+];
+
+function extractSchedule(csvText) {
+  // Sheet jadwal ini sheet perencanaan manual (bukan tabel respons rapi
+  // kayak roster), bentuknya kira-kira begini:
+  //
+  //   ,,TANGGAL FIX,,MATERI,,...
+  //   ,,AGUSTUS,12,Reading,...
+  //   ,,,16,,...
+  //   ,,,19,,...
+  //   ,,,21,Writing,...
+  //   ,,SEPTEMBER,2,,...
+  //
+  // Jadi parsing-nya berbasis POSISI KOLOM relatif terhadap sel
+  // "TANGGAL FIX": kolom itu sendiri berisi nama bulan (cuma diisi di
+  // baris pertama tiap bulan, baris berikutnya kosong di kolom itu tapi
+  // masih milik bulan yang sama), kolom+1 berisi tanggal (angka hari),
+  // kolom+2 berisi topik materi (opsional, boleh kosong).
+  const rows = csvToRows(csvText);
+  if (rows.length === 0) return { sessions: [] };
+
+  let dateCol = -1;
+  for (const row of rows) {
+    const idx = row.findIndex((cell) => cell.trim().toLowerCase() === 'tanggal fix');
+    if (idx !== -1) {
+      dateCol = idx;
+      break;
+    }
+  }
+  if (dateCol === -1) return { sessions: [] };
+
+  // Jam kelas dicari lewat teks bebas ("...JAM 20.00 WIB...") di sel mana
+  // pun, bukan posisi kolom tetap -- itu cuma satu baris keterangan biasa
+  // di sheet, bukan bagian dari tabel tanggal. Berlaku sama untuk semua
+  // sesi di tabel "TANGGAL FIX" (sheet ini tidak punya jam berbeda per
+  // sesi).
+  let classHour = 20;
+  let classMinute = 0;
+  outer: for (const row of rows) {
+    for (const cell of row) {
+      const match = cell.match(/jam\s*(\d{1,2})[.:](\d{2})/i);
+      if (match) {
+        classHour = Number(match[1]);
+        classMinute = Number(match[2]);
+        break outer;
+      }
+    }
+  }
+
+  const now = Date.now();
+  const sessions = [];
+  let currentMonthIndex = -1;
+
+  for (const row of rows) {
+    const monthCell = (row[dateCol] || '').trim().toLowerCase();
+    const monthIdx = INDONESIAN_MONTHS.indexOf(monthCell);
+    if (monthIdx !== -1) currentMonthIndex = monthIdx;
+
+    const dayCell = (row[dateCol + 1] || '').trim();
+    const day = Number(dayCell);
+    if (currentMonthIndex === -1 || !dayCell || !Number.isInteger(day) || day < 1 || day > 31) {
+      continue;
+    }
+
+    const topic = (row[dateCol + 2] || '').trim();
+
+    // Sheet tidak pernah menulis tahun (cuma "AGUSTUS", bukan "Agustus
+    // 2026"), jadi tahun ditebak: coba tahun berjalan dulu, dan kalau
+    // hasilnya jatuh lebih dari ~200 hari di masa lalu, majukan setahun.
+    // Ini supaya batch yang jadwalnya disusun di penghujung tahun untuk
+    // bulan awal tahun depan (mis. Januari) tetap terbaca sebagai sesi
+    // yang akan datang, bukan dianggap sudah lewat.
+    let year = new Date().getFullYear();
+    // WIB = UTC+7 tetap sepanjang tahun (tidak ada DST), jadi jam lokal
+    // dikonversi ke UTC dengan mengurangi 7 jam saat membangun Date-nya.
+    let sessionMs = Date.UTC(year, currentMonthIndex, day, classHour - 7, classMinute);
+    if (sessionMs < now - 200 * 24 * 60 * 60 * 1000) {
+      year += 1;
+      sessionMs = Date.UTC(year, currentMonthIndex, day, classHour - 7, classMinute);
+    }
+
+    sessions.push({
+      isoDatetime: new Date(sessionMs).toISOString(),
+      topic: topic || null,
+    });
+  }
+
+  sessions.sort((a, b) => a.isoDatetime.localeCompare(b.isoDatetime));
+  return { sessions };
+}
+
+async function fetchSchedule(url) {
+  // Sama seperti sumber roster: kalau sheet ini gagal diakses atau
+  // bentuknya berubah sampai tidak ketemu tabel "TANGGAL FIX", jangan
+  // sampai menggagalkan login -- materi lain (Zoom/Drive/WhatsApp/dll)
+  // tetap harus bisa diakses. Kartu jadwal & timer di client cukup jadi
+  // kosong/tersembunyi kalau ini gagal.
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('status ' + res.status);
+    const text = await res.text();
+    return extractSchedule(text);
+  } catch (err) {
+    console.error('Gagal memuat jadwal kelas dari SCHEDULE_CSV_URL: ' + err.message);
+    return { sessions: [] };
+  }
+}
+
 async function verifyGoogleToken(idToken, expectedClientId) {
   const res = await fetch(
     'https://oauth2.googleapis.com/tokeninfo?id_token=' +
@@ -280,6 +410,7 @@ module.exports = async function handler(req, res) {
     .split(',')
     .map((url) => url.trim())
     .filter(Boolean);
+  const scheduleUrl = (process.env.SCHEDULE_CSV_URL || '').trim();
 
   // Opsional. String kosong/tidak diisi -> tidak ada filter tanggal,
   // sama seperti perilaku sebelum ada konsep batch. String yang gagal
@@ -316,12 +447,32 @@ module.exports = async function handler(req, res) {
       return res.status(401).json({ ok: false, reason: verified.reason });
     }
 
-    const enrolledEmails = await fetchEnrolledEmails(rosterUrls, validCutoff);
+    // Diambil paralel: latensi jaringan biasanya lebih mahal daripada
+    // request yang kadang "sia-sia" (mis. jadwal ikut diambil walau
+    // ternyata emailnya tidak terdaftar). Sheet jadwal juga cuma link
+    // publish-to-web publik, tidak ada beban auth tambahan seperti roster.
+    const [enrolledEmails, scheduleResult] = await Promise.all([
+      fetchEnrolledEmails(rosterUrls, validCutoff),
+      scheduleUrl ? fetchSchedule(scheduleUrl) : Promise.resolve({ sessions: [] }),
+    ]);
     if (!enrolledEmails.has(verified.email)) {
       return res.status(403).json({ ok: false, reason: 'not_enrolled' });
     }
 
-    return res.status(200).json({ ok: true, materials: CLASS_MATERIALS });
+    // Cuma sesi yang BELUM lewat yang dikirim ke browser -- kartu jadwal
+    // menunjukkan "kapan aja bakal ada kelas", bukan riwayat kelas yang
+    // sudah selesai. Sesi pertama di daftar (kalau ada) otomatis jadi
+    // sesi berikutnya untuk timer di kartu Zoom.
+    const upcomingSessions = scheduleResult.sessions.filter(
+      (s) => new Date(s.isoDatetime).getTime() > Date.now()
+    );
+    const materials = {
+      ...CLASS_MATERIALS,
+      schedule: upcomingSessions,
+      nextSessionAt: upcomingSessions.length > 0 ? upcomingSessions[0].isoDatetime : null,
+    };
+
+    return res.status(200).json({ ok: true, materials });
   } catch (err) {
     console.error('verify-access error:', err.message);
     return res.status(502).json({ ok: false, reason: 'upstream_error' });

@@ -75,6 +75,129 @@ function renderMaterials(materials) {
   practiceListeningLink.href = materials.practiceListeningUrl || '#';
   practiceWritingLink.href = materials.practiceWritingUrl || '#';
   announcement.textContent = materials.announcement || '';
+
+  renderSchedule(materials.schedule || []);
+  startZoomCountdown(materials.nextSessionAt || null);
+}
+
+// Format "Selasa, 12 Agustus, 20:00 WIB" dari ISO UTC -- selalu di zona
+// WIB eksplisit (bukan zona lokal browser si siswa), karena jamnya
+// datang dari server dalam WIB dan harus tetap kebaca sama persis buat
+// siapa pun yang buka halaman ini dari zona waktu mana pun.
+const kelasScheduleDateFmt = new Intl.DateTimeFormat('id-ID', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  timeZone: 'Asia/Jakarta',
+});
+const kelasScheduleTimeFmt = new Intl.DateTimeFormat('id-ID', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+  timeZone: 'Asia/Jakarta',
+});
+
+function formatSessionDate(isoDatetime) {
+  const date = new Date(isoDatetime);
+  return kelasScheduleDateFmt.format(date) + ', ' + kelasScheduleTimeFmt.format(date) + ' WIB';
+}
+
+function renderSchedule(sessions) {
+  const list = document.getElementById('kelas-schedule-list');
+  const empty = document.getElementById('kelas-schedule-empty');
+  if (!list) return;
+
+  list.innerHTML = '';
+
+  if (!sessions.length) {
+    list.hidden = true;
+    if (empty) empty.hidden = false;
+    return;
+  }
+
+  list.hidden = false;
+  if (empty) empty.hidden = true;
+
+  sessions.forEach((session, i) => {
+    const item = document.createElement('li');
+    item.className = 'kelas-schedule-item' + (i === 0 ? ' is-next' : '');
+
+    const dateEl = document.createElement('span');
+    dateEl.className = 'kelas-schedule-date';
+    dateEl.textContent = formatSessionDate(session.isoDatetime);
+    item.appendChild(dateEl);
+
+    if (session.topic) {
+      const topicEl = document.createElement('span');
+      topicEl.className = 'kelas-schedule-topic';
+      topicEl.textContent = session.topic;
+      item.appendChild(topicEl);
+    }
+
+    if (i === 0) {
+      const badge = document.createElement('span');
+      badge.className = 'kelas-schedule-badge';
+      badge.textContent = 'BERIKUTNYA';
+      item.appendChild(badge);
+    }
+
+    list.appendChild(item);
+  });
+}
+
+// Interval disimpan di luar fungsi supaya bisa dimatikan lagi (ganti akun,
+// login ulang, dst) tanpa numpuk banyak setInterval berjalan sekaligus.
+let kelasCountdownInterval = null;
+
+function stopZoomCountdown() {
+  if (kelasCountdownInterval) {
+    window.clearInterval(kelasCountdownInterval);
+    kelasCountdownInterval = null;
+  }
+}
+
+function startZoomCountdown(nextSessionAt) {
+  stopZoomCountdown();
+  const timerEl = document.getElementById('kelas-zoom-timer');
+  if (!timerEl) return;
+
+  const target = nextSessionAt ? new Date(nextSessionAt).getTime() : NaN;
+  if (Number.isNaN(target)) {
+    timerEl.hidden = true;
+    return;
+  }
+
+  timerEl.hidden = false;
+
+  function tick() {
+    const diffMs = target - Date.now();
+
+    if (diffMs <= 0) {
+      timerEl.textContent = 'Sesi berikutnya sudah dimulai -- langsung gabung.';
+      stopZoomCountdown();
+      return;
+    }
+
+    const totalSeconds = Math.floor(diffMs / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const parts = [];
+    if (days > 0) parts.push(days + ' hari');
+    if (days > 0 || hours > 0) parts.push(hours + ' jam');
+    parts.push(minutes + ' menit');
+    // Detik cuma ditampilkan kalau sesinya sudah dekat (di bawah 1 jam
+    // lagi) -- supaya baris tidak ramai angka yang jalan tiap detik
+    // padahal sesinya masih berhari-hari lagi.
+    if (days === 0 && hours === 0) parts.push(seconds + ' detik');
+
+    timerEl.textContent = parts.join(' ') + ' lagi ke sesi berikutnya';
+  }
+
+  tick();
+  kelasCountdownInterval = window.setInterval(tick, 1000);
 }
 
 function renderGreeting(profile) {
@@ -153,6 +276,7 @@ document.getElementById('kelas-signout').addEventListener('click', () => {
     // langsung memilih akun yang sama seperti sebelumnya.
     window.google.accounts.id.disableAutoSelect();
   }
+  stopZoomCountdown();
   showState('signin');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });

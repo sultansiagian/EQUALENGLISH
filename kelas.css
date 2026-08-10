@@ -445,6 +445,20 @@
   margin-top: auto;
 }
 
+/* Chip timer di kartu Zoom -- pink-light supaya kelihatan "hidup"
+   (angka jalan tiap detik) tanpa bersaing sama tombol button-dark di
+   bawahnya untuk perhatian utama. */
+.kelas-zoom-timer {
+  margin: 0 0 1.2rem;
+  padding: 0.5rem 0.75rem;
+  color: var(--black);
+  background: var(--pink-light);
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
 /* Kartu yang materinya belum siap (mis. Quizizz sebelum link-nya ada).
    Tidak hover-lift seperti kartu aktif lainnya, supaya terasa memang
    belum bisa diklik sebelum tangan sempat mencoba. */
@@ -561,6 +575,73 @@
   line-height: 1.6;
 }
 
+/* ---- Jadwal kelas: daftar sesi yang akan datang, diambil dari sheet
+   utama EQUAL. Sesi pertama (is-next) ditonjolkan dengan badge dan
+   warna beda -- itu juga sesi yang jadi acuan timer di kartu Zoom. ---- */
+
+.kelas-schedule-card {
+  padding: 1.7rem;
+  margin-bottom: 1rem;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.kelas-schedule-card h3 {
+  margin: 0 0 1rem;
+  color: var(--black);
+  font-family: var(--display);
+  font-size: 1.3rem;
+  letter-spacing: -0.03em;
+}
+
+.kelas-schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kelas-schedule-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.8rem;
+  padding: 0.85rem 1rem;
+  background: var(--paper);
+  border-radius: 4px;
+}
+
+.kelas-schedule-item.is-next {
+  background: var(--pink-light);
+}
+
+.kelas-schedule-date {
+  color: var(--black);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.kelas-schedule-topic {
+  color: var(--ink-muted);
+  font-size: 0.82rem;
+}
+
+.kelas-schedule-badge {
+  margin-left: auto;
+  padding: 0.22rem 0.55rem;
+  color: var(--black);
+  background: var(--pink);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
 /* ============================================================
    RESPONSIF
    ============================================================ */
@@ -582,6 +663,7 @@
   .kelas-signin-box { padding: 1.2rem; }
   .kelas-action-card,
   .kelas-practice-card,
+  .kelas-schedule-card,
   .kelas-announcement-card {
     padding: 1.4rem;
   }

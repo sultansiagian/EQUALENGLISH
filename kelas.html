@@ -150,6 +150,7 @@
               Link yang sama dipakai setiap sesi, jadi simpan halaman ini
               dan buka lagi tiap mau kelas dimulai.
             </p>
+            <p id="kelas-zoom-timer" class="kelas-zoom-timer" hidden></p>
             <a id="kelas-zoom-link" class="button button-dark" href="#" target="_blank" rel="noopener">
               Buka Zoom <span aria-hidden="true">↗</span>
             </a>
@@ -186,6 +187,21 @@
           </article>
 
         </div>
+
+        <!-- Jadwal diambil dari sheet utama EQUAL (SCHEDULE_CSV_URL di
+             api/verify-access.js), sama seperti materi lain -- cuma
+             sesi yang belum lewat yang dikirim ke browser. Kalau env
+             var itu kosong atau sheet-nya gagal diparsing, daftar ini
+             kosong dan kelas.js otomatis menampilkan pesan fallback. -->
+        <article class="kelas-schedule-card" data-reveal>
+          <p class="kelas-material-label">JADWAL KELAS</p>
+          <h3>Sesi yang akan datang.</h3>
+          <p id="kelas-schedule-empty" class="kelas-material-desc" hidden>
+            Belum ada jadwal terbaru di sini. Cek pengumuman atau tanya
+            lewat grup WhatsApp kalau kamu butuh kepastian jadwal.
+          </p>
+          <ul id="kelas-schedule-list" class="kelas-schedule-list"></ul>
+        </article>
 
         <!-- Link Wayground (rebrand dari Quizizz) cuma hidup di server,
              sama seperti Zoom/Drive/WhatsApp -- lihat CLASS_MATERIALS
