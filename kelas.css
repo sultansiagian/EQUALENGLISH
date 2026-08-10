@@ -152,6 +152,21 @@
   margin-bottom: 1.3rem;
 }
 
+/* Dipakai di kelima state gerbang (signin/loading/welcome/denied/error).
+   text-align:center yang diwariskan dari .kelas-hero-content HANYA
+   merapikan teks DI DALAM kotak sebuah elemen -- elemen yang punya
+   max-width (mis. .kelas-hero-desc) tetap nempel ke kiri kotak
+   induknya kalau tidak ada margin:auto atau flexbox aktif, karena
+   text-align tidak pernah mengatur POSISI kotak, cuma isinya. Flexbox
+   di sini yang benar-benar memusatkan setiap kotak anak, apa pun
+   lebar max-width masing-masing. */
+.kelas-gate-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
 .kelas-hero-content h1 {
   max-width: 720px;
   margin: 0 0 1.3rem;
@@ -204,13 +219,6 @@
 /* Dipusatkan secara eksplisit lewat flex, bukan mengandalkan text-align
    warisan -- nama Indonesia sering panjang dan bisa membungkus 3-4
    baris, jadi pemusatannya harus pasti berapa pun lebar barisnya. */
-#kelas-gate-welcome {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
 .kelas-avatar {
   width: 88px;
   height: 88px;

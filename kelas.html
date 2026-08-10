@@ -58,7 +58,7 @@
         <p class="section-kicker section-kicker-light" data-reveal>RUANG KELAS</p>
 
         <!-- STATE 1: belum login -->
-        <div id="kelas-gate-signin" data-reveal-stagger>
+        <div id="kelas-gate-signin" class="kelas-gate-panel" data-reveal-stagger>
           <h1>Materi kelasmu,<br /><em>satu langkah lagi.</em></h1>
           <p class="kelas-hero-desc">
             Halaman ini khusus untuk siswa yang sudah terdaftar. Masuk pakai
@@ -82,7 +82,7 @@
         </div>
 
         <!-- STATE 2: lagi memeriksa akses ke server -->
-        <div id="kelas-gate-loading" hidden>
+        <div id="kelas-gate-loading" class="kelas-gate-panel" hidden>
           <p class="kelas-status">
             <span class="kelas-spinner" aria-hidden="true"></span>
             Memeriksa akses kamu…
@@ -90,7 +90,7 @@
         </div>
 
         <!-- STATE 3: berhasil -- sapaan personal, materi ada di bawah -->
-        <div id="kelas-gate-welcome" data-reveal-stagger hidden>
+        <div id="kelas-gate-welcome" class="kelas-gate-panel" data-reveal-stagger hidden>
           <img id="kelas-avatar" class="kelas-avatar" alt="" hidden />
           <h1 id="kelas-greeting">Kamu masuk!</h1>
           <p class="kelas-hero-desc">Materi kelasmu udah siap, tinggal scroll ke bawah.</p>
@@ -100,7 +100,7 @@
         </div>
 
         <!-- STATE 4: login berhasil tapi email tidak terdaftar sebagai siswa -->
-        <div id="kelas-gate-denied" data-reveal-stagger hidden>
+        <div id="kelas-gate-denied" class="kelas-gate-panel" data-reveal-stagger hidden>
           <h1>Email ini belum terdaftar.</h1>
           <p class="kelas-hero-desc">
             Email <strong id="kelas-denied-email"></strong> belum ada di daftar
@@ -113,7 +113,7 @@
         </div>
 
         <!-- STATE 5: gangguan teknis -->
-        <div id="kelas-gate-error" data-reveal-stagger hidden>
+        <div id="kelas-gate-error" class="kelas-gate-panel" data-reveal-stagger hidden>
           <h1>Ada gangguan teknis.</h1>
           <p class="kelas-hero-desc">
             Halaman ini lagi bermasalah di sisi kami, bukan di akunmu. Coba
