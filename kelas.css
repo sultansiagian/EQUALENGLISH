@@ -620,7 +620,7 @@
 
 .kelas-schedule-date {
   color: var(--black);
-  font-family: var(--mono);
+  font-family: var(--body);
   font-size: 0.82rem;
   font-weight: 600;
 }
