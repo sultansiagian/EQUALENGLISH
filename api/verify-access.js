@@ -1,3 +1,8 @@
+// Modul bawaan Node, bukan dependency tambahan (proyek ini sengaja
+// zero-dependency) -- dipakai buat verifikasi signature JWT secara
+// lokal, lihat verifyGoogleTokenLocal() di bawah.
+const crypto = require('crypto');
+
 /**
  * Endpoint terlindungi untuk halaman kelas EQUAL English.
  *
@@ -10,11 +15,18 @@
  *
  * Alur:
  *   1. Klien mengirim ID token dari tombol "Sign in with Google".
- *   2. Fungsi ini memverifikasi token itu ke server Google (memastikan
- *      token asli, belum kedaluwarsa, dan dibuat untuk app ini).
+ *   2. Fungsi ini memverifikasi token itu SECARA LOKAL (cek signature JWT
+ *      pakai kunci publik Google yang di-cache, lihat
+ *      verifyGoogleTokenLocal), tanpa nge-hit server Google tiap login.
+ *      Endpoint tokeninfo Google (dipakai versi lama fungsi ini) cuma
+ *      cadangan sekarang -- dipakai OTOMATIS kalau verifikasi lokal
+ *      gagal karena sebab teknis, lihat verifyGoogleToken di bawah.
  *   3. Fungsi ini mengambil daftar siswa dari Google Sheet yang sudah
  *      di-publish sebagai CSV, lalu mencocokkan email yang sudah
- *      terverifikasi tadi.
+ *      terverifikasi tadi. Hasil fetch sheet (roster/jadwal/materi)
+ *      di-cache singkat (lihat CSV_CACHE_TTL_MS) supaya banyak siswa
+ *      yang login berdekatan waktu tidak masing-masing memicu fetch
+ *      baru ke Google untuk data yang sama persis.
  *   4. Materi dikembalikan hanya jika keduanya cocok.
  *
  * ENV VARS yang wajib diisi di Vercel (Project Settings > Environment
@@ -127,6 +139,70 @@ const DEFAULT_MATERIALS = {
   announcement:
     'Semua materi ada di folder Drive ini. Rekaman Zoom ditambahkan langsung ke dalamnya setelah tiap sesi.',
 };
+
+// ============================================================
+// CACHE + RETRY UNTUK SEMUA FETCH KE GOOGLE (Sheets & kunci publik JWT)
+//
+// Kenapa ini ada: tanpa cache, tiap SATU siswa login = fetch ulang total
+// roster + jadwal + materi dari nol ke Google -- padahal isinya SAMA
+// PERSIS buat semua orang selama beberapa puluh detik ke depan. Kalau
+// puluhan/ratusan siswa login bersamaan (mis. persis pas kelas mau
+// mulai -- momen paling mungkin ini kejadian beneran), itu jadi ratusan
+// request duplikat yang sia-sia dan menaikkan risiko kena rate-limit
+// dari sisi Google.
+//
+// Cache-nya nyimpen PROMISE-nya, bukan cuma hasil akhirnya -- supaya
+// request yang datang HAMPIR BERSAMAAN (sebelum fetch pertama selesai)
+// ikut "numpang" ke fetch yang sama, bukan masing-masing bikin fetch
+// baru sendiri-sendiri. Ini cuma efektif kalau beberapa request
+// mendarat di instance server Vercel yang sama (instance "hangat" bisa
+// dipakai ulang); kalau tiap request dapat instance baru, cache ini
+// gak kepakai -- tapi tetap gak rugi, cuma balik ke perilaku lama.
+//
+// Kegagalan TIDAK ikut di-cache (langsung dihapus lagi dari cache begitu
+// gagal) supaya satu hiccup sesaat gak bikin semua orang gagal login
+// selama sisa TTL.
+// ============================================================
+const CSV_CACHE_TTL_MS = 45 * 1000;
+const JWKS_CACHE_TTL_MS = 60 * 60 * 1000; // kunci publik Google jarang rotasi
+const fetchCache = new Map(); // key -> { promise, expiresAt }
+
+function cachedFetch(key, ttlMs, fetcher) {
+  const now = Date.now();
+  const cached = fetchCache.get(key);
+  if (cached && cached.expiresAt > now) return cached.promise;
+
+  const promise = fetcher().catch((err) => {
+    fetchCache.delete(key);
+    throw err;
+  });
+  fetchCache.set(key, { promise, expiresAt: now + ttlMs });
+  return promise;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchTextWithRetry(url, attempts = 2) {
+  // Sengaja cuma diulang SEKALI (attempts=2 -> 1 percobaan awal + 1
+  // percobaan ulang), bukan berkali-kali -- momen paling rawan gagal
+  // (banyak siswa login bersamaan) juga momen paling penting buat dapat
+  // jawaban cepat, jadi retry bertubi-tubi cuma bikin orang nunggu lebih
+  // lama tanpa manfaat tambahan yang berarti.
+  let lastErr;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('status ' + res.status);
+      return await res.text();
+    } catch (err) {
+      lastErr = err;
+      if (i < attempts - 1) await sleep(300);
+    }
+  }
+  throw lastErr;
+}
 
 function csvToRows(csvText) {
   // Parser CSV sederhana yang menangani nilai berkoma di dalam tanda
@@ -256,9 +332,9 @@ async function fetchEnrolledEmails(csvUrls, cutoffDate) {
   await Promise.all(
     csvUrls.map(async (url) => {
       try {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('status ' + res.status);
-        const text = await res.text();
+        const text = await cachedFetch('roster:' + url, CSV_CACHE_TTL_MS, () =>
+          fetchTextWithRetry(url)
+        );
         extractEmailsFromSheet(text, cutoffDate).forEach((email) => emails.add(email));
       } catch (err) {
         failures.push(url + ' -> ' + err.message);
@@ -410,9 +486,9 @@ async function fetchSchedule(url) {
   // tetap harus bisa diakses. Kartu jadwal & timer di client cukup jadi
   // kosong/tersembunyi kalau ini gagal.
   try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('status ' + res.status);
-    const text = await res.text();
+    const text = await cachedFetch('schedule:' + url, CSV_CACHE_TTL_MS, () =>
+      fetchTextWithRetry(url)
+    );
     return extractSchedule(text);
   } catch (err) {
     console.error('Gagal memuat jadwal kelas dari SCHEDULE_CSV_URL: ' + err.message);
@@ -465,9 +541,9 @@ async function fetchMaterialsOverrides(url) {
   // kebaca TIDAK BOLEH menggagalkan login. Field yang tidak ketemu di
   // sini otomatis jatuh balik ke DEFAULT_MATERIALS di pemanggil.
   try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('status ' + res.status);
-    const text = await res.text();
+    const text = await cachedFetch('materials:' + url, CSV_CACHE_TTL_MS, () =>
+      fetchTextWithRetry(url)
+    );
     const found = extractMaterials(text);
     console.log(
       'extractMaterials: ketemu ' + Object.keys(found).length + ' dari ' +
@@ -482,7 +558,95 @@ async function fetchMaterialsOverrides(url) {
   }
 }
 
-async function verifyGoogleToken(idToken, expectedClientId) {
+function base64UrlDecode(str) {
+  const padded = str.replace(/-/g, '+').replace(/_/g, '/');
+  const withPadding = padded + '='.repeat((4 - (padded.length % 4)) % 4);
+  return Buffer.from(withPadding, 'base64');
+}
+
+async function getGoogleJwks() {
+  // Dicache lewat cachedFetch yang sama dipakai buat sheet -- kunci
+  // publik Google jarang rotasi (dalam hitungan hari/minggu), jadi TTL
+  // 1 jam (JWKS_CACHE_TTL_MS) jauh lebih dari cukup dan sangat
+  // memangkas jumlah request ke endpoint ini.
+  const text = await cachedFetch('google-jwks', JWKS_CACHE_TTL_MS, async () => {
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/certs');
+    if (!res.ok) throw new Error('status ' + res.status);
+    return res.text();
+  });
+  const data = JSON.parse(text);
+  return Array.isArray(data.keys) ? data.keys : [];
+}
+
+// Verifikasi ID token TANPA nge-hit server Google tiap kali ada yang
+// login (beda dari cara lama, verifyGoogleTokenRemote di bawah, yang
+// manggil endpoint tokeninfo Google setiap request) -- signature JWT-nya
+// dicek langsung pakai kunci publik Google yang di-cache (getGoogleJwks),
+// pakai modul crypto bawaan Node. Ini persis cara kerja library resmi
+// Google (google-auth-library) di balik layar, ditulis ulang manual di
+// sini supaya proyek ini tetap zero-dependency.
+//
+// PENTING: fungsi ini SENGAJA bisa throw kalau ada yang gagal secara
+// TEKNIS (JWKS gak bisa diambil, format token gak terduga, dll) --
+// BUKAN kalau tokennya memang tidak valid (itu balik
+// { valid:false, reason: ... } seperti biasa, tanpa throw). Pemanggil
+// (verifyGoogleToken) menangkap exception ini dan fallback ke
+// verifyGoogleTokenRemote kalau ini gagal, supaya bug atau gangguan di
+// sini tidak langsung mengunci semua siswa keluar dari kelasnya.
+async function verifyGoogleTokenLocal(idToken, expectedClientId) {
+  const parts = idToken.split('.');
+  if (parts.length !== 3) return { valid: false, reason: 'token_invalid' };
+  const [headerB64, payloadB64, sigB64] = parts;
+
+  const header = JSON.parse(base64UrlDecode(headerB64).toString('utf8'));
+  const payload = JSON.parse(base64UrlDecode(payloadB64).toString('utf8'));
+
+  if (header.alg !== 'RS256' || !header.kid) {
+    return { valid: false, reason: 'token_invalid' };
+  }
+
+  let keys = await getGoogleJwks();
+  let jwk = keys.find((k) => k.kid === header.kid);
+  if (!jwk) {
+    // Kunci belum ketemu di cache -- kemungkinan Google baru rotasi
+    // kunci sejak terakhir kita ambil. Coba ambil ULANG sekali (lewati
+    // cache lama), BUKAN langsung anggap tokennya invalid, karena ini
+    // kejadian normal, bukan tanda ada yang salah.
+    fetchCache.delete('google-jwks');
+    keys = await getGoogleJwks();
+    jwk = keys.find((k) => k.kid === header.kid);
+  }
+  if (!jwk) return { valid: false, reason: 'token_invalid' };
+
+  const publicKey = crypto.createPublicKey({ key: jwk, format: 'jwk' });
+  const signedData = Buffer.from(headerB64 + '.' + payloadB64);
+  const signature = base64UrlDecode(sigB64);
+  const signatureValid = crypto.verify('RSA-SHA256', signedData, publicKey, signature);
+  if (!signatureValid) return { valid: false, reason: 'token_invalid' };
+
+  if (payload.iss !== 'https://accounts.google.com' && payload.iss !== 'accounts.google.com') {
+    return { valid: false, reason: 'token_invalid' };
+  }
+  if (payload.aud !== expectedClientId) {
+    return { valid: false, reason: 'wrong_audience' };
+  }
+  if (payload.email_verified !== true && payload.email_verified !== 'true') {
+    return { valid: false, reason: 'email_unverified' };
+  }
+  const expiresAt = Number(payload.exp) * 1000;
+  if (!expiresAt || Date.now() > expiresAt) {
+    return { valid: false, reason: 'token_expired' };
+  }
+
+  return { valid: true, email: String(payload.email || '').toLowerCase() };
+}
+
+// Jalur CADANGAN -- ini cara verifikasi yang dipakai SEBELUM ada
+// verifyGoogleTokenLocal di atas. Sekarang cuma dipakai kalau
+// verifikasi lokal gagal karena alasan TEKNIS, bukan dipakai tiap
+// request seperti sebelumnya -- itu justru yang berisiko kena
+// rate-limit dari Google kalau banyak siswa login bersamaan.
+async function verifyGoogleTokenRemote(idToken, expectedClientId) {
   const res = await fetch(
     'https://oauth2.googleapis.com/tokeninfo?id_token=' +
       encodeURIComponent(idToken)
@@ -503,6 +667,26 @@ async function verifyGoogleToken(idToken, expectedClientId) {
   }
 
   return { valid: true, email: String(payload.email || '').toLowerCase() };
+}
+
+async function verifyGoogleToken(idToken, expectedClientId) {
+  try {
+    return await verifyGoogleTokenLocal(idToken, expectedClientId);
+  } catch (err) {
+    // Ini jalur yang HARUSNYA jarang kepakai. Kalau ini sering muncul di
+    // Vercel Functions log, ada yang perlu dicek di verifyGoogleTokenLocal
+    // atau ketersediaan endpoint kunci publik Google.
+    console.error(
+      'Verifikasi token lokal gagal (' + err.message + '), fallback ke endpoint ' +
+        'tokeninfo Google.'
+    );
+    try {
+      return await verifyGoogleTokenRemote(idToken, expectedClientId);
+    } catch (err2) {
+      console.error('Verifikasi token via fallback juga gagal: ' + err2.message);
+      return { valid: false, reason: 'token_invalid' };
+    }
+  }
 }
 
 // CommonJS (module.exports), bukan `export default`: proyek ini tidak
