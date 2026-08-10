@@ -54,15 +54,18 @@ function renderMaterials(materials) {
   const zoomLink = document.getElementById('kelas-zoom-link');
   const driveLink = document.getElementById('kelas-drive-link');
   const communityLink = document.getElementById('kelas-community-link');
+  const practiceReadingLink = document.getElementById('kelas-practice-reading');
+  const practiceListeningLink = document.getElementById('kelas-practice-listening');
+  const practiceWritingLink = document.getElementById('kelas-practice-writing');
   const announcement = document.getElementById('kelas-announcement');
 
   zoomLink.href = materials.zoomJoinUrl || '#';
   driveLink.href = materials.driveUrl || '#';
   communityLink.href = materials.communityUrl || '#';
+  practiceReadingLink.href = materials.practiceReadingUrl || '#';
+  practiceListeningLink.href = materials.practiceListeningUrl || '#';
+  practiceWritingLink.href = materials.practiceWritingUrl || '#';
   announcement.textContent = materials.announcement || '';
-
-  // Kartu Quizizz sengaja tidak disentuh di sini -- lihat komentar di
-  // kelas.html tentang cara mengaktifkannya begitu link-nya sudah ada.
 }
 
 function renderGreeting(profile) {

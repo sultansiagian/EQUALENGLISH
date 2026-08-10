@@ -478,6 +478,75 @@
   background: transparent;
 }
 
+/* ---- Latihan soal EPT UI (Wayground): satu kotak, tiga tombol.
+   Huruf R/L/W di sini kecil dan di dalam badge -- beda dari huruf
+   raksasa di section Materi index.html, yang justru pernah jadi
+   sumber bug menabrak teks di mobile (lihat commit sebelumnya). ---- */
+
+.kelas-practice-card {
+  padding: 1.7rem;
+  margin-bottom: 1rem;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.kelas-practice-card h3 {
+  margin: 0 0 0.6rem;
+  color: var(--black);
+  font-family: var(--display);
+  font-size: 1.3rem;
+  letter-spacing: -0.03em;
+}
+
+.kelas-practice-card .kelas-material-desc {
+  max-width: none;
+  margin-bottom: 1.6rem;
+}
+
+.kelas-practice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.kelas-practice-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1.4rem 1rem;
+  text-align: center;
+  background: var(--paper);
+  border-radius: 4px;
+}
+
+.kelas-practice-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: var(--black);
+  background: var(--pink);
+  border-radius: 50%;
+  font-family: var(--display);
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.kelas-practice-name {
+  color: var(--black);
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.kelas-practice-item .button {
+  padding: 0.6rem 1.1rem;
+  font-size: 0.8rem;
+}
+
 .kelas-announcement-card {
   padding: 1.5rem 1.7rem;
   background: var(--white);
@@ -506,11 +575,13 @@
   .kelas-hero-content { padding: 6.6rem 0 4.4rem; }
   .kelas-brand > span { display: none; }
   .kelas-actions { grid-template-columns: 1fr; }
+  .kelas-practice-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 520px) {
   .kelas-signin-box { padding: 1.2rem; }
   .kelas-action-card,
+  .kelas-practice-card,
   .kelas-announcement-card {
     padding: 1.4rem;
   }

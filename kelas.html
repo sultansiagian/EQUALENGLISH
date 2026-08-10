@@ -160,11 +160,10 @@
               <img src="/EDITS/logo-drive.png" alt="" width="40" height="40" />
             </div>
             <p class="kelas-material-label">SEMUA MATERI KELASMU</p>
-            <h3>Materi, rekaman Zoom &amp; Quizizz, satu folder.</h3>
+            <h3>Materi dan rekaman Zoom, satu folder.</h3>
             <p class="kelas-material-desc">
-              Rekaman tiap sesi dan link Quizizz ditambahkan langsung ke
-              folder ini oleh mentor, jadi selalu cek di sini kalau ada
-              yang baru.
+              Rekaman tiap sesi ditambahkan langsung ke folder ini oleh
+              mentor, jadi selalu cek di sini kalau ada yang baru.
             </p>
             <a id="kelas-drive-link" class="button button-outline" href="#" target="_blank" rel="noopener">
               Buka folder Drive <span aria-hidden="true">↗</span>
@@ -186,34 +185,43 @@
             </a>
           </article>
 
-          <!-- Belum ada link Quizizz (kelasnya masih disiapkan). Kartu
-               ini sengaja nonaktif dulu -- <button disabled>, bukan
-               <a>, supaya tidak ada yang kepencet ke tempat kosong.
-               Begitu link-nya ada: tambahkan quizizzUrl ke
-               CLASS_MATERIALS di api/verify-access.js, lalu ganti
-               elemen di bawah ini jadi <a id="kelas-quizizz-link"
-               class="button button-outline" href="#" target="_blank"
-               rel="noopener"> mengikuti pola kartu-kartu di atas, dan
-               tambahkan baris render-nya di kelas.js. -->
-          <article class="kelas-action-card kelas-action-pending">
-            <div class="kelas-action-icon">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6">
-                <circle cx="12" cy="12" r="9" />
-                <path d="M9.2 9.5a2.8 2.8 0 1 1 3.9 2.6c-.9.5-1.4 1-1.4 2" />
-                <circle cx="12" cy="16.3" r="0.15" fill="currentColor" stroke="none" />
-              </svg>
-            </div>
-            <p class="kelas-material-label">LATIHAN</p>
-            <h3>Kuis Quizizz.</h3>
-            <p class="kelas-material-desc">
-              Lagi disiapkan mentor. Begitu siap, link kuisnya muncul
-              langsung di kartu ini.
-            </p>
-            <button type="button" class="button button-outline" disabled>
-              Segera hadir
-            </button>
-          </article>
         </div>
+
+        <!-- Link Wayground (rebrand dari Quizizz) cuma hidup di server,
+             sama seperti Zoom/Drive/WhatsApp -- lihat CLASS_MATERIALS
+             di api/verify-access.js. Tidak pernah ada di HTML/JS
+             statis, baru terkirim ke browser setelah email pengunjung
+             terverifikasi. -->
+        <article class="kelas-practice-card" data-reveal>
+          <p class="kelas-material-label">LATIHAN SOAL EPT UI</p>
+          <h3>Uji kemampuanmu lewat kuis interaktif.</h3>
+          <p class="kelas-material-desc">
+            Tiga kuis latihan, satu buat tiap kemampuan yang diuji di EPT UI.
+          </p>
+          <div class="kelas-practice-grid">
+            <div class="kelas-practice-item">
+              <span class="kelas-practice-letter">R</span>
+              <span class="kelas-practice-name">Reading<br />Comprehension</span>
+              <a id="kelas-practice-reading" class="button button-dark" href="#" target="_blank" rel="noopener">
+                Mulai <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+            <div class="kelas-practice-item">
+              <span class="kelas-practice-letter">L</span>
+              <span class="kelas-practice-name">Listening<br />Comprehension</span>
+              <a id="kelas-practice-listening" class="button button-dark" href="#" target="_blank" rel="noopener">
+                Mulai <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+            <div class="kelas-practice-item">
+              <span class="kelas-practice-letter">W</span>
+              <span class="kelas-practice-name">Writing<br />Comprehension</span>
+              <a id="kelas-practice-writing" class="button button-dark" href="#" target="_blank" rel="noopener">
+                Mulai <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+          </div>
+        </article>
 
         <article class="kelas-announcement-card" data-reveal>
           <p class="kelas-material-label">PENGUMUMAN</p>

@@ -67,21 +67,17 @@
 // yang dikirim ke browser) karena file ini hanya berjalan di server.
 // Update, commit, push seperti biasa setiap ada perubahan.
 //
-// Rekaman Zoom dan link Quizizz tidak punya field terpisah karena
-// semuanya digabung jadi satu di dalam folder Drive ini (ditaruh di
-// sana langsung oleh mentor, bukan ditautkan dari sini).
+// Rekaman Zoom tidak punya field terpisah karena ditaruh langsung oleh
+// mentor ke dalam folder Drive di bawah (bukan ditautkan dari sini).
 //
-// zoomJoinUrl dan communityUrl adalah link yang dipakai ULANG terus-
-// menerus (bukan sekali pakai), sama-sama grup/meeting yang bisa
-// disusupi kalau linknya bocor ke publik. Makanya dua-duanya sengaja
-// cuma muncul di halaman terlindungi ini (bukan di index.html), dan
-// baru dikirim ke browser setelah email pengunjung lolos verifikasi.
+// zoomJoinUrl, communityUrl, dan ketiga practiceXxxUrl adalah link yang
+// dipakai ULANG terus-menerus (bukan sekali pakai) -- grup/meeting/kuis
+// yang bisa disusupi kalau linknya bocor ke publik. Makanya semuanya
+// sengaja cuma muncul di halaman terlindungi ini (bukan di index.html),
+// dan baru dikirim ke browser setelah email pengunjung lolos verifikasi.
 //
-// Quizizz belum ada link-nya (kelasnya masih disiapkan), jadi kartunya
-// di kelas.html sengaja dibiarkan nonaktif ("Segera hadir") dulu. Nanti
-// kalau linknya sudah ada, tambahkan field quizizzUrl di sini lalu ganti
-// markup kartunya di kelas.html dari <button disabled> jadi <a href>
-// mengikuti pola kartu lain di bawah ini.
+// Ketiga practiceXxxUrl mengarah ke kuis latihan EPT UI di Wayground
+// (rebrand dari Quizizz), satu link per kemampuan yang diuji.
 // ============================================================
 const CLASS_MATERIALS = {
   zoomJoinUrl:
@@ -89,8 +85,11 @@ const CLASS_MATERIALS = {
   driveUrl:
     'https://drive.google.com/drive/folders/12HtL4Rchwy6JdPBs3hEa81lgwk5dxluU?usp=sharing',
   communityUrl: 'https://chat.whatsapp.com/DZsFkQv353M2u3Ue0HKbjJ',
+  practiceReadingUrl: 'https://wayground.com/join?gc=09747545',
+  practiceListeningUrl: 'https://wayground.com/join?gc=57785433',
+  practiceWritingUrl: 'https://wayground.com/join?gc=10992729',
   announcement:
-    'Semua materi ada di folder Drive ini. Rekaman Zoom dan link Quizizz akan ditambahkan langsung ke dalamnya setelah tiap sesi.',
+    'Semua materi ada di folder Drive ini. Rekaman Zoom ditambahkan langsung ke dalamnya setelah tiap sesi.',
 };
 
 function csvToRows(csvText) {
