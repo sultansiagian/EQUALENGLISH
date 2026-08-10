@@ -42,7 +42,16 @@ function showState(name) {
   if (functionalZone) functionalZone.hidden = name !== 'welcome';
 
   revealNow(gateStates[name]);
-  if (name === 'welcome') revealNow(functionalZone.querySelector('[data-reveal-stagger]'));
+  // Bug lama: cuma me-reveal SATU elemen ([data-reveal-stagger] pertama,
+  // yaitu grid kartu aksi), jadi .kelas-practice-card dan
+  // .kelas-announcement-card (yang pakai [data-reveal] biasa) tidak
+  // pernah dapat class is-visible -- tetap nyangkut di opacity:0
+  // selamanya walau kotaknya sendiri ada dan makan tempat di layout.
+  // Baru ketahuan lewat sesi asli user, karena tes simulasi sebelumnya
+  // langsung set hidden=false manual, melewati showState() sama sekali.
+  if (name === 'welcome' && functionalZone) {
+    functionalZone.querySelectorAll('[data-reveal], [data-reveal-stagger]').forEach(revealNow);
+  }
 }
 
 // Reveal awal untuk kicker + gerbang signin, yang tampil dari awal
