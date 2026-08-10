@@ -284,7 +284,10 @@ function extractSchedule(csvText) {
   // masih milik bulan yang sama), kolom+1 berisi tanggal (angka hari),
   // kolom+2 berisi topik materi (opsional, boleh kosong).
   const rows = csvToRows(csvText);
-  if (rows.length === 0) return { sessions: [] };
+  if (rows.length === 0) {
+    console.error('extractSchedule: sheet jadwal kosong (0 baris terbaca dari CSV).');
+    return { sessions: [] };
+  }
 
   let dateCol = -1;
   for (const row of rows) {
@@ -294,7 +297,19 @@ function extractSchedule(csvText) {
       break;
     }
   }
-  if (dateCol === -1) return { sessions: [] };
+  if (dateCol === -1) {
+    // Ini penyebab paling umum kartu jadwal kosong padahal env var sudah
+    // diisi benar: sel "TANGGAL FIX" di sheet berubah teks/posisi/hilang,
+    // atau SCHEDULE_CSV_URL kebetulan menunjuk ke tab/sheet yang salah
+    // (mis. tab lain di spreadsheet yang sama, bukan yang ada tabel ini).
+    console.error(
+      'extractSchedule: sel "TANGGAL FIX" tidak ditemukan di ' + rows.length +
+        ' baris yang dibaca dari SCHEDULE_CSV_URL. Cek apakah sheet-nya masih ' +
+        'punya sel persis bertuliskan "TANGGAL FIX", dan apakah SCHEDULE_CSV_URL ' +
+        'menunjuk ke tab/sheet yang benar.'
+    );
+    return { sessions: [] };
+  }
 
   // Jam kelas dicari lewat teks bebas ("...JAM 20.00 WIB...") di sel mana
   // pun, bukan posisi kolom tetap -- itu cuma satu baris keterangan biasa
@@ -353,6 +368,16 @@ function extractSchedule(csvText) {
   }
 
   sessions.sort((a, b) => a.isoDatetime.localeCompare(b.isoDatetime));
+  // console.log (bukan console.error) -- ini bukan kegagalan, cuma jejak
+  // buat ketauan lewat Vercel Functions log kalau kartu jadwal ternyata
+  // kosong padahal parsing-nya sendiri berhasil (mis. semua sesi di sheet
+  // sudah lewat tanggalnya).
+  console.log(
+    'extractSchedule: ketemu ' + sessions.length + ' baris sesi di tabel "TANGGAL FIX" ' +
+      '(kolom tanggal index ' + dateCol + ', jam kelas ' + classHour + ':' +
+      String(classMinute).padStart(2, '0') + ' WIB). Sesi yang sudah lewat difilter ' +
+      'terpisah setelah ini oleh pemanggil.'
+  );
   return { sessions };
 }
 
@@ -451,6 +476,9 @@ module.exports = async function handler(req, res) {
     // request yang kadang "sia-sia" (mis. jadwal ikut diambil walau
     // ternyata emailnya tidak terdaftar). Sheet jadwal juga cuma link
     // publish-to-web publik, tidak ada beban auth tambahan seperti roster.
+    if (!scheduleUrl) {
+      console.log('SCHEDULE_CSV_URL kosong/belum diisi -- kartu jadwal & timer akan kosong.');
+    }
     const [enrolledEmails, scheduleResult] = await Promise.all([
       fetchEnrolledEmails(rosterUrls, validCutoff),
       scheduleUrl ? fetchSchedule(scheduleUrl) : Promise.resolve({ sessions: [] }),
@@ -466,6 +494,16 @@ module.exports = async function handler(req, res) {
     const upcomingSessions = scheduleResult.sessions.filter(
       (s) => new Date(s.isoDatetime).getTime() > Date.now()
     );
+    if (scheduleUrl && upcomingSessions.length === 0) {
+      // Beda dari 0 baris ditemukan sama sekali (dicatat di extractSchedule)
+      // -- ini kasus "parsing berhasil tapi semua sesinya sudah lewat
+      // tanggalnya", yang juga bikin kartu jadwal kosong tapi sebabnya beda.
+      console.log(
+        'SCHEDULE_CSV_URL terbaca (' + scheduleResult.sessions.length +
+          ' baris sesi total) tapi tidak ada satu pun yang belum lewat -- ' +
+          'kartu jadwal & timer akan kosong sampai sheet-nya diisi tanggal baru.'
+      );
+    }
     const materials = {
       ...CLASS_MATERIALS,
       schedule: upcomingSessions,
