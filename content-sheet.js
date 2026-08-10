@@ -28,6 +28,13 @@
  *   Paket 3  | Nama       | GROUP
  *   Paket 3  | Harga      | 47000
  *   Paket 3  | Tersedia   | Ya
+ *   Mentor   | Judul          | Satu mentor untuk saat ini.
+ *   Mentor   | Deskripsi      | Seluruh kelas dipandu langsung...
+ *   Mentor   | Catatan        | Kedua skor ini hasil tes asli...
+ *   Mentor   | Skor IELTS     | 8
+ *   Mentor   | Skor IELTS Dari| 9
+ *   Mentor   | Skor EPT UI    | 673
+ *   Mentor   | Skor EPT UI Dari | 674
  *
  * "Tersedia" isi "Tidak" (atau "Tidak Tersedia") -> kartu itu ditandai
  * merah "Tidak Tersedia". Kosongkan/isi "Ya" -> tampil normal.
@@ -35,6 +42,12 @@
  * dibaca sama -- yang penting angkanya. Badge "Hemat RpX.000 per
  * orang" di Paket 2 & 3 dihitung OTOMATIS dari selisih harga ke
  * Paket 1, tidak perlu diisi manual.
+ *
+ * Keempat "Skor..." di section Mentor itu ANGKA yang dianimasikan hitung
+ * naik oleh script.js begitu kartu itu discroll ke layar (lihat
+ * data-target di index.html). Field "...Dari" itu angka penyebutnya
+ * (mis. "DARI 9" di "IELTS · DARI 9") -- TIDAK ikut dianimasikan, cuma
+ * teks biasa.
  */
 
 const CONTENT_SHEET_URL =
@@ -118,6 +131,24 @@ function extractContent(csvText) {
       if (field.includes('nama')) pkg.name = isi;
       else if (field.includes('harga')) pkg.price = isi;
       else if (field.includes('tersedia')) pkg.available = isi;
+    } else if (bagian.includes('mentor')) {
+      if (field.includes('judul')) {
+        content.mentorTitle = isi;
+      } else if (field.includes('deskripsi')) {
+        content.mentorDesc = isi;
+      } else if (field.includes('catatan')) {
+        content.mentorNote = isi;
+      } else if (field.includes('dari')) {
+        // Dicek DULUAN sebelum ielts/ept di bawah -- "Skor IELTS Dari"
+        // juga mengandung kata "ielts", jadi kalau urutannya kebalik,
+        // baris ini bakal ketimpa salah dianggap "Skor IELTS" biasa.
+        if (field.includes('ielts')) content.mentorIeltsMax = isi;
+        else if (field.includes('ept')) content.mentorEptMax = isi;
+      } else if (field.includes('ielts')) {
+        content.mentorIeltsScore = isi;
+      } else if (field.includes('ept')) {
+        content.mentorEptScore = isi;
+      }
     }
   });
 
@@ -136,6 +167,39 @@ function formatRupiah(n) {
 function isMarkedUnavailable(value) {
   const v = contentNormalize(value);
   return v.startsWith('tidak') || v === 'no' || v === 'tutup' || v === 'penuh' || v === '0';
+}
+
+// Buat elemen [data-target] (angka yang dianimasikan hitung naik oleh
+// script.js). Dua hal dilakukan sekaligus, sengaja:
+//   1. Update dataset.target -- kalau animasinya BELUM jalan (elemen
+//      belum discroll ke layar), script.js bakal baca nilai baru ini
+//      pas animasinya beneran jalan nanti. Ini jalur normal/rapi.
+//   2. Langsung set textContent juga -- buat jaga-jaga kalau animasinya
+//      SUDAH jalan (mis. mode prefers-reduced-motion yang langsung set
+//      teks final saat halaman dimuat, SEBELUM fetch sheet ini selesai)
+//      atau SUDAH kejadian lewat scroll duluan. Tanpa ini, angka lama
+//      bisa nyangkut permanen walau dataset.target-nya sudah benar,
+//      karena observer di script.js cuma memicu animasi SEKALI per
+//      elemen (unobserve setelah triggered).
+// Efek samping kecil yang diterima: kalau animasinya baru jalan SETELAH
+// baris ini (observer belum sempat trigger), angka akan sekilas "reset"
+// ke 0 lalu animasi ulang ke nilai baru -- bukan bug, cuma kosmetik, dan
+// jarang kejadian (perlu scroll ke kartu ini pas fetch belum kelar).
+function applyCounterOverride(id, rawValue) {
+  if (rawValue === undefined) return;
+  const el = document.getElementById(id);
+  if (!el) return;
+  const num = Number(String(rawValue).replace(/[^\d.-]/g, ''));
+  if (!Number.isFinite(num)) return;
+
+  el.dataset.target = String(num);
+  const decimals = Number(el.dataset.decimals || 0);
+  const suffix = el.dataset.suffix || '';
+  el.textContent =
+    num.toLocaleString('id-ID', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }) + suffix;
 }
 
 function applyContent(content) {
@@ -188,6 +252,24 @@ function applyContent(content) {
     // murah dari basePrice (mis. basePrice belum kebaca), teks lama di
     // HTML dibiarkan apa adanya daripada ditampilkan salah.
   });
+
+  const mentorTitleEl = document.getElementById('mentor-title');
+  if (content.mentorTitle && mentorTitleEl) mentorTitleEl.textContent = content.mentorTitle;
+
+  const mentorDescEl = document.getElementById('mentor-desc');
+  if (content.mentorDesc && mentorDescEl) mentorDescEl.textContent = content.mentorDesc;
+
+  const mentorNoteEl = document.getElementById('mentor-note');
+  if (content.mentorNote && mentorNoteEl) mentorNoteEl.textContent = content.mentorNote;
+
+  applyCounterOverride('mentor-ielts-score', content.mentorIeltsScore);
+  applyCounterOverride('mentor-ept-score', content.mentorEptScore);
+
+  const ieltsMaxEl = document.getElementById('mentor-ielts-max');
+  if (content.mentorIeltsMax && ieltsMaxEl) ieltsMaxEl.textContent = content.mentorIeltsMax;
+
+  const eptMaxEl = document.getElementById('mentor-ept-max');
+  if (content.mentorEptMax && eptMaxEl) eptMaxEl.textContent = content.mentorEptMax;
 }
 
 if (CONTENT_SHEET_URL) {

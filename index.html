@@ -380,29 +380,38 @@
             </p>
           </div>
 
+          <!-- Judul, deskripsi, catatan, dan keempat angka skor di sini
+               bisa ditimpa lewat Google Sheet -- lihat content-sheet.js.
+               ID yang jadi target-nya, jangan dihapus/diganti nama tanpa
+               update content-sheet.js juga. Angka skor (data-target)
+               dianimasikan hitung naik oleh script.js begitu kartu ini
+               discroll ke layar -- content-sheet.js menimpa dataset
+               ITU JUGA (bukan cuma textContent) supaya kalau animasinya
+               belum sempat jalan pas sheet selesai di-fetch, animasinya
+               tetap jalan dengan angka yang baru dari sheet. -->
           <div class="proof-mentors proof-mentors-single" data-reveal-stagger>
             <!-- Skor IELTS 8 dari 9 dan EPT UI 673 dari 674, keduanya hasil tes asli. -->
             <article class="proof-mentor">
               <div class="proof-scores">
                 <p class="proof-score">
-                  <strong data-target="8">0</strong>
-                  <span>IELTS · DARI 9</span>
+                  <strong id="mentor-ielts-score" data-target="8">0</strong>
+                  <span>IELTS · DARI <span id="mentor-ielts-max">9</span></span>
                 </p>
                 <p class="proof-score">
-                  <strong data-target="673">0</strong>
-                  <span>EPT UI · DARI 674</span>
+                  <strong id="mentor-ept-score" data-target="673">0</strong>
+                  <span>EPT UI · DARI <span id="mentor-ept-max">674</span></span>
                 </p>
               </div>
               <div>
-                <h3>Satu mentor untuk saat ini.</h3>
-                <p class="proof-role">
+                <h3 id="mentor-title">Satu mentor untuk saat ini.</h3>
+                <p id="mentor-desc" class="proof-role">
                   Seluruh kelas dipandu langsung oleh mentor yang sama, sehingga arahan
                   yang kamu terima konsisten dari awal sampai akhir.
                 </p>
               </div>
             </article>
             <article class="proof-mentor proof-mentor-note">
-              <p class="proof-role">
+              <p id="mentor-note" class="proof-role">
                 Kedua skor ini hasil tes asli, bukan perkiraan. EPT UI setara TOEFL,
                 sehingga latihannya tetap relevan untuk tes apa pun yang kamu tuju.
               </p>
