@@ -1,0 +1,24 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "styles.css"
+        ],
+        "createdAt": "2026-08-10T17:07:39.302Z"
+      },
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "kelas.html"
+        ],
+        "createdAt": "2026-08-10T17:20:49.639Z"
+      }
+    ]
+  }
+}

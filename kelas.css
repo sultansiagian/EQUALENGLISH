@@ -113,11 +113,12 @@
 }
 
 .kelas-brand > span {
-  padding-left: 0.6rem;
-  border-left: 1px solid rgba(255, 255, 255, 0.4);
-  font-family: var(--mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
+  padding-left: 0.7rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.55);
+  font-family: var(--body);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
 }
 
@@ -633,10 +634,15 @@
   transform: none;
 }
 
-/* ---- Latihan soal EPT UI (Wayground): satu kotak, tiga tombol.
-   Huruf R/L/W di sini kecil dan di dalam badge -- beda dari huruf
-   raksasa di section Materi index.html, yang justru pernah jadi
-   sumber bug menabrak teks di mobile (lihat commit sebelumnya). ---- */
+/* ---- Latihan soal EPT UI (Wayground): satu kotak, tiga kartu ala
+   .program-symbol index.html (huruf gede, label kecil, angka urut).
+   BEDA PENTING dari index.html: huruf di sini normal-flow, BUKAN
+   position:absolute. .program-symbol absolut ukuran tetap (18rem) itu
+   yang bikin bug nabrak judul waktu card menyempit ke satu kolom di
+   mobile (lihat catatan di index.html). Karena huruf di sini ikut alur
+   dokumen biasa, dia otomatis mendorong judul turun -- jadi bug yang
+   sama tidak mungkin terulang di lebar kartu manapun, termasuk saat
+   grid ini turun ke satu kolom di bawah 640px. ---- */
 
 .kelas-practice-grid {
   display: grid;
@@ -648,36 +654,50 @@
 .kelas-practice-item {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.8rem;
-  padding: 1.4rem 1rem;
-  text-align: center;
+  align-items: flex-start;
+  gap: 0.9rem;
+  padding: 1.3rem;
   background: var(--paper);
   border-radius: 14px;
 }
 
-.kelas-practice-letter {
+.kelas-practice-pink { background: var(--pink); }
+.kelas-practice-white { background: var(--white); border: 1px solid var(--line); }
+.kelas-practice-paper { background: var(--paper); }
+
+.kelas-practice-top {
   display: flex;
+  width: 100%;
   align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
+  justify-content: space-between;
   color: var(--black);
-  background: var(--pink);
-  border-radius: 50%;
-  font-family: var(--display);
-  font-size: 1.1rem;
-  font-weight: 800;
+  font-family: var(--body);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
 }
+
+.kelas-practice-letter {
+  color: var(--black);
+  font-family: var(--display);
+  font-size: clamp(2.75rem, 7vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.kelas-practice-white .kelas-practice-letter { color: var(--pink); }
 
 .kelas-practice-name {
   color: var(--black);
-  font-size: 0.86rem;
+  font-size: 0.92rem;
   font-weight: 700;
   line-height: 1.35;
 }
 
 .kelas-practice-item .button {
+  align-self: flex-start;
+  margin-top: auto;
   padding: 0.6rem 1.1rem;
   font-size: 0.8rem;
 }

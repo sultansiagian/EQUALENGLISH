@@ -218,23 +218,33 @@
             </div>
             <h3>Uji kemampuanmu lewat <em>kuis interaktif</em></h3>
             <p class="kelas-tile-desc">Tiga kuis, satu buat tiap kemampuan yang diuji di EPT UI.</p>
+            <!-- Huruf besar di sini SENGAJA normal-flow (bukan posisi
+                 absolute), beda dari .program-symbol di index.html yang
+                 pernah nabrak judul begitu card menyempit ke satu kolom
+                 di mobile (lihat catatan di .kelas-practice-letter).
+                 Karena hurufnya ikut alur dokumen, dia otomatis dorong
+                 konten di bawahnya turun, jadi tidak mungkin tumpang
+                 tindih di lebar kartu manapun. -->
             <div class="kelas-practice-grid">
-              <div class="kelas-practice-item">
-                <span class="kelas-practice-letter">R</span>
+              <div class="kelas-practice-item kelas-practice-pink">
+                <div class="kelas-practice-top"><span>BACA TELITI</span><span>01</span></div>
+                <span class="kelas-practice-letter" aria-hidden="true">R</span>
                 <span class="kelas-practice-name">Reading<br />Comprehension</span>
                 <a id="kelas-practice-reading" class="button button-dark" href="#" target="_blank" rel="noopener">
                   Mulai <span aria-hidden="true">↗</span>
                 </a>
               </div>
-              <div class="kelas-practice-item">
-                <span class="kelas-practice-letter">L</span>
+              <div class="kelas-practice-item kelas-practice-white">
+                <div class="kelas-practice-top"><span>DENGAR CERMAT</span><span>02</span></div>
+                <span class="kelas-practice-letter" aria-hidden="true">L</span>
                 <span class="kelas-practice-name">Listening<br />Comprehension</span>
                 <a id="kelas-practice-listening" class="button button-dark" href="#" target="_blank" rel="noopener">
                   Mulai <span aria-hidden="true">↗</span>
                 </a>
               </div>
-              <div class="kelas-practice-item">
-                <span class="kelas-practice-letter">W</span>
+              <div class="kelas-practice-item kelas-practice-paper">
+                <div class="kelas-practice-top"><span>TULIS RAPI</span><span>03</span></div>
+                <span class="kelas-practice-letter" aria-hidden="true">W</span>
                 <span class="kelas-practice-name">Writing<br />Comprehension</span>
                 <a id="kelas-practice-writing" class="button button-dark" href="#" target="_blank" rel="noopener">
                   Mulai <span aria-hidden="true">↗</span>

@@ -1082,7 +1082,7 @@ h2 {
   font-size: clamp(3.15rem, 5.5vw, 5.4rem);
 }
 
-.cta-section h2 em { color: var(--white); }
+.cta-section h2 em { color: var(--black); }
 
 .cta-copy {
   max-width: 365px;
@@ -1834,6 +1834,12 @@ section[id] {
 }
 
 .plan-head h2 { margin-top: 1.3rem; }
+
+.plan-head h2 em {
+  color: var(--black);
+  text-decoration: underline;
+  text-decoration-color: var(--pink);
+}
 
 .plan-lede {
   margin: 0;
