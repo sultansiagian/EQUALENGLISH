@@ -71,6 +71,16 @@ const crypto = require('crypto');
  *                       ke DEFAULT_MATERIALS, sama seperti sebelum ada
  *                       sheet ini).
  *
+ *                       Sheet yang sama ini JUGA dipakai buat tanggal buka
+ *                       kuis Latihan Soal -- baris "Kuis Reading Buka",
+ *                       "Kuis Listening Buka", "Kuis Writing Buka", isi
+ *                       formatnya "20 Agustus" atau "20 Agustus 2026".
+ *                       SENGAJA terpisah dari tabel jadwal "TANGGAL FIX"
+ *                       (SCHEDULE_CSV_URL) -- ganti tanggal buka kuis
+ *                       tidak perlu mengutak-atik kalender kelas beneran.
+ *                       Kosongkan/hapus baris itu untuk kuis yang tidak
+ *                       mau dikunci. Lihat computePracticeUnlocksFromDates().
+ *
  * ENV VAR OPSIONAL, untuk buka form yang sama ke beberapa batch tanpa
  * batch lama ikut kebawa ke kelas batch baru:
  *   BATCH_CUTOFF_DATE   Tanggal buka batch yang sedang berjalan, format
@@ -496,67 +506,67 @@ async function fetchSchedule(url) {
   }
 }
 
-// Durasi satu sesi kelas: 1 jam penuh (fakta produk yang sudah
-// didokumentasikan di index.html -- "Satu jam penuh via Zoom"). Dipakai
-// buat nentuin kapan sebuah topik "sudah SELESAI dibahas", bukan cuma
-// "sudah mulai" -- kuis latihan soal baru kebuka setelah sesi yang
-// membahas topik itu benar-benar berakhir.
-const SESSION_DURATION_MS = 60 * 60 * 1000;
-
-// Kuis Latihan Soal (Reading/Listening/Writing di kelas.html) terkunci
-// sampai sesi kelas yang membahas topik itu -- ditandai lewat kolom
-// MATERI di tabel "TANGGAL FIX", lihat extractSchedule() -- benar-benar
-// selesai. Dipanggil dengan SEMUA sesi (bukan cuma upcomingSessions yang
-// sudah difilter di pemanggil), karena justru sesi yang SUDAH LEWAT yang
-// menentukan status terkunci/terbuka di sini.
+// Tanggal buka kuis Latihan Soal (Reading/Listening/Writing) di
+// kelas.html itu TERPISAH dari tabel jadwal "TANGGAL FIX" -- sengaja,
+// atas permintaan user, supaya ganti tanggal buka kuis tidak perlu
+// mengutak-atik kalender kelas beneran. Diisi manual per skill lewat
+// MATERIALS_CSV_URL (baris "Kuis Reading Buka", dst -- lihat
+// extractMaterials), format "20 Agustus" atau "20 Agustus 2026".
 //
-// Kalau sheet jadwal sama sekali tidak pernah menyebut satu topik (mis.
-// label "Reading" hilang, typo, atau diganti jadi kata lain yang tidak
-// dikenali extractSchedule), kuis topik itu SENGAJA TIDAK dikunci --
-// gagal terbuka, bukan gagal tertutup. Mengunci kuis yang sebelumnya
-// selalu bisa diakses tanpa alasan yang jelas ke siswa (dan tanpa cara
-// bagi siswa buat tau kenapa) lebih buruk daripada kuisnya kebuka lebih
-// awal dari rencana.
-function computePracticeUnlocks(sessions) {
-  const now = Date.now();
+// parseIndonesianDate: sama gaya parsing tahun dengan extractSchedule
+// (tahun opsional, pakai tahun berjalan, majukan setahun kalau hasilnya
+// jatuh jauh di masa lalu). Beda dari jadwal sesi kelas yang punya jam
+// spesifik ("MULAI JAM 20.00 WIB"), tanggal buka kuis dianggap berlaku
+// mulai AWAL hari itu (00:00 WIB) -- ini tanggal kebuka akses, bukan
+// jadwal sesi.
+function parseIndonesianDate(str) {
+  const text = (str || '').trim().toLowerCase();
+  const match = text.match(/(\d{1,2})\s+([a-z]+)\s*(\d{4})?/);
+  if (!match) return null;
+
+  const day = Number(match[1]);
+  const monthIdx = INDONESIAN_MONTHS.indexOf(match[2]);
+  if (monthIdx === -1 || !Number.isInteger(day) || day < 1 || day > 31) return null;
+
+  let year = match[3] ? Number(match[3]) : new Date().getFullYear();
+  let ms = Date.UTC(year, monthIdx, day, -7, 0);
+  if (!match[3] && ms < Date.now() - 200 * 24 * 60 * 60 * 1000) {
+    year += 1;
+    ms = Date.UTC(year, monthIdx, day, -7, 0);
+  }
+  return ms;
+}
+
+// Kalau tanggal buka kuis untuk suatu skill tidak diisi di sheet, atau
+// formatnya gagal dibaca, kuis itu SENGAJA TIDAK dikunci -- gagal
+// terbuka, bukan gagal tertutup. Mengunci kuis tanpa tanggal yang jelas
+// (atau karena salah ketik format) lebih buruk daripada kuisnya kebuka
+// lebih awal dari rencana.
+function computePracticeUnlocksFromDates(unlockDates) {
   const result = {
-    reading: { unlocked: false, unlocksAt: null },
-    listening: { unlocked: false, unlocksAt: null },
-    writing: { unlocked: false, unlocksAt: null },
+    reading: { unlocked: true, unlocksAt: null },
+    listening: { unlocked: true, unlocksAt: null },
+    writing: { unlocked: true, unlocksAt: null },
   };
-  const topicMentioned = { reading: false, listening: false, writing: false };
+  if (!unlockDates) return result;
 
-  sessions.forEach((session) => {
-    const topic = (session.topic || '').trim().toLowerCase();
-    if (!topic) return;
+  Object.keys(result).forEach((skill) => {
+    const raw = unlockDates[skill];
+    if (!raw) return;
 
-    let skill = null;
-    if (topic.includes('reading')) skill = 'reading';
-    else if (topic.includes('listening')) skill = 'listening';
-    else if (topic.includes('writing')) skill = 'writing';
-    if (!skill) return;
-
-    topicMentioned[skill] = true;
-    const sessionEndMs = new Date(session.isoDatetime).getTime() + SESSION_DURATION_MS;
-
-    if (sessionEndMs <= now) {
-      result[skill].unlocked = true;
-    } else {
-      // Simpan waktu kebuka TERDEKAT kalau ada beberapa baris untuk
-      // topik yang sama dan belum ada satu pun yang lewat -- dipakai
-      // client buat nampilin "Kebuka [tanggal]" di kuis yang masih
-      // terkunci.
-      const currentSoonest = result[skill].unlocksAt
-        ? new Date(result[skill].unlocksAt).getTime()
-        : null;
-      if (currentSoonest === null || sessionEndMs < currentSoonest) {
-        result[skill].unlocksAt = new Date(sessionEndMs).toISOString();
-      }
+    const ms = parseIndonesianDate(raw);
+    if (ms === null) {
+      console.error(
+        'Tanggal buka kuis ' + skill + ' tidak kebaca dari MATERIALS_CSV_URL: "' +
+          raw + '" -- pakai format "20 Agustus" atau "20 Agustus 2026". Kuis ' +
+          'ini sementara tetap terbuka sampai formatnya diperbaiki.'
+      );
+      return;
     }
-  });
 
-  Object.keys(topicMentioned).forEach((skill) => {
-    if (!topicMentioned[skill]) result[skill].unlocked = true;
+    if (ms > Date.now()) {
+      result[skill] = { unlocked: false, unlocksAt: new Date(ms).toISOString() };
+    }
   });
 
   return result;
@@ -588,6 +598,7 @@ function extractMaterials(csvText) {
   // tetap kebaca.
   const rows = csvToRows(csvText);
   const found = {};
+  const unlockDates = {};
 
   for (const row of rows) {
     const label = (row[0] || '').trim().toLowerCase();
@@ -595,10 +606,23 @@ function extractMaterials(csvText) {
     const value = (row[1] || '').trim();
     if (!value) continue;
 
+    // Baris tanggal buka kuis ("Kuis Reading Buka", dst) dicek DULUAN,
+    // sebelum daftar MATERIALS_FIELDS di bawah -- kalau tidak, label
+    // itu bisa kepeleset ketimpa jadi practiceReadingUrl (keyword-nya
+    // cuma 'reading', juga ketemu di label ini) dan isi kuisnya jadi
+    // tanggal, bukan link.
+    if (label.includes('buka') || label.includes('unlock')) {
+      if (label.includes('reading')) unlockDates.reading = value;
+      else if (label.includes('listening')) unlockDates.listening = value;
+      else if (label.includes('writing')) unlockDates.writing = value;
+      continue;
+    }
+
     const field = MATERIALS_FIELDS.find((f) => f.keywords.some((kw) => label.includes(kw)));
     if (field) found[field.key] = value;
   }
 
+  found.practiceUnlockDates = unlockDates;
   return found;
 }
 
@@ -851,9 +875,8 @@ module.exports = async function handler(req, res) {
       ...materialsOverrides,
       schedule: upcomingSessions,
       nextSessionAt: upcomingSessions.length > 0 ? upcomingSessions[0].isoDatetime : null,
-      // Dihitung dari SEMUA sesi (scheduleResult.sessions), bukan
-      // upcomingSessions -- lihat computePracticeUnlocks().
-      practiceUnlocked: computePracticeUnlocks(scheduleResult.sessions),
+      // Terpisah dari jadwal kelas -- lihat computePracticeUnlocksFromDates().
+      practiceUnlocked: computePracticeUnlocksFromDates(materialsOverrides.practiceUnlockDates),
     };
 
     return res.status(200).json({ ok: true, materials });

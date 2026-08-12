@@ -226,13 +226,14 @@
                  konten di bawahnya turun, jadi tidak mungkin tumpang
                  tindih di lebar kartu manapun. -->
             <div class="kelas-practice-grid">
-              <!-- Terkunci/terbuka ditentukan server dari tabel jadwal
-                   (kolom MATERI di "TANGGAL FIX") -- lihat
-                   computePracticeUnlocks() di api/verify-access.js dan
-                   applyPracticeLock() di kelas.js. Kuis Reading baru
-                   kebuka setelah sesi kelas yang membahas Reading
-                   SELESAI (bukan cuma sudah mulai), begitu juga
-                   Listening/Writing. -->
+              <!-- Terkunci/terbuka ditentukan server dari tanggal buka
+                   per kuis di MATERIALS_CSV_URL (baris "Kuis Reading
+                   Buka", dst -- SENGAJA terpisah dari tabel jadwal
+                   "TANGGAL FIX", ganti tanggal buka kuis tidak
+                   mengubah kalender kelas beneran) -- lihat
+                   computePracticeUnlocksFromDates() di
+                   api/verify-access.js dan applyPracticeLock() di
+                   kelas.js. -->
               <div class="kelas-practice-item kelas-practice-pink">
                 <div class="kelas-practice-top"><span>BACA TELITI</span><span>01</span></div>
                 <span class="kelas-practice-letter" aria-hidden="true">R</span>

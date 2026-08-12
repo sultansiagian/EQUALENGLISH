@@ -118,9 +118,12 @@ function applyPracticeLock(linkId, status) {
   link.innerHTML = 'Terkunci';
 
   if (note) {
+    // Tanggal buka kuis sekarang independen dari jadwal kelas (bukan
+    // lagi "setelah sesi ini selesai") -- lihat
+    // computePracticeUnlocksFromDates() di api/verify-access.js.
     note.textContent = status.unlocksAt
-      ? 'Kebuka setelah sesi ini: ' + formatSessionDate(status.unlocksAt)
-      : 'Kebuka setelah materinya dibahas di kelas.';
+      ? 'Kebuka ' + formatSessionDate(status.unlocksAt)
+      : 'Belum ada tanggal buka.';
     note.hidden = false;
   }
 }
