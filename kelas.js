@@ -77,7 +77,22 @@ function renderMaterials(materials) {
   announcement.textContent = materials.announcement || '';
 
   renderSchedule(materials.schedule || []);
-  startZoomCountdown(materials.nextSessionAt || null);
+
+  // Default terbuka kalau server belum kirim zoomUnlocked (mis. materials
+  // lama yang di-cache) -- gagal terbuka, sama seperti practiceUnlocked.
+  const zoomStatus = materials.zoomUnlocked || { unlocked: true, unlocksAt: null };
+  const zoomJoinUrl = materials.zoomJoinUrl || '#';
+  applyZoomLock(zoomStatus, zoomJoinUrl);
+  // unlocksAt & zoomJoinUrl dioper ke countdown supaya tick() bisa buka
+  // link-nya sendiri begitu ambang waktunya lewat -- lihat catatan di
+  // startZoomCountdown soal bug lama (link nyangkut "Terkunci" walau
+  // waktunya udah lewat, karena dulu cuma reload manual yang bisa
+  // manggil ulang applyZoomLock). zoomJoinUrl WAJIB dioper ulang di sini
+  // (bukan cuma di renderMaterials), karena applyZoomLock yang dipanggil
+  // dari dalam tick() terjadi SETELAH href sempat dilepas oleh kondisi
+  // terkunci -- tanpa ini link kelihatan kebuka (aria-disabled hilang)
+  // tapi hrefnya kosong, jadi tetap tidak bisa diklik.
+  startZoomCountdown(materials.nextSessionAt || null, zoomStatus.unlocksAt, zoomJoinUrl);
 
   // Default semua terbuka kalau server belum kirim practiceUnlocked
   // sama sekali (mis. materials lama yang di-cache) -- gagal terbuka,
@@ -90,10 +105,6 @@ function renderMaterials(materials) {
   applyPracticeLock('kelas-practice-reading', unlocked.reading);
   applyPracticeLock('kelas-practice-listening', unlocked.listening);
   applyPracticeLock('kelas-practice-writing', unlocked.writing);
-
-  // Default terbuka kalau server belum kirim zoomUnlocked (mis. materials
-  // lama yang di-cache) -- gagal terbuka, sama seperti practiceUnlocked.
-  applyZoomLock(materials.zoomUnlocked || { unlocked: true, unlocksAt: null });
 }
 
 // Kartu Zoom terkunci/terbuka ditentukan server dari jadwal kelas beneran
@@ -101,23 +112,40 @@ function renderMaterials(materials) {
 // menerapkan hasilnya ke DOM. Beda dari applyPracticeLock: link Zoom
 // bukan .button (class-nya .kelas-tile-link), jadi styling & markup
 // disabled-nya juga beda.
-function applyZoomLock(status) {
+function applyZoomLock(status, joinUrl) {
   const link = document.getElementById('kelas-zoom-link');
   const note = document.getElementById('kelas-zoom-lock-note');
   if (!link) return;
 
   if (!status || status.unlocked) {
     link.removeAttribute('aria-disabled');
+    // tabindex eksplisit cuma dipasang pas terkunci (lihat di bawah) --
+    // begitu terbuka dan href beneran balik, elemen &lt;a&gt; sudah
+    // focusable secara native, tabindex="0" jadi sisa yang tidak perlu.
+    link.removeAttribute('tabindex');
     link.innerHTML = 'Buka Zoom <span aria-hidden="true">↗</span>';
-    // href sudah di-set sebelum applyZoomLock dipanggil di
-    // renderMaterials, jadi tidak perlu diulang di sini.
+    // joinUrl WAJIB di-set ulang di sini (bukan diasumsikan sudah ada
+    // dari renderMaterials) -- kalau applyZoomLock ini datang dari
+    // auto-unlock di tick(), href sempat dilepas duluan oleh cabang
+    // terkunci, jadi tanpa baris ini link kelihatan kebuka tapi tidak
+    // bisa diklik kemana-mana.
+    if (joinUrl) link.href = joinUrl;
     if (note) note.hidden = true;
     return;
   }
 
+  // href dilepas supaya klik/Enter tidak pernah menavigasi ke link Zoom
+  // asli walau elemennya sempat ke-render dulu dengan href terisi.
+  // TAPI &lt;a&gt; tanpa href kehilangan status "link" di accessibility
+  // tree hampir di semua browser -- jadi pengguna screen reader/keyboard
+  // tidak tahu kartu ini ada sama sekali, beda dari pengguna awas yang
+  // masih lihat kartunya (redup) dan catatan "Kebuka jam sekian". tabindex
+  // eksplisit "0" mengembalikannya ke urutan Tab tanpa mengembalikan
+  // kemampuan navigasinya.
   link.removeAttribute('href');
   link.removeAttribute('target');
   link.setAttribute('aria-disabled', 'true');
+  link.setAttribute('tabindex', '0');
   link.innerHTML = 'Terkunci';
 
   if (note) {
@@ -140,6 +168,8 @@ function applyPracticeLock(linkId, status) {
   if (!status || status.unlocked) {
     if (item) item.classList.remove('is-locked');
     link.removeAttribute('aria-disabled');
+    // Lihat catatan di applyZoomLock soal tabindex eksplisit ini.
+    link.removeAttribute('tabindex');
     link.innerHTML = 'Mulai <span aria-hidden="true">↗</span>';
     // href sudah di-set sebelum applyPracticeLock dipanggil di
     // renderMaterials, jadi tidak perlu diulang di sini.
@@ -147,10 +177,14 @@ function applyPracticeLock(linkId, status) {
     return;
   }
 
+  // Sama seperti applyZoomLock: href dilepas biar tidak bisa dinavigasi,
+  // tapi tabindex="0" dipasang eksplisit supaya kuis yang terkunci tetap
+  // ke-tab dan ke-announce screen reader, bukan cuma redup buat mata.
   if (item) item.classList.add('is-locked');
   link.removeAttribute('href');
   link.removeAttribute('target');
   link.setAttribute('aria-disabled', 'true');
+  link.setAttribute('tabindex', '0');
   link.innerHTML = 'Terkunci';
 
   if (note) {
@@ -240,24 +274,54 @@ function stopZoomCountdown() {
   }
 }
 
-function startZoomCountdown(nextSessionAt) {
+// Bug lama: link Zoom cuma dibuka sekali di renderMaterials() lewat
+// applyZoomLock(), lalu tidak pernah dicek ulang. Siswa yang buka
+// halaman ini pas masih terkunci, lalu nurut instruksi kartunya sendiri
+// ("simpan halaman ini") dan cuma nunggu tanpa reload, bakal lihat link
+// tetap "Terkunci" walau ambang bukanya (unlocksAt, 5 menit sebelum
+// sesi -- lihat ZOOM_UNLOCK_LEAD_MS di api/verify-access.js) sudah
+// lewat. tick() jalan tiap detik buat teks countdown, jadi dipakai juga
+// buat re-cek unlocksAt dan buka link-nya sendiri begitu waktunya lewat
+// -- tidak perlu reload manual lagi.
+function startZoomCountdown(nextSessionAt, unlocksAt, joinUrl) {
   stopZoomCountdown();
   const timerEl = document.getElementById('kelas-zoom-timer');
   if (!timerEl) return;
 
+  const unlockTarget = unlocksAt ? new Date(unlocksAt).getTime() : NaN;
+  let autoUnlocked = false;
+
+  function maybeAutoUnlock() {
+    if (autoUnlocked || Number.isNaN(unlockTarget)) return;
+    if (Date.now() < unlockTarget) return;
+    autoUnlocked = true;
+    applyZoomLock({ unlocked: true }, joinUrl);
+  }
+
   const target = nextSessionAt ? new Date(nextSessionAt).getTime() : NaN;
   if (Number.isNaN(target)) {
     timerEl.hidden = true;
+    // Tidak ada teks countdown buat ditampilkan, tapi ambang unlock-nya
+    // tetap perlu dicek ulang, jadi tick minimal buat itu tetap jalan.
+    if (!Number.isNaN(unlockTarget)) {
+      maybeAutoUnlock();
+      kelasCountdownInterval = window.setInterval(maybeAutoUnlock, 1000);
+    }
     return;
   }
 
   timerEl.hidden = false;
 
   function tick() {
+    maybeAutoUnlock();
     const diffMs = target - Date.now();
 
     if (diffMs <= 0) {
       timerEl.textContent = 'Sesi berikutnya sudah dimulai -- langsung gabung.';
+      // Jaring pengaman kalau unlocksAt kosong/null (mis. sheet jadwal
+      // gagal diparsing) -- begitu waktu mulai sesi lewat, link tidak
+      // boleh tetap terkunci apa pun alasannya.
+      applyZoomLock({ unlocked: true }, joinUrl);
       stopZoomCountdown();
       return;
     }
@@ -354,7 +418,11 @@ window.handleCredentialResponse = async function handleCredentialResponse(respon
   }
 };
 
-document.getElementById('kelas-signout').addEventListener('click', () => {
+// Dipakai baik oleh "Bukan kamu? Ganti akun" di zona fungsional maupun
+// tombol "Coba akun lain" di state denied/error -- penyebab paling umum
+// "denied" adalah akun Google yang ke-cache salah, jadi siswa harus bisa
+// benerin sendiri di halaman ini, bukan cuma diarahkan ke WhatsApp.
+function trySwitchAccount() {
   if (window.google && window.google.accounts && window.google.accounts.id) {
     // Supaya tombol sign-in menampilkan pilihan akun lagi, bukan
     // langsung memilih akun yang sama seperti sebelumnya.
@@ -363,7 +431,18 @@ document.getElementById('kelas-signout').addEventListener('click', () => {
   stopZoomCountdown();
   showState('signin');
   window.scrollTo({ top: 0, behavior: 'smooth' });
-});
+}
+
+document.getElementById('kelas-signout').addEventListener('click', trySwitchAccount);
+
+const deniedRetryBtn = document.getElementById('kelas-denied-retry');
+if (deniedRetryBtn) deniedRetryBtn.addEventListener('click', trySwitchAccount);
+
+const errorRetryBtn = document.getElementById('kelas-error-retry');
+if (errorRetryBtn) errorRetryBtn.addEventListener('click', trySwitchAccount);
+
+const errorReloadBtn = document.getElementById('kelas-error-reload');
+if (errorReloadBtn) errorReloadBtn.addEventListener('click', () => window.location.reload());
 
 // shader-background.js mencari .hero-shader begitu file itu sendiri
 // dimuat (self-invoking), jadi tidak ada inisialisasi tambahan yang

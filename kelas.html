@@ -100,7 +100,13 @@
           </a>
         </div>
 
-        <!-- STATE 4: login berhasil tapi email tidak terdaftar sebagai siswa -->
+        <!-- STATE 4: login berhasil tapi email tidak terdaftar sebagai siswa.
+             Penyebab paling umum di sini bukan "belum terdaftar" beneran,
+             tapi akun Google yang ke-cache salah (One Tap suka nyaranin
+             akun terakhir dipakai) -- jadi "Coba akun lain" ditaruh
+             sejajar sama WhatsApp, bukan cuma jalan keluar lewat kontak
+             manual. Pakai trySwitchAccount() yang sama dengan tombol
+             "Ganti akun" di zona fungsional. -->
         <div id="kelas-gate-denied" class="kelas-gate-panel" data-reveal-stagger hidden>
           <h1>Email ini belum terdaftar.</h1>
           <p class="kelas-hero-desc">
@@ -108,9 +114,12 @@
             siswa EQUAL English. Kalau kamu baru saja daftar, coba lagi dalam
             beberapa menit. Kalau menurutmu ini keliru, hubungi kami langsung.
           </p>
-          <a class="button button-pink" href="https://wa.me/6285888345058" target="_blank" rel="noopener">
-            Hubungi lewat WhatsApp <span aria-hidden="true">↗</span>
-          </a>
+          <div class="cta-actions">
+            <a class="button button-pink" href="https://wa.me/6285888345058" target="_blank" rel="noopener">
+              Hubungi lewat WhatsApp <span aria-hidden="true">↗</span>
+            </a>
+            <button type="button" id="kelas-denied-retry" class="text-link">Coba akun lain</button>
+          </div>
         </div>
 
         <!-- STATE 5: gangguan teknis -->
@@ -120,9 +129,12 @@
             Halaman ini lagi bermasalah di sisi kami, bukan di akunmu. Coba
             muat ulang halaman, atau hubungi kami kalau masih gagal.
           </p>
-          <a class="button button-pink" href="https://wa.me/6285888345058" target="_blank" rel="noopener">
-            Hubungi lewat WhatsApp <span aria-hidden="true">↗</span>
-          </a>
+          <div class="cta-actions">
+            <a class="button button-pink" href="https://wa.me/6285888345058" target="_blank" rel="noopener">
+              Hubungi lewat WhatsApp <span aria-hidden="true">↗</span>
+            </a>
+            <button type="button" id="kelas-error-reload" class="text-link">Muat ulang halaman</button>
+          </div>
         </div>
       </div>
     </div>
