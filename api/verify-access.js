@@ -635,12 +635,28 @@ async function fetchMaterialsOverrides(url) {
       fetchTextWithRetry(url)
     );
     const found = extractMaterials(text);
+
+    // practiceUnlockDates dihitung terpisah dari MATERIALS_FIELDS (bukan
+    // salah satu field di array itu), jadi dilaporkan sendiri di bawah
+    // supaya angka "ketemu X dari Y field" di sini tetap akurat.
+    const regularFieldsFound = Object.keys(found).filter((k) => k !== 'practiceUnlockDates');
     console.log(
-      'extractMaterials: ketemu ' + Object.keys(found).length + ' dari ' +
+      'extractMaterials: ketemu ' + regularFieldsFound.length + ' dari ' +
         MATERIALS_FIELDS.length + ' field di MATERIALS_CSV_URL (' +
-        Object.keys(found).join(', ') + '). Field yang tidak ketemu pakai ' +
+        regularFieldsFound.join(', ') + '). Field yang tidak ketemu pakai ' +
         'nilai DEFAULT_MATERIALS.'
     );
+
+    // Baris ini yang paling gampang dipakai buat mastiin lewat Vercel >
+    // Functions log apakah baris "Kuis Reading Buka" dkk kebaca benar,
+    // tanpa perlu buka sheet-nya langsung (URL-nya cuma ada sebagai env
+    // var, tidak pernah tersimpan di kode).
+    const unlockDates = found.practiceUnlockDates || {};
+    const unlockSummary = ['reading', 'listening', 'writing']
+      .map((skill) => skill + '=' + (unlockDates[skill] ? '"' + unlockDates[skill] + '"' : 'kosong'))
+      .join(', ');
+    console.log('extractMaterials: tanggal buka kuis dari MATERIALS_CSV_URL -- ' + unlockSummary);
+
     return found;
   } catch (err) {
     console.error('Gagal memuat sheet materi dari MATERIALS_CSV_URL: ' + err.message);
