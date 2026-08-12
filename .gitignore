@@ -25,6 +25,9 @@ EDITS/*-unsplash.jpg
 # Konfigurasi lokal Claude Code
 .claude/
 
+# Skill agent lokal (impeccable, ui-ux-pro-max, marketingskills, dll)
+.agents/
+
 # Berkas sistem
 Thumbs.db
 desktop.ini
