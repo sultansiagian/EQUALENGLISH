@@ -78,6 +78,51 @@ function renderMaterials(materials) {
 
   renderSchedule(materials.schedule || []);
   startZoomCountdown(materials.nextSessionAt || null);
+
+  // Default semua terbuka kalau server belum kirim practiceUnlocked
+  // sama sekali (mis. materials lama yang di-cache) -- gagal terbuka,
+  // bukan gagal tertutup, sama seperti fallback di server-nya.
+  const unlocked = materials.practiceUnlocked || {
+    reading: { unlocked: true },
+    listening: { unlocked: true },
+    writing: { unlocked: true },
+  };
+  applyPracticeLock('kelas-practice-reading', unlocked.reading);
+  applyPracticeLock('kelas-practice-listening', unlocked.listening);
+  applyPracticeLock('kelas-practice-writing', unlocked.writing);
+}
+
+// Kuis terkunci/terbuka ditentukan server dari jadwal (lihat
+// computePracticeUnlocks di api/verify-access.js) -- fungsi ini cuma
+// menerapkan hasilnya ke DOM, bukan memutuskan sendiri.
+function applyPracticeLock(linkId, status) {
+  const link = document.getElementById(linkId);
+  if (!link) return;
+  const item = link.closest('.kelas-practice-item');
+  const note = document.getElementById(linkId + '-note');
+
+  if (!status || status.unlocked) {
+    if (item) item.classList.remove('is-locked');
+    link.removeAttribute('aria-disabled');
+    link.innerHTML = 'Mulai <span aria-hidden="true">↗</span>';
+    // href sudah di-set sebelum applyPracticeLock dipanggil di
+    // renderMaterials, jadi tidak perlu diulang di sini.
+    if (note) note.hidden = true;
+    return;
+  }
+
+  if (item) item.classList.add('is-locked');
+  link.removeAttribute('href');
+  link.removeAttribute('target');
+  link.setAttribute('aria-disabled', 'true');
+  link.innerHTML = 'Terkunci';
+
+  if (note) {
+    note.textContent = status.unlocksAt
+      ? 'Kebuka setelah sesi ini: ' + formatSessionDate(status.unlocksAt)
+      : 'Kebuka setelah materinya dibahas di kelas.';
+    note.hidden = false;
+  }
 }
 
 // Format "Selasa, 12 Agustus, 20:00 WIB" dari ISO UTC -- selalu di zona

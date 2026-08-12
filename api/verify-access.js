@@ -496,6 +496,72 @@ async function fetchSchedule(url) {
   }
 }
 
+// Durasi satu sesi kelas: 1 jam penuh (fakta produk yang sudah
+// didokumentasikan di index.html -- "Satu jam penuh via Zoom"). Dipakai
+// buat nentuin kapan sebuah topik "sudah SELESAI dibahas", bukan cuma
+// "sudah mulai" -- kuis latihan soal baru kebuka setelah sesi yang
+// membahas topik itu benar-benar berakhir.
+const SESSION_DURATION_MS = 60 * 60 * 1000;
+
+// Kuis Latihan Soal (Reading/Listening/Writing di kelas.html) terkunci
+// sampai sesi kelas yang membahas topik itu -- ditandai lewat kolom
+// MATERI di tabel "TANGGAL FIX", lihat extractSchedule() -- benar-benar
+// selesai. Dipanggil dengan SEMUA sesi (bukan cuma upcomingSessions yang
+// sudah difilter di pemanggil), karena justru sesi yang SUDAH LEWAT yang
+// menentukan status terkunci/terbuka di sini.
+//
+// Kalau sheet jadwal sama sekali tidak pernah menyebut satu topik (mis.
+// label "Reading" hilang, typo, atau diganti jadi kata lain yang tidak
+// dikenali extractSchedule), kuis topik itu SENGAJA TIDAK dikunci --
+// gagal terbuka, bukan gagal tertutup. Mengunci kuis yang sebelumnya
+// selalu bisa diakses tanpa alasan yang jelas ke siswa (dan tanpa cara
+// bagi siswa buat tau kenapa) lebih buruk daripada kuisnya kebuka lebih
+// awal dari rencana.
+function computePracticeUnlocks(sessions) {
+  const now = Date.now();
+  const result = {
+    reading: { unlocked: false, unlocksAt: null },
+    listening: { unlocked: false, unlocksAt: null },
+    writing: { unlocked: false, unlocksAt: null },
+  };
+  const topicMentioned = { reading: false, listening: false, writing: false };
+
+  sessions.forEach((session) => {
+    const topic = (session.topic || '').trim().toLowerCase();
+    if (!topic) return;
+
+    let skill = null;
+    if (topic.includes('reading')) skill = 'reading';
+    else if (topic.includes('listening')) skill = 'listening';
+    else if (topic.includes('writing')) skill = 'writing';
+    if (!skill) return;
+
+    topicMentioned[skill] = true;
+    const sessionEndMs = new Date(session.isoDatetime).getTime() + SESSION_DURATION_MS;
+
+    if (sessionEndMs <= now) {
+      result[skill].unlocked = true;
+    } else {
+      // Simpan waktu kebuka TERDEKAT kalau ada beberapa baris untuk
+      // topik yang sama dan belum ada satu pun yang lewat -- dipakai
+      // client buat nampilin "Kebuka [tanggal]" di kuis yang masih
+      // terkunci.
+      const currentSoonest = result[skill].unlocksAt
+        ? new Date(result[skill].unlocksAt).getTime()
+        : null;
+      if (currentSoonest === null || sessionEndMs < currentSoonest) {
+        result[skill].unlocksAt = new Date(sessionEndMs).toISOString();
+      }
+    }
+  });
+
+  Object.keys(topicMentioned).forEach((skill) => {
+    if (!topicMentioned[skill]) result[skill].unlocked = true;
+  });
+
+  return result;
+}
+
 // Kolom A di sheet materi = nama field dalam bahasa manusia (bebas, boleh
 // beda-beda kata asal masih mengandung salah satu keyword di sini).
 // Kolom B = isinya (link atau teks pengumuman). Urutan array menentukan
@@ -785,6 +851,9 @@ module.exports = async function handler(req, res) {
       ...materialsOverrides,
       schedule: upcomingSessions,
       nextSessionAt: upcomingSessions.length > 0 ? upcomingSessions[0].isoDatetime : null,
+      // Dihitung dari SEMUA sesi (scheduleResult.sessions), bukan
+      // upcomingSessions -- lihat computePracticeUnlocks().
+      practiceUnlocked: computePracticeUnlocks(scheduleResult.sessions),
     };
 
     return res.status(200).json({ ok: true, materials });

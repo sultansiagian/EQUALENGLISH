@@ -702,6 +702,36 @@
   font-size: 0.8rem;
 }
 
+/* ---- Kuis terkunci: server (computePracticeUnlocks di
+   api/verify-access.js) menentukan status ini lewat jadwal, JS
+   (applyPracticeLock di kelas.js) yang menerapkannya ke DOM. Huruf
+   raksasa & nama tetap kelihatan normal (biar siswa tetap tau kuis
+   apa aja yang ada), cuma tombolnya yang berubah jadi non-aktif. ---- */
+
+.kelas-practice-item.is-locked .kelas-practice-letter,
+.kelas-practice-item.is-locked .kelas-practice-name {
+  opacity: 0.45;
+}
+
+.kelas-practice-item.is-locked .button {
+  color: var(--ink-muted);
+  cursor: not-allowed;
+  background: transparent;
+  border: 1px solid var(--line);
+}
+
+.kelas-practice-item.is-locked .button:hover {
+  color: var(--ink-muted);
+  background: transparent;
+}
+
+.kelas-practice-lock-note {
+  margin: -0.4rem 0 0;
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
 .kelas-announcement {
   margin: 0;
   color: var(--ink-muted);

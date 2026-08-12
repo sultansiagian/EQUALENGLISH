@@ -226,6 +226,13 @@
                  konten di bawahnya turun, jadi tidak mungkin tumpang
                  tindih di lebar kartu manapun. -->
             <div class="kelas-practice-grid">
+              <!-- Terkunci/terbuka ditentukan server dari tabel jadwal
+                   (kolom MATERI di "TANGGAL FIX") -- lihat
+                   computePracticeUnlocks() di api/verify-access.js dan
+                   applyPracticeLock() di kelas.js. Kuis Reading baru
+                   kebuka setelah sesi kelas yang membahas Reading
+                   SELESAI (bukan cuma sudah mulai), begitu juga
+                   Listening/Writing. -->
               <div class="kelas-practice-item kelas-practice-pink">
                 <div class="kelas-practice-top"><span>BACA TELITI</span><span>01</span></div>
                 <span class="kelas-practice-letter" aria-hidden="true">R</span>
@@ -233,6 +240,7 @@
                 <a id="kelas-practice-reading" class="button button-dark" href="#" target="_blank" rel="noopener">
                   Mulai <span aria-hidden="true">↗</span>
                 </a>
+                <p id="kelas-practice-reading-note" class="kelas-practice-lock-note" hidden></p>
               </div>
               <div class="kelas-practice-item kelas-practice-white">
                 <div class="kelas-practice-top"><span>DENGAR CERMAT</span><span>02</span></div>
@@ -241,6 +249,7 @@
                 <a id="kelas-practice-listening" class="button button-dark" href="#" target="_blank" rel="noopener">
                   Mulai <span aria-hidden="true">↗</span>
                 </a>
+                <p id="kelas-practice-listening-note" class="kelas-practice-lock-note" hidden></p>
               </div>
               <div class="kelas-practice-item kelas-practice-paper">
                 <div class="kelas-practice-top"><span>TULIS RAPI</span><span>03</span></div>
@@ -249,6 +258,7 @@
                 <a id="kelas-practice-writing" class="button button-dark" href="#" target="_blank" rel="noopener">
                   Mulai <span aria-hidden="true">↗</span>
                 </a>
+                <p id="kelas-practice-writing-note" class="kelas-practice-lock-note" hidden></p>
               </div>
             </div>
           </article>
