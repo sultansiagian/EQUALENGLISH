@@ -29,7 +29,7 @@ function revealNow(root) {
   root.classList.add('is-visible');
   if (root.hasAttribute('data-reveal-stagger')) {
     Array.from(root.children).forEach((child, i) => {
-      window.setTimeout(() => child.classList.add('is-visible'), i * 80);
+      window.setTimeout(() => child.classList.add('is-visible'), i * 50);
     });
   }
 }

@@ -48,7 +48,7 @@ syncHeader();
 
 /* ---------- reveal saat masuk viewport ---------- */
 
-const STAGGER_STEP = 80;
+const STAGGER_STEP = 50;
 
 function reveal(element, stagger) {
   element.classList.add('is-visible');

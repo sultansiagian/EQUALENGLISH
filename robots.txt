@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://equalenglish.vercel.app/sitemap.xml

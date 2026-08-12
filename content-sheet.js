@@ -15,7 +15,7 @@
  * FORMAT SHEET (3 kolom: Bagian | Field | Isi), satu baris per item:
  *   Bootcamp | Judul      | Bootcamp EPT UI.
  *   Bootcamp | Deskripsi  | Untuk kamu yang sedang mengejar nilai...
- *   Bootcamp | Poin 1     | Listening, structure & reading, setara materi TOEFL
+ *   Bootcamp | Poin 1     | Listening, reading & writing, setara materi TOEFL
  *   Bootcamp | Poin 2     | Dipandu mentor IELTS 8 dan EPT UI 673
  *   Bootcamp | Poin 3     | Akses rekaman sesi Zoom tanpa batas
  *   Bootcamp | Poin 4     | Latihannya lewat fun quiz...

@@ -15,7 +15,7 @@ butuh persiapan cepat sebelum ujian tanpa pendekatan yang intimidatif.
 ## Product Purpose
 
 Bootcamp intensif 10 hari yang mempersiapkan mahasiswa UI buat EPT UI
-(listening/structure/reading) lewat sesi Zoom langsung dibimbing SATU mentor
+(listening/reading/writing) lewat sesi Zoom langsung dibimbing SATU mentor
 bersertifikat asli (IELTS 8, EPT UI 673), dilengkapi kuis latihan interaktif,
 rekaman sesi tak terbatas, dan komunitas WhatsApp pendamping.
 

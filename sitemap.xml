@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Cuma satu URL: kelas.html sengaja tidak dimasukkan karena punya
+  <meta name="robots" content="noindex, nofollow"> (halaman gerbang
+  login khusus siswa terdaftar, bukan konten publik yang perlu
+  diindeks). Kalau nanti ada halaman publik baru, tambah <url> baru
+  di sini dan update <lastmod>.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://equalenglish.vercel.app/</loc>
+    <lastmod>2026-08-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

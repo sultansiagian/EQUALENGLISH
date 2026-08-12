@@ -8,8 +8,71 @@
       content="EQUAL English, kelas bahasa Inggris yang membuat proses belajarmu lebih terarah dan lebih percaya diri."
     />
     <title>EQUAL English · Your English. Elevated.</title>
+    <link rel="canonical" href="https://equalenglish.vercel.app/" />
     <link rel="icon" type="image/png" href="/EDITS/favicon.png" />
     <link rel="apple-touch-icon" href="/EDITS/favicon.png" />
+
+    <!-- Open Graph / Twitter Card: dibaca WhatsApp, Instagram, dan platform
+         lain saat link ini di-share, biar tidak muncul preview kosong.
+         og-banner.jpg (1200x630) dibuat programatik dari logo + palet situs
+         (lihat riwayat commit), bukan aset desain manual. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://equalenglish.vercel.app/" />
+    <meta property="og:title" content="EQUAL English · Your English. Elevated." />
+    <meta
+      property="og:description"
+      content="EQUAL English, kelas bahasa Inggris yang membuat proses belajarmu lebih terarah dan lebih percaya diri."
+    />
+    <meta property="og:image" content="https://equalenglish.vercel.app/EDITS/og-banner.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="id_ID" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="EQUAL English · Your English. Elevated." />
+    <meta
+      name="twitter:description"
+      content="EQUAL English, kelas bahasa Inggris yang membuat proses belajarmu lebih terarah dan lebih percaya diri."
+    />
+    <meta name="twitter:image" content="https://equalenglish.vercel.app/EDITS/og-banner.jpg" />
+
+    <!-- Schema.org (Course + Organization). Cuma fakta yang sudah
+         terverifikasi & sudah live di halaman ini -- skor mentor asli,
+         harga paket Individual sebagai harga dasar, kontak publik yang
+         sudah dicantumkan di footer. Tidak ada aggregateRating/review,
+         karena belum ada testimoni asli yang bisa diverifikasi (lihat
+         catatan section Mentor). Jangan tambahkan itu sampai ada. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Course",
+        "name": "Bootcamp EPT UI",
+        "description": "Bootcamp intensif 10 hari yang mempersiapkan mahasiswa Universitas Indonesia untuk EPT UI (setara TOEFL): listening, reading, dan writing. Dipandu satu mentor bersertifikat dengan skor asli IELTS 8 dan EPT UI 673.",
+        "provider": {
+          "@type": "Organization",
+          "name": "EQUAL English",
+          "url": "https://equalenglish.vercel.app/",
+          "sameAs": ["https://www.instagram.com/equal.english/"],
+          "email": "englishwithequal@gmail.com"
+        },
+        "hasCourseInstance": {
+          "@type": "CourseInstance",
+          "courseMode": "online",
+          "courseWorkload": "P10D",
+          "location": {
+            "@type": "VirtualLocation",
+            "url": "https://equalenglish.vercel.app/"
+          }
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "59000",
+          "priceCurrency": "IDR",
+          "category": "Individual",
+          "url": "https://equalenglish.vercel.app/#harga",
+          "availability": "https://schema.org/InStock"
+        }
+      }
+    </script>
     <script>
       /* Ditambahkan sebelum render supaya elemen reveal tidak berkedip.
          Fallback 2,5 detik: kalau script.js gagal dimuat, semua konten
@@ -64,11 +127,11 @@
         <div class="hero-glow hero-glow-two"></div>
         <div class="hero-grid page-shell">
           <div class="hero-copy" data-reveal-stagger>
-            <p class="eyebrow"><span></span> Naikkan level bahasa Inggrismu.</p>
+            <p class="eyebrow"><span></span> Persiapan EPT UI, bukan kursus bahasa Inggris umum.</p>
             <h1 id="hero-title">Belajar bahasa Inggris,<br /><em>berani jadi diri sendiri.</em></h1>
             <p class="hero-description">
-              EQUAL English adalah ruang belajar yang membuat bahasa Inggris terasa
-              lebih dekat, lebih terarah, dan menyenangkan untuk dijalani.
+              EQUAL English adalah bootcamp yang menyiapkanmu buat EPT UI, dipandu
+              mentor dengan skor tinggi dari bingung sampai ngerti.
             </p>
             <div class="hero-actions">
               <a class="button button-pink" href="#mulai">Mulai perjalananmu <span aria-hidden="true">↗</span></a>
@@ -223,13 +286,16 @@
         <!-- Foto ilustratif dari Unsplash, bukan dokumentasi kelas EQUAL.
              Keterangannya sengaja deskriptif supaya tidak terbaca sebagai klaim. -->
         <figure class="section-figure" data-reveal>
-          <img
-            src="/EDITS/foto-komunitas.jpg"
-            alt="Seorang pembicara berbicara dengan mikrofon di hadapan peserta yang duduk mengikuti sesi belajar"
-            width="1600"
-            height="1064"
-            loading="lazy"
-          />
+          <picture>
+            <source srcset="/EDITS/foto-komunitas.webp" type="image/webp" />
+            <img
+              src="/EDITS/foto-komunitas.jpg"
+              alt="Seorang pembicara berbicara dengan mikrofon di hadapan peserta yang duduk mengikuti sesi belajar"
+              width="1600"
+              height="1064"
+              loading="lazy"
+            />
+          </picture>
           <figcaption>Ruang belajar bersama</figcaption>
         </figure>
 
@@ -317,13 +383,16 @@
 
         <!-- Foto ilustratif dari Unsplash, bukan dokumentasi kelas EQUAL. -->
         <figure class="section-figure" data-reveal>
-          <img
-            src="/EDITS/foto-kelas-zoom.jpg"
-            alt="Layar laptop menampilkan kelas daring berisi banyak peserta dalam panggilan video"
-            width="1600"
-            height="1200"
-            loading="lazy"
-          />
+          <picture>
+            <source srcset="/EDITS/foto-kelas-zoom.webp" type="image/webp" />
+            <img
+              src="/EDITS/foto-kelas-zoom.jpg"
+              alt="Layar laptop menampilkan kelas daring berisi banyak peserta dalam panggilan video"
+              width="1600"
+              height="1200"
+              loading="lazy"
+            />
+          </picture>
           <figcaption>Semua sesi berlangsung lewat Zoom</figcaption>
         </figure>
 
@@ -349,9 +418,9 @@
           <article class="journey-step">
             <span class="step-number">03</span>
             <div class="step-marker marker-star" aria-hidden="true">✦</div>
-            <h3>Latihan lewat Quizizz</h3>
+            <h3>Latihan lewat Wayground</h3>
             <p>
-              Setiap materi didampingi kuis latihan soal di Quizizz, agar yang baru
+              Setiap materi didampingi kuis latihan soal di Wayground, agar yang baru
               dipelajari langsung kamu gunakan di hari yang sama.
             </p>
           </article>
@@ -479,7 +548,7 @@
             <h2 id="bootcamp-title" data-reveal>Bootcamp EPT UI.</h2>
             <p id="bootcamp-desc" class="bootcamp-lede" data-reveal>
               Untuk kamu yang sedang mengejar nilai di semester pertama. Materinya setara
-              TOEFL: listening, structure, dan reading. Semuanya dijalani secara intensif
+              TOEFL: listening, reading, dan writing. Semuanya dijalani secara intensif
               dalam 10 hari, dan terbuka untuk mahasiswa dari fakultas mana pun di
               Universitas Indonesia.
             </p>
@@ -493,7 +562,7 @@
                jadi target-nya, jangan dihapus/diganti nama tanpa update
                content-sheet.js juga. -->
           <ul class="bootcamp-list" data-reveal-stagger>
-            <li><span>01</span> <span id="bootcamp-point-1">Listening, structure &amp; reading, setara materi TOEFL</span></li>
+            <li><span>01</span> <span id="bootcamp-point-1">Listening, reading &amp; writing, setara materi TOEFL</span></li>
             <li><span>02</span> <span id="bootcamp-point-2">Dipandu mentor IELTS 8 dan EPT UI 673</span></li>
             <li><span>03</span> <span id="bootcamp-point-3">Akses rekaman sesi Zoom tanpa batas</span></li>
             <li><span>04</span> <span id="bootcamp-point-4">Latihannya lewat fun quiz, sehingga tidak terasa seperti mengerjakan drill soal</span></li>
@@ -509,8 +578,9 @@
               <h2 id="plan-title" data-reveal>Makin ramai,<br /><em>makin hemat.</em></h2>
             </div>
             <p class="plan-lede" data-reveal>
-              Harga di bawah berlaku untuk Bootcamp EPT UI dan dihitung per orang, jadi
-              semakin banyak teman yang kamu ajak, semakin kecil yang kamu bayar.
+              Harga di bawah berlaku untuk satu batch Bootcamp EPT UI, dihitung per
+              orang, sudah termasuk seluruh sesi, rekaman Zoom, dan materi di Google
+              Drive. Semakin banyak teman yang kamu ajak, semakin kecil yang kamu bayar.
             </p>
           </div>
 
@@ -572,11 +642,6 @@
               <p id="plan-save-3" class="plan-save">Hemat Rp12.000 per orang</p>
             </article>
           </div>
-
-          <p class="plan-note" data-reveal>
-            Harga berlaku untuk satu batch Bootcamp EPT UI, sudah termasuk seluruh sesi,
-            rekaman Zoom, dan materi di Google Drive.
-          </p>
         </div>
       </section>
 
