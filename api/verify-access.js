@@ -489,6 +489,59 @@ function extractSchedule(csvText) {
   return { sessions };
 }
 
+// Kartu Zoom terkunci sampai 5 menit sebelum sesi berikutnya mulai, dan
+// tetap terbuka sepanjang sesi itu masih berlangsung (durasi dianggap 1
+// jam penuh -- fakta produk yang sama dipakai di tempat lain, "Satu jam
+// penuh via Zoom"). BEDA dari tanggal buka kuis (lihat
+// computePracticeUnlocksFromDates): ini SENGAJA tetap terikat ke jadwal
+// kelas beneran (SCHEDULE_CSV_URL / tabel "TANGGAL FIX"), bukan tanggal
+// manual terpisah -- karena pertanyaannya memang "sesi ini lagi jalan
+// atau enggak", bukan "kontennya udah boleh dibuka belum".
+const ZOOM_UNLOCK_LEAD_MS = 5 * 60 * 1000;
+const ZOOM_SESSION_DURATION_MS = 60 * 60 * 1000;
+
+// Dipanggil dengan SEMUA sesi (bukan cuma upcomingSessions yang sudah
+// difilter di pemanggil) -- justru sesi yang SUDAH MULAI tapi belum
+// genap 1 jam yang perlu dicek di sini juga. Kalau cuma pakai
+// upcomingSessions, siswa yang login PAS sesi lagi jalan bisa salah
+// dikunci, karena begitu jam mulai sebuah sesi lewat, sesi itu langsung
+// hilang dari daftar "akan datang".
+function computeZoomUnlock(sessions) {
+  const now = Date.now();
+
+  // Tidak ada data jadwal sama sekali (SCHEDULE_CSV_URL kosong/gagal
+  // diakses/gagal diparsing) -- jangan pernah mengunci tanpa kepastian
+  // kapan kebuka. Gagal terbuka, bukan gagal tertutup.
+  if (!sessions || sessions.length === 0) {
+    return { unlocked: true, unlocksAt: null };
+  }
+
+  let soonestUnlockAt = null;
+
+  for (const session of sessions) {
+    const startMs = new Date(session.isoDatetime).getTime();
+    const openFrom = startMs - ZOOM_UNLOCK_LEAD_MS;
+    const openUntil = startMs + ZOOM_SESSION_DURATION_MS;
+
+    if (now >= openFrom && now <= openUntil) {
+      return { unlocked: true, unlocksAt: null };
+    }
+    if (openFrom > now && (soonestUnlockAt === null || openFrom < soonestUnlockAt)) {
+      soonestUnlockAt = openFrom;
+    }
+  }
+
+  if (soonestUnlockAt === null) {
+    // Tidak ada sesi yang lagi berlangsung DAN tidak ada sesi akan
+    // datang yang jadwalnya kebaca (mis. semua tanggal di sheet sudah
+    // lewat) -- daripada mengunci tanpa kepastian kapan kebuka lagi,
+    // biarkan terbuka.
+    return { unlocked: true, unlocksAt: null };
+  }
+
+  return { unlocked: false, unlocksAt: new Date(soonestUnlockAt).toISOString() };
+}
+
 async function fetchSchedule(url) {
   // Sama seperti sumber roster: kalau sheet ini gagal diakses atau
   // bentuknya berubah sampai tidak ketemu tabel "TANGGAL FIX", jangan
@@ -893,6 +946,9 @@ module.exports = async function handler(req, res) {
       nextSessionAt: upcomingSessions.length > 0 ? upcomingSessions[0].isoDatetime : null,
       // Terpisah dari jadwal kelas -- lihat computePracticeUnlocksFromDates().
       practiceUnlocked: computePracticeUnlocksFromDates(materialsOverrides.practiceUnlockDates),
+      // Dihitung dari SEMUA sesi (scheduleResult.sessions), bukan
+      // upcomingSessions -- lihat computeZoomUnlock().
+      zoomUnlocked: computeZoomUnlock(scheduleResult.sessions),
     };
 
     return res.status(200).json({ ok: true, materials });

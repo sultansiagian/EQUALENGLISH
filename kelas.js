@@ -90,6 +90,42 @@ function renderMaterials(materials) {
   applyPracticeLock('kelas-practice-reading', unlocked.reading);
   applyPracticeLock('kelas-practice-listening', unlocked.listening);
   applyPracticeLock('kelas-practice-writing', unlocked.writing);
+
+  // Default terbuka kalau server belum kirim zoomUnlocked (mis. materials
+  // lama yang di-cache) -- gagal terbuka, sama seperti practiceUnlocked.
+  applyZoomLock(materials.zoomUnlocked || { unlocked: true, unlocksAt: null });
+}
+
+// Kartu Zoom terkunci/terbuka ditentukan server dari jadwal kelas beneran
+// (lihat computeZoomUnlock di api/verify-access.js) -- fungsi ini cuma
+// menerapkan hasilnya ke DOM. Beda dari applyPracticeLock: link Zoom
+// bukan .button (class-nya .kelas-tile-link), jadi styling & markup
+// disabled-nya juga beda.
+function applyZoomLock(status) {
+  const link = document.getElementById('kelas-zoom-link');
+  const note = document.getElementById('kelas-zoom-lock-note');
+  if (!link) return;
+
+  if (!status || status.unlocked) {
+    link.removeAttribute('aria-disabled');
+    link.innerHTML = 'Buka Zoom <span aria-hidden="true">↗</span>';
+    // href sudah di-set sebelum applyZoomLock dipanggil di
+    // renderMaterials, jadi tidak perlu diulang di sini.
+    if (note) note.hidden = true;
+    return;
+  }
+
+  link.removeAttribute('href');
+  link.removeAttribute('target');
+  link.setAttribute('aria-disabled', 'true');
+  link.innerHTML = 'Terkunci';
+
+  if (note) {
+    note.textContent = status.unlocksAt
+      ? 'Kebuka ' + formatSessionDate(status.unlocksAt)
+      : 'Belum ada jadwal sesi berikutnya.';
+    note.hidden = false;
+  }
 }
 
 // Kuis terkunci/terbuka ditentukan server dari jadwal (lihat

@@ -725,11 +725,26 @@
   background: transparent;
 }
 
-.kelas-practice-lock-note {
+/* Dipakai bareng kuis (di dalam .kelas-practice-item) dan kartu Zoom
+   (di dalam .kelas-tile-live-body) -- makanya nama class-nya generik,
+   bukan .kelas-practice-*. */
+.kelas-lock-note {
   margin: -0.4rem 0 0;
   color: var(--ink-muted);
   font-size: 0.72rem;
   line-height: 1.4;
+}
+
+/* ---- Kartu Zoom terkunci: link jadi non-aktif, mirip tombol kuis
+   terkunci tapi .kelas-tile-link punya style beda dari .button. ---- */
+
+.kelas-tile-link[aria-disabled="true"] {
+  color: var(--ink-muted);
+  cursor: not-allowed;
+}
+
+.kelas-tile-link[aria-disabled="true"] span {
+  transform: none !important;
 }
 
 .kelas-announcement {

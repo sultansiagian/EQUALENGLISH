@@ -159,6 +159,14 @@
               <a id="kelas-zoom-link" class="kelas-tile-link" href="#" target="_blank" rel="noopener">
                 Buka Zoom <span aria-hidden="true">↗</span>
               </a>
+              <!-- Terkunci sampai 5 menit sebelum sesi berikutnya mulai,
+                   tetap terbuka sepanjang sesi berlangsung -- lihat
+                   computeZoomUnlock() di api/verify-access.js dan
+                   applyZoomLock() di kelas.js. Beda dari kuis: ini
+                   SENGAJA tetap terikat ke jadwal kelas beneran (bukan
+                   tanggal manual), karena aksesnya memang soal "sesi
+                   ini lagi jalan atau enggak". -->
+              <p id="kelas-zoom-lock-note" class="kelas-lock-note" hidden></p>
             </div>
           </article>
 
@@ -241,7 +249,7 @@
                 <a id="kelas-practice-reading" class="button button-dark" href="#" target="_blank" rel="noopener">
                   Mulai <span aria-hidden="true">↗</span>
                 </a>
-                <p id="kelas-practice-reading-note" class="kelas-practice-lock-note" hidden></p>
+                <p id="kelas-practice-reading-note" class="kelas-lock-note" hidden></p>
               </div>
               <div class="kelas-practice-item kelas-practice-white">
                 <div class="kelas-practice-top"><span>DENGAR CERMAT</span><span>02</span></div>
@@ -250,7 +258,7 @@
                 <a id="kelas-practice-listening" class="button button-dark" href="#" target="_blank" rel="noopener">
                   Mulai <span aria-hidden="true">↗</span>
                 </a>
-                <p id="kelas-practice-listening-note" class="kelas-practice-lock-note" hidden></p>
+                <p id="kelas-practice-listening-note" class="kelas-lock-note" hidden></p>
               </div>
               <div class="kelas-practice-item kelas-practice-paper">
                 <div class="kelas-practice-top"><span>TULIS RAPI</span><span>03</span></div>
@@ -259,7 +267,7 @@
                 <a id="kelas-practice-writing" class="button button-dark" href="#" target="_blank" rel="noopener">
                   Mulai <span aria-hidden="true">↗</span>
                 </a>
-                <p id="kelas-practice-writing-note" class="kelas-practice-lock-note" hidden></p>
+                <p id="kelas-practice-writing-note" class="kelas-lock-note" hidden></p>
               </div>
             </div>
           </article>
