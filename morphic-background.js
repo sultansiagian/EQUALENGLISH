@@ -20,6 +20,9 @@
      waktu container-nya ter-scroll keluar layar (IntersectionObserver),
      supaya tidak membakar CPU/baterai di halaman yang memang dibuka
      lama-lama ("simpan halaman ini" di kartu Zoom).
+   - Interaksi kursor (dorongan menjauh, "mental") ditambah di luar
+     component React sumbernya -- lihat REPEL_RADIUS/STRENGTH/DECAY dan
+     Particle.prototype.repel().
 */
 
 (function () {
@@ -28,6 +31,13 @@
   var SVG_NS = 'http://www.w3.org/2000/svg';
   var PARTICLE_SIZE = 30;
   var SPAWN_INTERVAL_MS = 180;
+  // Kursor "memental" partikel: begitu jaraknya di bawah REPEL_RADIUS,
+  // partikel didorong menjauh -- makin dekat, makin kuat dorongannya.
+  // REPEL_DECAY < 1 bikin dorongan itu luruh tiap frame (pegas balik ke
+  // jalur alaminya), bukan nempel permanen di posisi baru.
+  var REPEL_RADIUS = 90;
+  var REPEL_STRENGTH = 26;
+  var REPEL_DECAY = 0.9;
 
   // Partikel bisa lahir dari tiga sisi: 'up' (dari bawah, naik -- perilaku
   // asli), 'right' (dari kiri, geser ke kanan), 'left' (dari kanan, geser
@@ -40,6 +50,13 @@
     this.rotationValue = 0;
     this.rotationDirection = Math.random() > 0.5 ? 1 : -1;
     this.scale = 0.4 + Math.random() * 2;
+    // Dorongan dari kursor (lihat repel()) -- diluruhkan tiap frame, jadi
+    // ini offset SEMENTARA di atas jalur alaminya, bukan posisi baru yang
+    // permanen.
+    this.offsetX = 0;
+    this.offsetY = 0;
+    this.naturalX = 0;
+    this.naturalY = 0;
 
     if (direction === 'right') {
       // Lahir di tepi kiri, jalan ke kanan; goyang naik-turun sepanjang
@@ -86,21 +103,40 @@
 
   Particle.prototype.applyTransform = function () {
     var sway = this.secondary + Math.sin((this.position * Math.PI) / this.steps) * this.siner;
-    var x, y;
     if (this.direction === 'right' || this.direction === 'left') {
-      x = this.position;
-      y = sway;
+      this.naturalX = this.position;
+      this.naturalY = sway;
     } else {
-      x = sway;
-      y = this.position;
+      this.naturalX = sway;
+      this.naturalY = this.position;
     }
     var rotation = this.rotationDirection * this.rotationValue;
     this.element.style.transform =
-      'translateX(' + x + 'px) translateY(' + y + 'px) scale(' +
-      this.scale + ') rotate(' + rotation + 'deg)';
+      'translateX(' + (this.naturalX + this.offsetX) + 'px) translateY(' +
+      (this.naturalY + this.offsetY) + 'px) scale(' + this.scale +
+      ') rotate(' + rotation + 'deg)';
   };
 
-  Particle.prototype.move = function () {
+  // Didorong menjauh dari kursor kalau jaraknya (dari posisi ALAMI, bukan
+  // posisi yang sudah ke-offset -- supaya beberapa frame dorongan
+  // berturut-turut tidak saling melipatgandakan) di bawah REPEL_RADIUS.
+  // pointer null/tidak aktif -- cuma luruh, tidak ada dorongan baru.
+  Particle.prototype.repel = function (pointer) {
+    this.offsetX *= REPEL_DECAY;
+    this.offsetY *= REPEL_DECAY;
+    if (!pointer || !pointer.active) return;
+
+    var dx = this.naturalX + PARTICLE_SIZE / 2 - pointer.x;
+    var dy = this.naturalY + PARTICLE_SIZE / 2 - pointer.y;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist >= REPEL_RADIUS || dist === 0) return;
+
+    var force = (1 - dist / REPEL_RADIUS) * REPEL_STRENGTH;
+    this.offsetX += (dx / dist) * force;
+    this.offsetY += (dy / dist) * force;
+  };
+
+  Particle.prototype.move = function (pointer) {
     if (this.direction === 'right') {
       this.position += this.friction;
     } else {
@@ -109,6 +145,11 @@
     }
     this.rotationValue += this.friction;
     this.applyTransform();
+    // repel() dipanggil SETELAH applyTransform: butuh naturalX/Y hasil
+    // posisi frame ini, lalu hasil offset barunya baru kepakai di
+    // applyTransform() pemanggilan BERIKUTNYA -- satu frame telat, tidak
+    // kelihatan bedanya di mata tapi bikin urutannya jelas/tidak sirkular.
+    this.repel(pointer);
 
     var offScreen =
       this.direction === 'right'
@@ -144,6 +185,12 @@
     var visible = true;
     var disposed = false;
     var bounds = { width: 0, height: 0 };
+    // Posisi kursor, relatif ke pojok kiri-atas container (sistem
+    // koordinat yang sama dipakai partikel). .kelas-morphic-particles
+    // sengaja pointer-events:none (supaya tidak pernah mencuri klik dari
+    // kartu di atasnya) -- makanya pointermove-nya didengarkan di
+    // document, bukan di container/partikelnya sendiri.
+    var pointer = { x: 0, y: 0, active: false };
 
     function measure() {
       var rect = container.getBoundingClientRect();
@@ -174,7 +221,7 @@
     function frame() {
       var next = [];
       for (var i = 0; i < particles.length; i++) {
-        if (particles[i].move()) next.push(particles[i]);
+        if (particles[i].move(pointer)) next.push(particles[i]);
       }
       particles = next;
       // Terus jalan selama masih ada partikel di layar, walau spawner
@@ -250,6 +297,24 @@
     }
     reduceMotion.addEventListener('change', onMotionPreferenceChange);
 
+    // pointerleave di document (bukan container) supaya kursor yang
+    // keluar lewat tepi manapun -- termasuk keluar dari window sama
+    // sekali -- tetap membuat partikel berhenti didorong. blur jaga-jaga
+    // kalau tab/window kehilangan fokus tanpa event pointerleave (mis.
+    // Alt-Tab dengan kursor masih di atas halaman).
+    function onPointerMove(event) {
+      var rect = container.getBoundingClientRect();
+      pointer.x = event.clientX - rect.left;
+      pointer.y = event.clientY - rect.top;
+      pointer.active = true;
+    }
+    function onPointerGone() {
+      pointer.active = false;
+    }
+    document.addEventListener('pointermove', onPointerMove, { passive: true });
+    document.addEventListener('pointerleave', onPointerGone);
+    window.addEventListener('blur', onPointerGone);
+
     sync();
 
     var dispose = function () {
@@ -261,6 +326,9 @@
       if (intersectionObserver) intersectionObserver.disconnect();
       document.removeEventListener('visibilitychange', onVisibilityChange);
       reduceMotion.removeEventListener('change', onMotionPreferenceChange);
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerleave', onPointerGone);
+      window.removeEventListener('blur', onPointerGone);
       for (var i = 0; i < particles.length; i++) particles[i].destroy();
       particles = [];
     };
