@@ -29,18 +29,38 @@
   var PARTICLE_SIZE = 30;
   var SPAWN_INTERVAL_MS = 180;
 
-  function Particle(container, bounds, x, friction, ballColor) {
+  // Partikel bisa lahir dari tiga sisi: 'up' (dari bawah, naik -- perilaku
+  // asli), 'right' (dari kiri, geser ke kanan), 'left' (dari kanan, geser
+  // ke kiri). Ketiganya pakai rumus yang sama, cuma sumbu utama (arah
+  // jalan) dan sumbu sekunder (arah goyang sinus) ditukar posisinya.
+  function Particle(container, bounds, direction, origin, friction, ballColor) {
     this.container = container;
-    this.x = x;
+    this.direction = direction;
     this.friction = friction;
-    // steps & siner dihitung dari tinggi/lebar container (lihat catatan
-    // di header), bukan dari window.
-    this.steps = bounds.height / 2;
-    this.siner = (bounds.width / 2.5) * Math.random();
-    this.position = bounds.height + PARTICLE_SIZE;
     this.rotationValue = 0;
     this.rotationDirection = Math.random() > 0.5 ? 1 : -1;
     this.scale = 0.4 + Math.random() * 2;
+
+    if (direction === 'right') {
+      // Lahir di tepi kiri, jalan ke kanan; goyang naik-turun sepanjang
+      // tinggi container.
+      this.secondary = origin; // posisi vertikal awal (tetap, cuma digoyang sinus)
+      this.steps = bounds.width / 2;
+      this.siner = (bounds.height / 2.5) * Math.random();
+      this.position = -PARTICLE_SIZE;
+    } else if (direction === 'left') {
+      // Lahir di tepi kanan, jalan ke kiri; goyang naik-turun.
+      this.secondary = origin;
+      this.steps = bounds.width / 2;
+      this.siner = (bounds.height / 2.5) * Math.random();
+      this.position = bounds.width + PARTICLE_SIZE;
+    } else {
+      // 'up' (default): lahir di bawah, naik; goyang kiri-kanan.
+      this.secondary = origin;
+      this.steps = bounds.height / 2;
+      this.siner = (bounds.width / 2.5) * Math.random();
+      this.position = bounds.height + PARTICLE_SIZE;
+    }
 
     var svg = document.createElementNS(SVG_NS, 'svg');
     svg.setAttribute('viewBox', '0 0 67.4 67.4');
@@ -58,28 +78,54 @@
     svg.style.height = PARTICLE_SIZE + 'px';
     svg.style.top = '0';
     svg.style.left = '0';
-    svg.style.transform =
-      'translateX(' + this.x + 'px) translateY(' + this.position + 'px)';
 
     container.appendChild(svg);
     this.element = svg;
+    this.applyTransform();
   }
 
-  Particle.prototype.move = function () {
-    this.position -= this.friction;
-    var left = this.x + Math.sin((this.position * Math.PI) / this.steps) * this.siner;
-    this.rotationValue += this.friction;
+  Particle.prototype.applyTransform = function () {
+    var sway = this.secondary + Math.sin((this.position * Math.PI) / this.steps) * this.siner;
+    var x, y;
+    if (this.direction === 'right' || this.direction === 'left') {
+      x = this.position;
+      y = sway;
+    } else {
+      x = sway;
+      y = this.position;
+    }
     var rotation = this.rotationDirection * this.rotationValue;
-
     this.element.style.transform =
-      'translateX(' + left + 'px) translateY(' + this.position + 'px) scale(' +
+      'translateX(' + x + 'px) translateY(' + y + 'px) scale(' +
       this.scale + ') rotate(' + rotation + 'deg)';
+  };
 
-    if (this.position < -PARTICLE_SIZE) {
+  Particle.prototype.move = function () {
+    if (this.direction === 'right') {
+      this.position += this.friction;
+    } else {
+      // 'left' dan 'up' dua-duanya berkurang menuju sisi seberang.
+      this.position -= this.friction;
+    }
+    this.rotationValue += this.friction;
+    this.applyTransform();
+
+    var offScreen =
+      this.direction === 'right'
+        ? this.position > this._maxPosition()
+        : this.position < -PARTICLE_SIZE;
+    if (offScreen) {
       this.destroy();
       return false;
     }
     return true;
+  };
+
+  // Batas jalan buat arah 'right' disimpan lewat siner/steps saja (tidak
+  // ada field width tersendiri di instance), jadi dihitung balik dari
+  // steps (steps = bounds.width / 2 khusus arah horizontal).
+  Particle.prototype._maxPosition = function () {
+    return this.steps * 2 + PARTICLE_SIZE;
   };
 
   Particle.prototype.destroy = function () {
@@ -109,16 +155,19 @@
       return !disposed && visible && !reduceMotion.matches && bounds.height > 0;
     }
 
+    // Tiga arah lahir dengan peluang sama: dari bawah (naik), dari kiri
+    // (geser kanan), dari kanan (geser kiri) -- origin-nya masing-masing
+    // posisi di sumbu SEKUNDER (acak di lebar container buat 'up', acak
+    // di tinggi container buat 'left'/'right').
+    var DIRECTIONS = ['up', 'right', 'left'];
+
     function spawn() {
       if (!running()) return;
+      var direction = DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)];
+      var origin =
+        direction === 'up' ? Math.random() * bounds.width : Math.random() * bounds.height;
       particles.push(
-        new Particle(
-          container,
-          bounds,
-          Math.random() * bounds.width,
-          1 + Math.random(),
-          ballColor
-        )
+        new Particle(container, bounds, direction, origin, 1 + Math.random(), ballColor)
       );
     }
 
