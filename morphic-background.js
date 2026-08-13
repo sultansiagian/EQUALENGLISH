@@ -23,6 +23,9 @@
    - Interaksi kursor (dorongan menjauh, "mental") ditambah di luar
      component React sumbernya -- lihat REPEL_RADIUS/STRENGTH/DECAY dan
      Particle.prototype.repel().
+   - Dimatikan total di layar sempit (IS_NARROW, <=640px): sempat dicoba
+     diringankan (batas partikel, blur lebih tipis), tapi tetap patah-
+     patah di HP. Solusinya dibikin biner, bukan bertingkat.
 */
 
 (function () {
@@ -31,17 +34,27 @@
   var SVG_NS = 'http://www.w3.org/2000/svg';
   var PARTICLE_SIZE = 30;
 
-  // Layar sempit (HP) dapat setelan lebih ringan: interval spawn lebih
-  // jarang dan batas partikel hidup lebih rendah. Filter goo (feGaussianBlur)
-  // itu mahal per elemen -- yang paling menentukan performa BUKAN jumlah
-  // partikel yang di-spawn per detik, tapi berapa banyak yang HIDUP
-  // BERSAMAAN sepanjang perjalanannya (partikel arah 'up' butuh ~15-25
-  // detik nyeberang container yang tinggi, jadi menumpuk kalau tidak
-  // dibatasi -- ini penyebab utama nge-lag di HP, bukan sekadar "device-nya
-  // lemah").
-  var IS_NARROW = window.matchMedia('(max-width: 640px)').matches;
-  var SPAWN_INTERVAL_MS = IS_NARROW ? 340 : 180;
-  var MAX_PARTICLES = IS_NARROW ? 14 : 34;
+  // Layar sempit (HP) dimatikan TOTAL -- sudah dicoba diringankan (batas
+  // partikel, blur lebih tipis) tapi tetap patah-patah. Filter goo
+  // (feGaussianBlur) diproses ulang tiap partikel bergerak, dan itu
+  // ternyata masih terlalu berat buat GPU HP kebanyakan, jadi solusinya
+  // dibikin biner: nyala penuh di layar biasa, kosong (cuma warna hitam
+  // polos dari .kelas-functional) di layar sempit.
+  //
+  // SENGAJA fungsi, bukan konstanta yang dihitung sekali di-cache ke var --
+  // dicek live setiap running() dipanggil (murah, matchMedia native).
+  // Kalau di-cache sekali di sini, nilainya kebeku permanen sepanjang umur
+  // halaman berdasarkan kondisi viewport TEPAT SAAT script ini pertama
+  // jalan; efek sampingnya kalau ada momen viewport belum "settle" pas
+  // script diparse (mis. sebagian browser/embed yang layout awalnya
+  // telat), matchMedia bisa kebaca salah dan tidak akan pernah dicek
+  // ulang lagi selamanya. Dicek live juga otomatis jadi reaktif kalau
+  // layar diputar/di-resize di tengah sesi -- bonus, bukan tujuan utama.
+  function isNarrowViewport() {
+    return window.matchMedia('(max-width: 640px)').matches;
+  }
+  var SPAWN_INTERVAL_MS = 180;
+  var MAX_PARTICLES = 34;
 
   // Kursor "memental" partikel: begitu jaraknya di bawah REPEL_RADIUS,
   // partikel didorong menjauh -- makin dekat, makin kuat dorongannya.
@@ -219,7 +232,9 @@
     }
 
     function running() {
-      return !disposed && visible && !reduceMotion.matches && bounds.height > 0;
+      return (
+        !disposed && !isNarrowViewport() && visible && !reduceMotion.matches && bounds.height > 0
+      );
     }
 
     // Tiga arah lahir dengan peluang sama: dari bawah (naik), dari kiri
