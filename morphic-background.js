@@ -30,14 +30,34 @@
 
   var SVG_NS = 'http://www.w3.org/2000/svg';
   var PARTICLE_SIZE = 30;
-  var SPAWN_INTERVAL_MS = 180;
+
+  // Layar sempit (HP) dapat setelan lebih ringan: interval spawn lebih
+  // jarang dan batas partikel hidup lebih rendah. Filter goo (feGaussianBlur)
+  // itu mahal per elemen -- yang paling menentukan performa BUKAN jumlah
+  // partikel yang di-spawn per detik, tapi berapa banyak yang HIDUP
+  // BERSAMAAN sepanjang perjalanannya (partikel arah 'up' butuh ~15-25
+  // detik nyeberang container yang tinggi, jadi menumpuk kalau tidak
+  // dibatasi -- ini penyebab utama nge-lag di HP, bukan sekadar "device-nya
+  // lemah").
+  var IS_NARROW = window.matchMedia('(max-width: 640px)').matches;
+  var SPAWN_INTERVAL_MS = IS_NARROW ? 340 : 180;
+  var MAX_PARTICLES = IS_NARROW ? 14 : 34;
+
   // Kursor "memental" partikel: begitu jaraknya di bawah REPEL_RADIUS,
   // partikel didorong menjauh -- makin dekat, makin kuat dorongannya.
   // REPEL_DECAY < 1 bikin dorongan itu luruh tiap frame (pegas balik ke
-  // jalur alaminya), bukan nempel permanen di posisi baru.
-  var REPEL_RADIUS = 90;
-  var REPEL_STRENGTH = 26;
-  var REPEL_DECAY = 0.9;
+  // jalur alaminya), bukan nempel permanen di posisi baru. Radius dibuat
+  // cukup besar supaya efeknya gampang "kesenggol" lewat gerakan kursor
+  // biasa, bukan cuma kalau presisi nempel ke satu partikel.
+  var REPEL_RADIUS = 150;
+  var REPEL_STRENGTH = 34;
+  var REPEL_DECAY = 0.88;
+  // Touch device (HP/tablet) tidak punya kursor yang benar-benar hover --
+  // pointermove cuma muncul pas jari lagi diseret, bukan sekadar "di atas"
+  // elemen. Fitur kursor dimatikan total di situ: bukan cuma percuma,
+  // tapi listener pointermove yang jalan terus-menerus juga menambah beban
+  // di perangkat yang justru paling butuh dihemat.
+  var SUPPORTS_HOVER = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
   // Partikel bisa lahir dari tiga sisi: 'up' (dari bawah, naik -- perilaku
   // asli), 'right' (dari kiri, geser ke kanan), 'left' (dari kanan, geser
@@ -209,7 +229,10 @@
     var DIRECTIONS = ['up', 'right', 'left'];
 
     function spawn() {
-      if (!running()) return;
+      // Batas partikel hidup bersamaan -- lihat catatan MAX_PARTICLES di
+      // atas soal kenapa ini yang paling menentukan performa, bukan
+      // interval spawn-nya sendiri.
+      if (!running() || particles.length >= MAX_PARTICLES) return;
       var direction = DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)];
       var origin =
         direction === 'up' ? Math.random() * bounds.width : Math.random() * bounds.height;
@@ -311,9 +334,15 @@
     function onPointerGone() {
       pointer.active = false;
     }
-    document.addEventListener('pointermove', onPointerMove, { passive: true });
-    document.addEventListener('pointerleave', onPointerGone);
-    window.addEventListener('blur', onPointerGone);
+    // Cuma dipasang di perangkat yang benar-benar punya kursor hover
+    // (lihat SUPPORTS_HOVER) -- di HP/tablet listener ini tidak berguna
+    // (pointermove nyaris tidak pernah muncul tanpa jari diseret) dan
+    // cuma nambah kerjaan di perangkat yang paling butuh dihemat.
+    if (SUPPORTS_HOVER) {
+      document.addEventListener('pointermove', onPointerMove, { passive: true });
+      document.addEventListener('pointerleave', onPointerGone);
+      window.addEventListener('blur', onPointerGone);
+    }
 
     sync();
 
@@ -326,9 +355,11 @@
       if (intersectionObserver) intersectionObserver.disconnect();
       document.removeEventListener('visibilitychange', onVisibilityChange);
       reduceMotion.removeEventListener('change', onMotionPreferenceChange);
-      document.removeEventListener('pointermove', onPointerMove);
-      document.removeEventListener('pointerleave', onPointerGone);
-      window.removeEventListener('blur', onPointerGone);
+      if (SUPPORTS_HOVER) {
+        document.removeEventListener('pointermove', onPointerMove);
+        document.removeEventListener('pointerleave', onPointerGone);
+        window.removeEventListener('blur', onPointerGone);
+      }
       for (var i = 0; i < particles.length; i++) particles[i].destroy();
       particles = [];
     };

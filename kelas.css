@@ -872,6 +872,11 @@
   .kelas-brand > span { display: none; }
   .kelas-tile-grid { grid-template-columns: 1fr; }
   .kelas-practice-grid { grid-template-columns: 1fr; }
+  /* Sama seperti IS_NARROW di morphic-background.js (breakpoint 640px
+     yang sama, sengaja disamakan): blur goo yang lebih tipis, lebih
+     murah diproses ulang tiap partikel bergerak -- lihat #goo-light
+     di kelas.html. */
+  .kelas-morphic-particles { filter: url("#goo-light"); }
 }
 
 /* Tile Zoom (kelas-tile-live) turun jadi tumpukan vertikal di layar

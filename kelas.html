@@ -324,6 +324,21 @@
           />
           <feBlend in="SourceGraphic" in2="colormatrix" />
         </filter>
+        <!-- Versi lebih ringan buat layar sempit (lihat @media di
+             kelas.css) -- stdDeviation blur adalah bagian termahal dari
+             filter goo ini, dan diproses ulang tiap partikel bergerak.
+             Radius diperkecil, matriks kontrasnya disesuaikan supaya
+             bentuk "cair"-nya tetap dapat walau blur-nya lebih tipis. -->
+        <filter id="goo-light">
+          <feGaussianBlur in="SourceGraphic" result="blur" stdDeviation="7" />
+          <feColorMatrix
+            in="blur"
+            result="colormatrix"
+            type="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 14 -6"
+          />
+          <feBlend in="SourceGraphic" in2="colormatrix" />
+        </filter>
       </defs>
     </svg>
 
