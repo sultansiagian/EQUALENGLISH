@@ -336,14 +336,65 @@
    ============================================================ */
 
 .kelas-functional {
+  position: relative;
   padding: 4.2rem 0 6rem;
+  overflow: hidden;
+  background: var(--black);
+}
+
+/* ---- Latar morphic (partikel pink yang saling meleleh) ----
+   Dua lapis: .kelas-morphic sebagai kotak pembatas (clip + z-index),
+   .kelas-morphic-particles sebagai kanvas tempat partikel SVG dibuat
+   morphic-background.js. Filter goo-nya dipasang di lapisan dalam saja,
+   supaya blur besarnya tidak ikut kena ke apa pun selain partikel.
+
+   pointer-events:none supaya lapisan ini tidak pernah mencuri klik dari
+   kartu di atasnya (link Zoom/Drive/kuis semuanya harus tetap bisa
+   diklik). */
+.kelas-morphic {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.kelas-morphic-particles {
+  position: absolute;
+  inset: 0;
+  filter: url("#goo");
+}
+
+/* Definisi <filter> tidak boleh ikut memakan tempat di layout. width/
+   height 0 saja tidak cukup di sebagian browser, jadi dikunci absolut. */
+.kelas-morphic-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Partikel murni dekoratif: begitu pengguna minta gerakan dikurangi,
+   morphic-background.js berhenti membuat partikel sama sekali, dan
+   lapisannya disembunyikan supaya tidak ada sisa bulatan yang diam di
+   tempat (yang justru bikin latar kelihatan "rusak", bukan tenang). */
+@media (prefers-reduced-motion: reduce) {
+  .kelas-morphic {
+    display: none;
+  }
 }
 
 .kelas-shell {
+  position: relative;
+  z-index: 1;
   width: min(720px, calc(100% - 3rem));
   margin: 0 auto;
 }
 
+/* Warna di sini SENGAJA putih/putih-pudar, bukan var(--ink-muted)/
+   var(--black) seperti sisa situs -- zona ini sekarang berlatar gelap
+   (lihat .kelas-functional), jadi token warna "teks di atas terang"
+   yang dipakai di mana-mana lainnya justru nyaris tak kebaca di sini. */
 .kelas-welcome-bar {
   display: flex;
   align-items: center;
@@ -352,18 +403,18 @@
   gap: 0.6rem;
   margin-bottom: 2.6rem;
   padding-bottom: 1.2rem;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
   font-size: 0.82rem;
-  color: var(--ink-muted);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .kelas-welcome-bar strong {
-  color: var(--black);
+  color: var(--white);
 }
 
 #kelas-signout {
   padding: 0;
-  color: var(--ink-muted);
+  color: rgba(255, 255, 255, 0.6);
   background: none;
   border: none;
   font-family: var(--body);
@@ -374,7 +425,7 @@
 
 #kelas-signout:hover,
 #kelas-signout:focus-visible {
-  color: var(--black);
+  color: var(--white);
 }
 
 /* ---- Headline "Ruang kelasmu, siap dipakai." -- satu-satunya
@@ -388,7 +439,7 @@
 
 .kelas-materi-title {
   margin: 0 0 0.6rem;
-  color: var(--black);
+  color: var(--white);
   font-family: var(--display);
   font-size: clamp(2rem, 5vw, 2.7rem);
   font-weight: 800;
@@ -415,7 +466,7 @@
 .kelas-materi-lede {
   margin: 0;
   max-width: 420px;
-  color: var(--ink-muted);
+  color: rgba(255, 255, 255, 0.72);
   font-size: 0.96rem;
   line-height: 1.55;
 }

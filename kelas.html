@@ -146,6 +146,16 @@
          basa-basi jadi prioritas, bukan atmosfer.
          ============================================================ -->
     <main id="kelas-functional" class="kelas-functional" hidden>
+      <!-- Latar morphic: partikel bulat pink naik ke atas, saling meleleh
+           lewat SVG goo filter di bawah. Murni dekoratif (aria-hidden),
+           dan di-render di lapisan paling bawah supaya kartu-kartu di
+           atasnya tetap solid dan kontras penuh. Lihat morphic-background.js
+           soal reduced-motion & penghentian animasi saat tab/zona tidak
+           terlihat. -->
+      <div class="kelas-morphic" aria-hidden="true">
+        <div class="kelas-morphic-particles"></div>
+      </div>
+
       <div class="kelas-shell">
         <div class="kelas-welcome-bar">
           <p>Masuk sebagai <strong id="kelas-email"></strong></p>
@@ -295,7 +305,30 @@
       </div>
     </main>
 
+    <!-- Filter "goo": blur besar lalu kontras alpha ekstrem, sehingga dua
+         lingkaran yang berdekatan menyatu jadi satu bentuk cair, bukan dua
+         bulatan yang saling tumpuk. Dipakai oleh .kelas-morphic-particles
+         lewat CSS filter: url(#goo). Ditaruh di luar zona fungsional yang
+         [hidden] supaya definisi filter-nya tetap ada di dokumen bahkan
+         sebelum login (elemen di dalam display:none tidak selalu bisa
+         dijadikan referensi filter). -->
+    <svg class="kelas-morphic-defs" aria-hidden="true" focusable="false">
+      <defs>
+        <filter id="goo">
+          <feGaussianBlur in="SourceGraphic" result="blur" stdDeviation="12" />
+          <feColorMatrix
+            in="blur"
+            result="colormatrix"
+            type="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 21 -9"
+          />
+          <feBlend in="SourceGraphic" in2="colormatrix" />
+        </filter>
+      </defs>
+    </svg>
+
     <script src="/shader-background.js"></script>
     <script src="/kelas.js"></script>
+    <script src="/morphic-background.js"></script>
   </body>
 </html>

@@ -51,6 +51,19 @@ function showState(name) {
   // langsung set hidden=false manual, melewati showState() sama sekali.
   if (name === 'welcome' && functionalZone) {
     functionalZone.querySelectorAll('[data-reveal], [data-reveal-stagger]').forEach(revealNow);
+    // Latar morphic (morphic-background.js) diukur pertama kali saat
+    // scriptnya jalan di page load, waktu zona ini masih hidden (kotak
+    // 0x0) -- panggil ulang eksplisit di sini begitu zona ini benar-benar
+    // tampil, jangan cuma andalkan ResizeObserver-nya sendiri. Dibungkus
+    // setTimeout (BUKAN requestAnimationFrame) supaya baris ini jalan
+    // setelah browser sempat memproses perubahan hidden->tampil barusan.
+    // rAF sengaja dihindari di sini -- browser men-throttle/menjeda rAF
+    // di tab yang sedang tidak fokus/di-background, dan login lewat
+    // Google redirect/popup persis situasi di mana tab bisa saja belum
+    // fokus penuh. setTimeout tidak kena masalah itu.
+    if (window.__kelasMorphicSync) {
+      window.setTimeout(window.__kelasMorphicSync, 0);
+    }
   }
 }
 
