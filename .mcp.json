@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "pika-mcp": {
+      "type": "http",
+      "url": "https://experiment-mcp.pika.art/api/mcp"
+    }
+  }
+}
