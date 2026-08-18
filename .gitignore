@@ -32,3 +32,10 @@ EDITS/*-unsplash.jpg
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Dependency untuk fungsi /api (lihat package.json) -- Vercel yang
+# meng-install ulang ini sendiri tiap deploy, tidak perlu ikut ke Git.
+# .env.local juga tidak boleh ke-commit kalau nanti dipakai buat coba
+# env var secara lokal (isinya bisa berupa token asli).
+node_modules/
+.env.local

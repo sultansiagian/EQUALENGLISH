@@ -1,3 +1,9 @@
 {
-  "cleanUrls": true
+  "cleanUrls": true,
+  "rewrites": [{ "source": "/", "destination": "/api/render-home" }],
+  "functions": {
+    "api/render-home.js": {
+      "includeFiles": "index.html"
+    }
+  }
 }

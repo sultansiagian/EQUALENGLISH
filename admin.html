@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Halaman privat, bukan buat publik -- jangan sampai ada di hasil
+         pencarian Google, sama seperti kelas.html. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Admin · EQUAL English</title>
+    <link rel="icon" type="image/png" href="/EDITS/favicon.png" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Syne:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Cuma dipakai buat token warna/font (:root) dan komponen kecil,
+         BUKAN buat layout section index.html -- admin.css yang mengatur
+         semua layout halaman ini sendiri. -->
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/admin.css" />
+  </head>
+  <body>
+    <div class="admin-shell">
+      <header class="admin-topbar">
+        <span class="admin-topbar-brand">EQUAL English <em>Admin</em></span>
+        <span id="admin-user" class="admin-topbar-user" hidden></span>
+      </header>
+
+      <!-- STATE 1: belum login -->
+      <section id="admin-panel-signin" class="admin-panel admin-panel-center">
+        <h1>Masuk ke Admin</h1>
+        <p class="admin-hint">
+          Pakai akun Google yang sudah didaftarkan sebagai admin. Halaman ini
+          cuma untuk mengubah teks, harga, dan foto di equalenglish.vercel.app,
+          bukan untuk siswa.
+        </p>
+        <div class="admin-signin-box">
+          <div
+            id="g_id_onload"
+            data-client_id="367439644430-4t8r204v4h6ufouinpd2ctdftgndbehf.apps.googleusercontent.com"
+            data-callback="handleAdminCredential"
+            data-auto_prompt="false"
+          ></div>
+          <div class="g_id_signin" data-type="standard" data-shape="pill" data-size="large"></div>
+        </div>
+      </section>
+
+      <!-- STATE 2: memeriksa akses -->
+      <section id="admin-panel-loading" class="admin-panel admin-panel-center" hidden>
+        <p class="admin-status"><span class="admin-spinner" aria-hidden="true"></span> Memeriksa akses…</p>
+      </section>
+
+      <!-- STATE 3: login berhasil tapi bukan admin -->
+      <section id="admin-panel-denied" class="admin-panel admin-panel-center" hidden>
+        <h1>Bukan akun admin.</h1>
+        <p class="admin-hint">
+          Email <strong id="admin-denied-email"></strong> belum terdaftar di
+          <code>ADMIN_EMAILS</code>. Masuk pakai akun Google yang benar, atau
+          tambahkan email ini ke Environment Variables di Vercel.
+        </p>
+        <button type="button" class="admin-btn admin-btn-ghost" onclick="trySwitchAdminAccount()">
+          Coba akun lain
+        </button>
+      </section>
+
+      <!-- STATE 4: error server/jaringan -->
+      <section id="admin-panel-error" class="admin-panel admin-panel-center" hidden>
+        <h1>Gagal memuat.</h1>
+        <p class="admin-hint" id="admin-error-detail">
+          Ada masalah menghubungi server. Coba muat ulang halaman ini.
+        </p>
+        <button type="button" class="admin-btn admin-btn-ghost" onclick="location.reload()">
+          Muat ulang
+        </button>
+      </section>
+
+      <!-- STATE 5: dashboard -->
+      <main id="admin-panel-dashboard" class="admin-panel" hidden>
+        <div id="admin-toast" class="admin-toast" role="status" hidden></div>
+
+        <section class="admin-card">
+          <h2>Program Intensif <span class="admin-card-note">section 06</span></h2>
+          <label class="admin-field">
+            <span>Judul</span>
+            <input type="text" data-key="bootcampTitle" />
+          </label>
+          <label class="admin-field">
+            <span>Deskripsi</span>
+            <textarea data-key="bootcampDesc" rows="3"></textarea>
+          </label>
+          <label class="admin-field">
+            <span>Poin 1</span>
+            <input type="text" data-key="bootcampPoint1" />
+          </label>
+          <label class="admin-field">
+            <span>Poin 2</span>
+            <input type="text" data-key="bootcampPoint2" />
+          </label>
+          <label class="admin-field">
+            <span>Poin 3</span>
+            <input type="text" data-key="bootcampPoint3" />
+          </label>
+          <label class="admin-field">
+            <span>Poin 4</span>
+            <input type="text" data-key="bootcampPoint4" />
+          </label>
+        </section>
+
+        <section class="admin-card">
+          <h2>Pilihan Paket <span class="admin-card-note">section 07</span></h2>
+          <p class="admin-hint">
+            Badge "Hemat RpX.000 per orang" di Pair &amp; Group dihitung otomatis
+            dari selisih ke harga Individual, tidak perlu diisi manual.
+          </p>
+          <div class="admin-pkg-grid">
+            <div class="admin-pkg">
+              <h3>Paket 1</h3>
+              <label class="admin-field"><span>Nama</span><input type="text" data-key="pkg1Name" /></label>
+              <label class="admin-field"><span>Harga (Rp)</span><input type="number" min="0" step="1000" data-key="pkg1Price" /></label>
+              <label class="admin-checkbox"><input type="checkbox" data-key="pkg1Available" /><span>Tersedia</span></label>
+            </div>
+            <div class="admin-pkg">
+              <h3>Paket 2</h3>
+              <label class="admin-field"><span>Nama</span><input type="text" data-key="pkg2Name" /></label>
+              <label class="admin-field"><span>Harga (Rp)</span><input type="number" min="0" step="1000" data-key="pkg2Price" /></label>
+              <label class="admin-checkbox"><input type="checkbox" data-key="pkg2Available" /><span>Tersedia</span></label>
+            </div>
+            <div class="admin-pkg">
+              <h3>Paket 3</h3>
+              <label class="admin-field"><span>Nama</span><input type="text" data-key="pkg3Name" /></label>
+              <label class="admin-field"><span>Harga (Rp)</span><input type="number" min="0" step="1000" data-key="pkg3Price" /></label>
+              <label class="admin-checkbox"><input type="checkbox" data-key="pkg3Available" /><span>Tersedia</span></label>
+            </div>
+          </div>
+        </section>
+
+        <section class="admin-card">
+          <h2>Mentor <span class="admin-card-note">section 05</span></h2>
+          <label class="admin-field">
+            <span>Judul</span>
+            <input type="text" data-key="mentorTitle" />
+          </label>
+          <label class="admin-field">
+            <span>Deskripsi</span>
+            <textarea data-key="mentorDesc" rows="2"></textarea>
+          </label>
+          <label class="admin-field">
+            <span>Catatan</span>
+            <textarea data-key="mentorNote" rows="2"></textarea>
+          </label>
+          <div class="admin-pkg-grid admin-pkg-grid-2">
+            <div class="admin-pkg">
+              <h3>Skor IELTS</h3>
+              <label class="admin-field"><span>Skor</span><input type="number" min="0" max="9" step="0.5" data-key="mentorIeltsScore" /></label>
+              <label class="admin-field"><span>Dari</span><input type="text" data-key="mentorIeltsMax" /></label>
+            </div>
+            <div class="admin-pkg">
+              <h3>Skor EPT UI</h3>
+              <label class="admin-field"><span>Skor</span><input type="number" min="0" data-key="mentorEptScore" /></label>
+              <label class="admin-field"><span>Dari</span><input type="text" data-key="mentorEptMax" /></label>
+            </div>
+          </div>
+        </section>
+
+        <div class="admin-save-bar">
+          <button type="button" id="admin-save-btn" class="admin-btn admin-btn-primary">
+            Simpan Teks &amp; Harga
+          </button>
+          <span id="admin-save-status" class="admin-save-status"></span>
+        </div>
+
+        <section class="admin-card">
+          <h2>Foto &amp; Logo</h2>
+          <p class="admin-hint">
+            Upload langsung tayang di equalenglish.vercel.app, biasanya dalam
+            beberapa detik -- tidak perlu tombol Simpan terpisah. Foto besar
+            otomatis dikompres dulu di browser sebelum diupload.
+          </p>
+          <div class="admin-photo-grid">
+            <div class="admin-photo" data-slot="logo">
+              <span class="admin-photo-label">Logo</span>
+              <img class="admin-photo-preview admin-photo-preview-contain" alt="Preview logo" hidden />
+              <input type="file" accept="image/*" class="admin-photo-input" />
+              <span class="admin-photo-status"></span>
+            </div>
+            <div class="admin-photo" data-slot="photoKomunitas">
+              <span class="admin-photo-label">Foto komunitas <em>(section 03)</em></span>
+              <img class="admin-photo-preview" alt="Preview foto komunitas" hidden />
+              <input type="file" accept="image/*" class="admin-photo-input" />
+              <span class="admin-photo-status"></span>
+            </div>
+            <div class="admin-photo" data-slot="photoKelasZoom">
+              <span class="admin-photo-label">Foto kelas Zoom <em>(section 04)</em></span>
+              <img class="admin-photo-preview" alt="Preview foto kelas Zoom" hidden />
+              <input type="file" accept="image/*" class="admin-photo-input" />
+              <span class="admin-photo-status"></span>
+            </div>
+            <div class="admin-photo" data-slot="ogBanner">
+              <span class="admin-photo-label">Banner share link <em>(1200×630)</em></span>
+              <img class="admin-photo-preview admin-photo-preview-wide" alt="Preview banner share link" hidden />
+              <input type="file" accept="image/*" class="admin-photo-input" />
+              <span class="admin-photo-status"></span>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/admin.js"></script>
+  </body>
+</html>

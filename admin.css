@@ -1,0 +1,361 @@
+/* Layout khusus /admin. Token warna/font dari styles.css (:root) dipakai
+   ulang, tapi struktur halaman ini beda total dari index.html -- dashboard
+   form, bukan landing page -- jadi ditulis dari nol, bukan nebeng class
+   section yang sudah ada. */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--black);
+  font-family: var(--body);
+}
+
+.admin-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 32px;
+  background: var(--black);
+  color: var(--white);
+}
+
+.admin-topbar-brand {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.01em;
+}
+
+.admin-topbar-brand em {
+  font-style: normal;
+  color: var(--pink);
+}
+
+.admin-topbar-user {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--pink-light);
+}
+
+.admin-panel {
+  flex: 1;
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+.admin-panel-center {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: left;
+}
+
+.admin-panel h1 {
+  font-family: var(--display);
+  font-size: 1.8rem;
+  margin: 0 0 12px;
+}
+
+.admin-hint {
+  color: var(--ink-muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  max-width: 60ch;
+}
+
+.admin-signin-box {
+  margin-top: 20px;
+}
+
+.admin-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  color: var(--ink-muted);
+}
+
+.admin-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  border-top-color: var(--pink);
+  animation: admin-spin 0.8s linear infinite;
+}
+
+@keyframes admin-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.admin-btn {
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 0.92rem;
+  border-radius: 999px;
+  padding: 12px 24px;
+  border: 2px solid var(--black);
+  cursor: pointer;
+  background: var(--black);
+  color: var(--white);
+  margin-top: 18px;
+}
+
+.admin-btn-ghost {
+  background: transparent;
+  color: var(--black);
+}
+
+.admin-btn-primary {
+  background: var(--pink);
+  border-color: var(--black);
+  color: var(--black);
+}
+
+.admin-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-toast {
+  background: var(--black);
+  color: var(--white);
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  margin-bottom: 24px;
+}
+
+.admin-toast-error {
+  background: var(--red);
+}
+
+.admin-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.admin-card h2 {
+  font-family: var(--display);
+  font-size: 1.2rem;
+  margin: 0 0 4px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.admin-card-note {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--ink-muted);
+}
+
+.admin-card > .admin-hint {
+  margin-bottom: 16px;
+}
+
+.admin-field {
+  display: block;
+  margin-top: 14px;
+}
+
+.admin-field span {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+  margin-bottom: 6px;
+}
+
+.admin-field input[type='text'],
+.admin-field input[type='number'],
+.admin-field textarea {
+  width: 100%;
+  font-family: var(--body);
+  font-size: 0.95rem;
+  padding: 10px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--black);
+}
+
+.admin-field textarea {
+  resize: vertical;
+}
+
+.admin-field input:focus,
+.admin-field textarea:focus {
+  outline: none;
+  border-color: var(--pink);
+  background: var(--white);
+}
+
+.admin-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.admin-pkg-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 12px;
+}
+
+.admin-pkg-grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.admin-pkg {
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.admin-pkg h3 {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+  margin: 0;
+}
+
+.admin-save-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 10px 10px 10px 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  margin-bottom: 24px;
+}
+
+.admin-save-bar .admin-btn {
+  margin-top: 0;
+}
+
+.admin-save-status {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+}
+
+.admin-save-status[data-state='ok'] {
+  color: #1a7f37;
+}
+
+.admin-save-status[data-state='error'] {
+  color: var(--red);
+}
+
+.admin-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  margin-top: 12px;
+}
+
+.admin-photo {
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.admin-photo-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.admin-photo-label em {
+  font-style: normal;
+  font-weight: 400;
+  color: var(--ink-muted);
+}
+
+.admin-photo-preview {
+  display: block;
+  width: 100%;
+  max-height: 160px;
+  object-fit: contain;
+  background: var(--paper);
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.admin-photo-preview:not([hidden]) {
+  object-fit: cover;
+}
+
+.admin-photo-preview-contain,
+.admin-photo-preview-wide {
+  object-fit: contain;
+}
+
+.admin-photo-preview-contain {
+  max-height: 100px;
+}
+
+.admin-photo-input {
+  font-size: 0.82rem;
+  max-width: 100%;
+}
+
+.admin-photo-status {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  margin-top: 6px;
+  min-height: 1em;
+}
+
+.admin-photo-status[data-state='ok'] {
+  color: #1a7f37;
+}
+
+.admin-photo-status[data-state='error'] {
+  color: var(--red);
+}
+
+@media (max-width: 720px) {
+  .admin-pkg-grid,
+  .admin-pkg-grid-2,
+  .admin-photo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-save-bar {
+    flex-wrap: wrap;
+    border-radius: 16px;
+  }
+}
