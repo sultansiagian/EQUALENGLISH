@@ -422,3 +422,118 @@ body {
   max-height: 420px;
   overflow: auto;
 }
+
+/* ============================================================
+   TESTIMONI di panel admin. Barisnya dibuat dari JavaScript (jumlahnya
+   bebas), lihat renderTestiList() di admin.js.
+   ============================================================ */
+
+.admin-testi-list {
+  margin-top: 18px;
+}
+
+.admin-testi-empty {
+  padding: 18px;
+  border: 1.5px dashed var(--line);
+  border-radius: 12px;
+  margin: 0;
+}
+
+.admin-testi {
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.admin-testi-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-testi-head h3 {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+  margin: 0;
+}
+
+.admin-testi-remove {
+  font-family: var(--body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--red);
+  background: transparent;
+  border: 1px solid rgba(229, 72, 77, 0.35);
+  border-radius: 999px;
+  padding: 5px 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.admin-testi-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr 0.7fr;
+  gap: 12px;
+}
+
+.admin-testi-photo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.admin-testi-preview {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--paper);
+}
+
+/* Dipakai di tempat <label class="admin-field"><span> tidak cocok, karena
+   input file-nya bukan anak langsung dari label yang sama. */
+.admin-field-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+  margin-bottom: 6px;
+}
+
+.admin-testi-status {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  color: var(--ink-muted);
+  margin-top: 5px;
+  min-height: 1em;
+}
+
+.admin-testi-status[data-state='ok'] {
+  color: #1a7f37;
+}
+
+.admin-testi-status[data-state='error'] {
+  color: var(--red);
+}
+
+/* Tombol simpan testimoni terpisah dari tombol simpan teks & harga di
+   atas, jadi bar-nya tidak perlu bayangan mengambang seperti yang itu. */
+.admin-save-bar-testi {
+  box-shadow: none;
+  margin-top: 18px;
+  margin-bottom: 0;
+}
+
+@media (max-width: 720px) {
+  .admin-testi-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -2413,3 +2413,204 @@ section[id] {
     opacity: 1 !important;
   }
 }
+
+/* ============================================================
+   SECTION TESTIMONI
+
+   Markup-nya TIDAK ada di index.html -- dibuat server-side oleh
+   renderTestimonials() di api/render-home.js dari daftar yang diisi
+   lewat /admin. Kalau daftarnya kosong, section ini tidak dirender
+   sama sekali, jadi tidak ada keadaan "section kosong" yang perlu
+   di-style.
+
+   Bentuknya mengikuti referensi kartu bergradien yang diminta: bidang
+   warna di belakang, panel gelap semi-transparan di atasnya, isi di
+   dalam panel. BEDA dari referensi aslinya, gradiennya CSS biasa,
+   BUKAN WebGL (referensinya pakai satu canvas WebGL per kartu). Latar
+   animasi sebelumnya di halaman ini sudah pernah dicabut karena
+   ngelag di perangkat user, dan enam canvas WebGL sekaligus jauh
+   lebih berat dari itu. Yang dianimasikan cuma transform (rotasi
+   lambat) pada elemen gradiennya, properti compositor-only.
+   ============================================================ */
+
+.testi-section {
+  margin-top: 5rem;
+}
+
+.testi-head {
+  max-width: 640px;
+  margin-bottom: 2.5rem;
+}
+
+.testi-head h2 {
+  margin-top: 1.25rem;
+}
+
+.testi-lede {
+  margin: 0.9rem 0 0;
+  color: var(--ink-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.testi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.testi-card {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  min-height: 260px;
+  display: flex;
+}
+
+/* Bidang gradien di belakang panel. Dibuat jauh lebih besar dari
+   kartunya (200%) dan diputar pelan dari tengah, supaya rotasinya tidak
+   pernah memperlihatkan sudut/tepi gradien di dalam kartu. */
+.testi-card-glow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    var(--testi-a),
+    var(--testi-b),
+    var(--testi-a),
+    var(--testi-b),
+    var(--testi-a)
+  );
+  animation: testi-spin 28s linear infinite;
+}
+
+@keyframes testi-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Lima varian warna, berulang tiap 5 kartu. Semuanya turunan pink
+   merek (--pink/--pink-light) plus sedikit geseran ke ungu/koral supaya
+   kartunya tidak seragam, tanpa keluar dari palet situs. */
+.testi-card[data-testi-variant='0'] { --testi-a: #ffacdf; --testi-b: #ffd7ef; }
+.testi-card[data-testi-variant='1'] { --testi-a: #ffd7ef; --testi-b: #c9a7ff; }
+.testi-card[data-testi-variant='2'] { --testi-a: #ffacdf; --testi-b: #ffb9a7; }
+.testi-card[data-testi-variant='3'] { --testi-a: #c9a7ff; --testi-b: #ffacdf; }
+.testi-card[data-testi-variant='4'] { --testi-a: #ffb9a7; --testi-b: #ffd7ef; }
+
+.testi-card-inner {
+  position: relative;
+  z-index: 1;
+  margin: 1.5px;
+  padding: 1.75rem;
+  border-radius: 22.5px;
+  background: rgba(0, 0, 0, 0.86);
+  color: var(--white);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.testi-quote {
+  margin: 0;
+  flex: 1;
+}
+
+.testi-quote p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.62;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.testi-person {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.testi-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Cadangan waktu testimoni itu tidak punya foto: lingkaran berisi
+   inisial nama. Sengaja selalu ada sesuatu di posisi ini -- kartu tanpa
+   apa pun di situ terbaca seperti gambar gagal dimuat, bukan seperti
+   pilihan desain. */
+.testi-avatar-initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--black);
+  background: var(--pink);
+}
+
+.testi-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.testi-name {
+  font-style: normal;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.testi-faculty {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1.35;
+}
+
+.testi-score {
+  flex-shrink: 0;
+  align-self: flex-start;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  padding: 0.4rem 0.6rem;
+  border-radius: 999px;
+  background: var(--pink);
+  color: var(--black);
+  white-space: nowrap;
+}
+
+@media (max-width: 1000px) {
+  .testi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 680px) {
+  .testi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .testi-card {
+    min-height: 0;
+  }
+}
+
+/* Sejalan dengan animasi lain di situs ini: gerakannya dihentikan,
+   gradiennya tetap tampil (sudah bagus dalam keadaan diam). */
+@media (prefers-reduced-motion: reduce) {
+  .testi-card-glow {
+    animation: none;
+  }
+}

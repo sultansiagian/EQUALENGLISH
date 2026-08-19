@@ -2,6 +2,18 @@ const DEFAULTS = require('./_lib/site-defaults');
 const { requireAdmin } = require('./_lib/admin-guard');
 const { readOverrides, writeOverrides } = require('./_lib/global-config-store');
 
+// Batas jumlah testimoni & panjang tiap field. Angkanya dipilih longgar
+// (jauh di atas kebutuhan wajar) tapi tetap terbatas, semata supaya satu
+// kesalahan tidak bisa menghabiskan kuota 1 MB Global Config yang dipakai
+// bersama SELURUH konten situs.
+const MAX_TESTIMONIALS = 24;
+
+function trimTo(value, maxLen) {
+  return String(value === undefined || value === null ? '' : value)
+    .trim()
+    .slice(0, maxLen);
+}
+
 /**
  * GET  -> nilai yang SEDANG AKTIF di halaman publik (override Global Config
  *         kalau ada, kalau tidak nilai default index.html) -- ini yang
@@ -44,6 +56,32 @@ module.exports = async function handler(req, res) {
     });
     if (Object.keys(filtered).length === 0) {
       return res.status(400).json({ ok: false, reason: 'no_valid_keys' });
+    }
+
+    // "testimonials" satu-satunya kunci yang isinya ARRAY, bukan nilai
+    // tunggal, jadi allowlist di atas belum cukup -- bentuk dalamnya masih
+    // bebas. Dinormalkan di sini supaya Global Config tidak bisa terisi
+    // struktur aneh atau kebablasan besar (batas store-nya 1 MB untuk
+    // SELURUH konten situs; array yang tidak dibatasi bisa menghabiskannya
+    // dan bikin semua penyimpanan berikutnya gagal).
+    if (filtered.testimonials !== undefined) {
+      if (!Array.isArray(filtered.testimonials)) {
+        return res.status(400).json({ ok: false, reason: 'testimonials_bukan_array' });
+      }
+      filtered.testimonials = filtered.testimonials
+        .slice(0, MAX_TESTIMONIALS)
+        .map((t) => ({
+          nama: trimTo(t && t.nama, 80),
+          fakultas: trimTo(t && t.fakultas, 120),
+          skorEpt: trimTo(t && t.skorEpt, 20),
+          pesan: trimTo(t && t.pesan, 600),
+          fotoUrl: trimTo(t && t.fotoUrl, 400),
+        }))
+        // Item yang benar-benar kosong dibuang, tapi item setengah isi
+        // TETAP disimpan -- admin mungkin sedang menyicil mengisi. Yang
+        // memutuskan item mana yang layak tampil di halaman publik adalah
+        // renderTestimonials() di api/render-home.js, bukan di sini.
+        .filter((t) => t.nama || t.pesan || t.fakultas || t.skorEpt || t.fotoUrl);
     }
 
     try {

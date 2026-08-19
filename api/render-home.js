@@ -170,6 +170,110 @@ function applyImages(html, overrides) {
   return out;
 }
 
+// Ambil huruf pertama nama buat avatar cadangan kalau testimoni itu tidak
+// punya foto. Dibatasi 2 huruf ("Sultan Siagian" -> "SS", "Rina" -> "R").
+function initials(nama) {
+  return String(nama || '')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w.charAt(0).toUpperCase())
+    .join('');
+}
+
+/**
+ * Bikin HTML seluruh section testimoni dari array. Beda dari field lain
+ * yang cuma menimpa teks di elemen yang sudah ada, section ini DIBUAT
+ * UTUH di sini karena jumlah kartunya tidak tetap.
+ *
+ * Array kosong (atau semua itemnya tidak valid) -> balik string kosong,
+ * sehingga tidak ada section apa pun yang tampil di beranda. Itu keadaan
+ * default yang dikirim; lihat catatan panjang di site-defaults.js soal
+ * kenapa testimoni tidak boleh diisi contoh karangan.
+ */
+function renderTestimonials(overrides) {
+  const list = Array.isArray(overrides.testimonials) ? overrides.testimonials : [];
+
+  // Item wajib punya pesan DAN nama supaya tidak ada kartu setengah jadi
+  // yang tampil di halaman publik kalau admin baru mengisi sebagian.
+  const valid = list.filter(
+    (t) => t && String(t.pesan || '').trim() && String(t.nama || '').trim()
+  );
+  if (valid.length === 0) return '';
+
+  const title = overrides.testiTitle !== undefined ? overrides.testiTitle : DEFAULTS.testiTitle;
+  const desc = overrides.testiDesc !== undefined ? overrides.testiDesc : DEFAULTS.testiDesc;
+
+  const cards = valid
+    .map((t, i) => {
+      const nama = escapeHtml(String(t.nama).trim());
+      const pesan = escapeHtml(String(t.pesan).trim());
+      const fakultas = String(t.fakultas || '').trim();
+      const skor = String(t.skorEpt || '').trim();
+      const foto = String(t.fotoUrl || '').trim();
+
+      // Avatar: foto kalau ada, kalau tidak inisial nama. Sengaja selalu
+      // ada sesuatu -- kartu tanpa wajah/inisial terlihat seperti gagal
+      // memuat gambar, bukan seperti pilihan desain.
+      const avatar = foto
+        ? '<img class="testi-avatar" src="' + escapeHtml(foto) + '" alt="" width="52" height="52" loading="lazy" />'
+        : '<span class="testi-avatar testi-avatar-initial" aria-hidden="true">' + escapeHtml(initials(nama)) + '</span>';
+
+      const meta = [];
+      if (fakultas) meta.push('<span class="testi-faculty">' + escapeHtml(fakultas) + '</span>');
+      const skorHtml = skor
+        ? '<span class="testi-score">EPT ' + escapeHtml(skor) + '</span>'
+        : '';
+
+      // data-testi-variant dipakai CSS buat memilih pasangan warna
+      // gradien tiap kartu (5 varian, berulang) supaya kartunya tidak
+      // seragam, tanpa perlu menulis warna di sini.
+      return (
+        '<article class="testi-card" data-testi-variant="' + (i % 5) + '">' +
+        '<div class="testi-card-glow" aria-hidden="true"></div>' +
+        '<div class="testi-card-inner">' +
+        '<blockquote class="testi-quote"><p>' + pesan + '</p></blockquote>' +
+        '<figcaption class="testi-person">' +
+        avatar +
+        '<span class="testi-identity">' +
+        '<cite class="testi-name">' + nama + '</cite>' +
+        (meta.length ? meta.join('') : '') +
+        '</span>' +
+        skorHtml +
+        '</figcaption>' +
+        '</div>' +
+        '</article>'
+      );
+    })
+    .join('');
+
+  return (
+    '<section class="testi-section" id="testimoni" aria-labelledby="testi-title">' +
+    '<div class="testi-head">' +
+    '<p class="section-kicker" data-reveal>05B / KATA MEREKA</p>' +
+    '<h2 id="testi-title" data-reveal>' + escapeHtml(title) + '</h2>' +
+    (String(desc || '').trim()
+      ? '<p class="testi-lede" data-reveal>' + escapeHtml(desc) + '</p>'
+      : '') +
+    '</div>' +
+    '<div class="testi-grid" data-reveal-stagger>' + cards + '</div>' +
+    '</section>'
+  );
+}
+
+// Ganti seluruh isi di antara dua penanda komentar HTML. Dipakai untuk
+// blok yang isinya PUNYA ELEMEN BERSARANG (section testimoni) -- di
+// situ replaceById tidak bisa dipakai, karena regex-nya berhenti di
+// "</" pertama yang ketemu, yang buat elemen bersarang itu tag anaknya,
+// bukan tag penutup yang benar.
+function replaceBetweenMarkers(html, startMark, endMark, replacement) {
+  const start = html.indexOf(startMark);
+  if (start === -1) return html;
+  const end = html.indexOf(endMark, start);
+  if (end === -1) return html;
+  return html.slice(0, start + startMark.length) + replacement + html.slice(end);
+}
+
 function renderHtml(raw, overrides) {
   let html = raw;
 
@@ -187,6 +291,12 @@ function renderHtml(raw, overrides) {
 
   html = applyPackages(html, overrides);
   html = applyImages(html, overrides);
+  html = replaceBetweenMarkers(
+    html,
+    '<!--TESTIMONI:MULAI-->',
+    '<!--TESTIMONI:SELESAI-->',
+    renderTestimonials(overrides)
+  );
 
   return html;
 }
@@ -229,3 +339,4 @@ module.exports.applyImages = applyImages;
 module.exports.replaceById = replaceById;
 module.exports.formatRupiah = formatRupiah;
 module.exports.escapeHtml = escapeHtml;
+module.exports.renderTestimonials = renderTestimonials;

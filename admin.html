@@ -210,6 +210,38 @@
           </div>
         </section>
 
+        <section class="admin-card">
+          <h2>Testimoni <span class="admin-card-note">beranda</span></h2>
+          <p class="admin-hint">
+            Selama daftarnya kosong, section testimoni tidak muncul sama
+            sekali di beranda. Begitu ada satu yang punya nama dan pesan,
+            section-nya otomatis tampil. Foto, fakultas, dan skor EPT boleh
+            dikosongkan.
+          </p>
+
+          <label class="admin-field">
+            <span>Judul section</span>
+            <input type="text" data-key="testiTitle" />
+          </label>
+          <label class="admin-field">
+            <span>Deskripsi section</span>
+            <textarea data-key="testiDesc" rows="2"></textarea>
+          </label>
+
+          <div id="admin-testi-list" class="admin-testi-list"></div>
+
+          <button type="button" id="admin-testi-add" class="admin-btn admin-btn-ghost">
+            + Tambah Testimoni
+          </button>
+
+          <div class="admin-save-bar admin-save-bar-testi">
+            <button type="button" id="admin-testi-save" class="admin-btn admin-btn-primary">
+              Simpan Testimoni
+            </button>
+            <span id="admin-testi-status" class="admin-save-status"></span>
+          </div>
+        </section>
+
         <!-- Alat bantu kalau menyimpan gagal. Sengaja ditaruh paling bawah
              dan tidak mencolok -- ini bukan fitur sehari-hari, cuma dipakai
              waktu ada yang error. -->

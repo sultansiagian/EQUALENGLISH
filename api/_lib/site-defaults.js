@@ -62,4 +62,27 @@ module.exports = {
   photoKomunitasUrl: '/EDITS/foto-komunitas.jpg',
   photoKelasZoomUrl: '/EDITS/foto-kelas-zoom.jpg',
   ogBannerUrl: 'https://equalenglish.vercel.app/EDITS/og-banner.jpg',
+
+  // ============================================================
+  // TESTIMONI. Beda bentuk dari semua field di atas: ini ARRAY dengan
+  // panjang bebas, bukan satu nilai tetap, jadi ditangani terpisah di
+  // render-home.js (renderTestimonials(), pakai penanda komentar HTML)
+  // dan di admin.js (daftar kartu yang bisa ditambah/hapus).
+  //
+  // SENGAJA DIKIRIM KOSONG dan tidak diisi contoh apa pun. Section
+  // testimoni di index.html sebelumnya memang dinonaktifkan dengan
+  // alasan yang masih berlaku: satu testimoni karangan yang ketahuan
+  // menjatuhkan kredibilitas skor mentor dan data riset di halaman ini,
+  // yang semuanya asli dan bisa dicek. Array kosong -> seluruh section
+  // tidak dirender sama sekali di beranda (bukan dirender kosong),
+  // jadi halaman tetap aman sampai ada kutipan asli yang diisi lewat
+  // /admin.
+  //
+  // Bentuk tiap item (semua string, semua opsional kecuali pesan &
+  // nama -- item tanpa keduanya dilewati waktu render):
+  //   { nama, fakultas, skorEpt, pesan, fotoUrl }
+  testiTitle: 'Kata mereka yang sudah ikut.',
+  testiDesc:
+    'Pengalaman langsung dari peserta yang sudah menjalani kelasnya sampai selesai.',
+  testimonials: [],
 };

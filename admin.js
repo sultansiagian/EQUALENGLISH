@@ -80,6 +80,10 @@ window.handleAdminCredential = async function handleAdminCredential(response) {
       userEl.hidden = false;
       fillForm(data.values);
       loadPhotoPreviews(data.values);
+      testimonials = Array.isArray(data.values.testimonials)
+        ? data.values.testimonials.map((t) => Object.assign({}, t))
+        : [];
+      renderTestiList();
       showPanel('dashboard');
       return;
     }
@@ -199,6 +203,18 @@ const PHOTO_SLOT_SPECS = {
   ogBanner: { width: 1200, height: 630, mode: 'cover', type: 'image/jpeg', quality: 0.85 },
 };
 
+// Foto testimoni: kecil dan bulat di halaman (52px, lihat .testi-avatar di
+// styles.css), tapi disimpan 200x200 supaya tetap tajam di layar
+// beresolusi tinggi. 'cover' supaya wajah tidak gepeng berapa pun rasio
+// foto aslinya.
+const TESTI_PHOTO_SPEC = {
+  width: 200,
+  height: 200,
+  mode: 'cover',
+  type: 'image/webp',
+  quality: 0.85,
+};
+
 const SLOT_TO_KEY = {
   logo: 'logoUrl',
   photoKomunitas: 'photoKomunitasUrl',
@@ -312,6 +328,177 @@ async function handlePhotoUpload(container, file) {
 }
 
 // ============================================================
+// TESTIMONI
+//
+// Beda dari field lain di halaman ini yang tiap satunya punya elemen
+// tetap di admin.html: jumlah testimoni bebas, jadi barisnya dibuat dari
+// JavaScript. State-nya disimpan di array testimonials di bawah, dan
+// baru dikirim ke server sekaligus waktu tombol "Simpan Testimoni"
+// ditekan (beda dari foto logo/komunitas dst yang langsung tayang
+// begitu diupload).
+// ============================================================
+
+let testimonials = [];
+
+function testiTemplate(index, item) {
+  const row = document.createElement('div');
+  row.className = 'admin-testi';
+  row.dataset.index = index;
+  row.innerHTML =
+    '<div class="admin-testi-head">' +
+    '<h3>Testimoni ' + (index + 1) + '</h3>' +
+    '<button type="button" class="admin-testi-remove" aria-label="Hapus testimoni ini">Hapus</button>' +
+    '</div>' +
+    '<div class="admin-testi-grid">' +
+    '<label class="admin-field"><span>Nama</span><input type="text" data-t="nama" /></label>' +
+    '<label class="admin-field"><span>Fakultas / angkatan</span><input type="text" data-t="fakultas" /></label>' +
+    '<label class="admin-field"><span>Skor EPT</span><input type="text" data-t="skorEpt" placeholder="mis. 620" /></label>' +
+    '</div>' +
+    '<label class="admin-field"><span>Kesan pesan</span><textarea data-t="pesan" rows="3"></textarea></label>' +
+    '<div class="admin-testi-photo">' +
+    '<img class="admin-testi-preview" alt="" hidden />' +
+    '<div>' +
+    '<span class="admin-field-label">Foto (opsional)</span>' +
+    '<input type="file" accept="image/*" class="admin-testi-file" />' +
+    '<span class="admin-testi-status"></span>' +
+    '</div>' +
+    '</div>';
+
+  row.querySelector('[data-t="nama"]').value = item.nama || '';
+  row.querySelector('[data-t="fakultas"]').value = item.fakultas || '';
+  row.querySelector('[data-t="skorEpt"]').value = item.skorEpt || '';
+  row.querySelector('[data-t="pesan"]').value = item.pesan || '';
+  if (item.fotoUrl) {
+    const img = row.querySelector('.admin-testi-preview');
+    img.src = item.fotoUrl;
+    img.hidden = false;
+  }
+
+  // Tiap ketikan langsung disimpan ke array state, supaya menambah/
+  // menghapus baris lain tidak menghilangkan yang sudah diketik (daftar
+  // ini digambar ulang penuh setiap kali berubah jumlahnya).
+  row.querySelectorAll('[data-t]').forEach((input) => {
+    input.addEventListener('input', () => {
+      testimonials[index][input.dataset.t] = input.value;
+    });
+  });
+
+  row.querySelector('.admin-testi-remove').addEventListener('click', () => {
+    testimonials.splice(index, 1);
+    renderTestiList();
+  });
+
+  row.querySelector('.admin-testi-file').addEventListener('change', (e) => {
+    if (e.target.files && e.target.files[0]) uploadTestiPhoto(index, row, e.target.files[0]);
+  });
+
+  return row;
+}
+
+function renderTestiList() {
+  const list = document.getElementById('admin-testi-list');
+  list.textContent = '';
+  if (testimonials.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'admin-hint admin-testi-empty';
+    empty.textContent =
+      'Belum ada testimoni. Section ini tidak tampil di beranda sampai kamu tambah minimal satu.';
+    list.appendChild(empty);
+    return;
+  }
+  testimonials.forEach((item, i) => list.appendChild(testiTemplate(i, item)));
+}
+
+async function uploadTestiPhoto(index, row, file) {
+  const input = row.querySelector('.admin-testi-file');
+  const status = row.querySelector('.admin-testi-status');
+  input.disabled = true;
+  status.removeAttribute('data-state');
+  status.textContent = 'Mengompres…';
+
+  try {
+    const compressed = await compressImage(file, TESTI_PHOTO_SPEC);
+    status.textContent = 'Mengupload…';
+    const dataUrl = await blobToDataUrl(compressed);
+
+    const res = await fetch('/api/admin-upload', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify({ slot: 'testimonialPhoto', dataUrl }),
+    });
+    const data = await res.json();
+
+    if (res.ok && data.ok) {
+      testimonials[index].fotoUrl = data.url;
+      const img = row.querySelector('.admin-testi-preview');
+      img.src = data.url;
+      img.hidden = false;
+      status.dataset.state = 'ok';
+      status.textContent = 'Foto siap. Klik Simpan Testimoni.';
+    } else if (res.status === 401) {
+      handleUnauthorized(data.reason);
+    } else {
+      status.dataset.state = 'error';
+      status.textContent = 'Gagal upload: ' + (data.message || data.reason || res.status);
+    }
+  } catch (err) {
+    status.dataset.state = 'error';
+    status.textContent = 'Gagal upload: ' + err.message;
+  } finally {
+    input.disabled = false;
+    input.value = '';
+  }
+}
+
+function setTestiStatus(state, text) {
+  const el = document.getElementById('admin-testi-status');
+  el.textContent = text;
+  if (state) el.dataset.state = state;
+  else el.removeAttribute('data-state');
+}
+
+async function saveTestimonials() {
+  const btn = document.getElementById('admin-testi-save');
+  btn.disabled = true;
+  setTestiStatus(null, 'Menyimpan…');
+
+  try {
+    const res = await fetch('/api/admin-content', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify({
+        items: {
+          testimonials: testimonials,
+          testiTitle: document.querySelector('[data-key="testiTitle"]').value,
+          testiDesc: document.querySelector('[data-key="testiDesc"]').value,
+        },
+      }),
+    });
+    const data = await res.json();
+
+    if (res.ok && data.ok) {
+      const tampil = testimonials.filter(
+        (t) => String(t.nama || '').trim() && String(t.pesan || '').trim()
+      ).length;
+      setTestiStatus(
+        'ok',
+        tampil === 0
+          ? 'Tersimpan, tapi belum ada yang tampil di beranda (butuh nama + kesan pesan).'
+          : 'Tersimpan. ' + tampil + ' testimoni tampil di beranda dalam ~10 detik.'
+      );
+    } else if (res.status === 401) {
+      handleUnauthorized(data.reason);
+    } else {
+      setTestiStatus('error', 'Gagal menyimpan: ' + (data.message || data.reason || res.status));
+    }
+  } catch (err) {
+    setTestiStatus('error', 'Gagal menyimpan: ' + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ============================================================
 // CEK KONEKSI -- lihat api/admin-diagnose.js
 // ============================================================
 
@@ -346,6 +533,16 @@ async function runDiagnose() {
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('admin-save-btn').addEventListener('click', saveForm);
   document.getElementById('admin-diagnose-btn').addEventListener('click', runDiagnose);
+  document.getElementById('admin-testi-save').addEventListener('click', saveTestimonials);
+  document.getElementById('admin-testi-add').addEventListener('click', () => {
+    testimonials.push({ nama: '', fakultas: '', skorEpt: '', pesan: '', fotoUrl: '' });
+    renderTestiList();
+    // Fokus ke kolom Nama baris yang baru dibuat, supaya bisa langsung
+    // mengetik tanpa harus mengarahkan kursor sendiri.
+    const rows = document.querySelectorAll('.admin-testi');
+    const last = rows[rows.length - 1];
+    if (last) last.querySelector('[data-t="nama"]').focus();
+  });
 
   document.querySelectorAll('.admin-photo').forEach((container) => {
     const input = container.querySelector('.admin-photo-input');

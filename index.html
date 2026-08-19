@@ -489,55 +489,25 @@
           </div>
 
           <!-- ==========================================================
-               SECTION TESTIMONI: SENGAJA DINONAKTIFKAN.
+               SECTION TESTIMONI.
 
-               Disembunyikan sampai kutipan asli dari siswa terkumpul,
-               supaya halaman ini aman dipublikasikan tanpa kartu contoh.
+               Isinya TIDAK ada di file ini. Seluruh blok di antara dua
+               penanda di bawah digantikan oleh api/render-home.js dari
+               daftar testimoni yang diisi lewat /admin (lihat
+               renderTestimonials() di sana, dan kunci "testimonials" di
+               api/_lib/site-defaults.js).
 
-               CARA MENGAKTIFKAN KEMBALI:
-               1. Hapus baris pembuka komentar ini dan baris penutupnya
-                  di bawah blok.
-               2. Ganti isi tiap <blockquote> dengan kutipan asli.
-               3. Ganti <cite> dengan nama dan kelas siswa.
-               4. Hapus <span class="proof-tag">CONTOH</span> di tiap kartu.
+               Kalau daftarnya kosong, blok ini tetap kosong dan tidak
+               ada apa pun yang tampil -- itu perilaku yang diinginkan,
+               bukan bug. Jangan mengisi kartu contoh di sini: satu
+               testimoni karangan yang ketahuan menjatuhkan kredibilitas
+               skor mentor dan data riset di halaman ini, yang semuanya
+               asli dan bisa dicek.
 
-               Jangan isi dengan kutipan karangan. Selain menyesatkan
-               calon murid, satu testimoni palsu yang ketahuan akan
-               menjatuhkan kredibilitas skor mentor dan data riset yang
-               ada di halaman ini, yang semuanya asli dan bisa dicek.
-               ==========================================================
-
-          <div class="proof-quotes" data-reveal-stagger>
-            <article class="proof-quote">
-              <blockquote>
-                <p>Kutipan asli dari siswa tentang perubahan yang mereka rasakan.</p>
-              </blockquote>
-              <p class="proof-byline">
-                <span class="proof-tag">CONTOH</span>
-                <cite>Nama siswa · Kelas yang diambil</cite>
-              </p>
-            </article>
-            <article class="proof-quote">
-              <blockquote>
-                <p>Kutipan kedua. Yang paling kuat biasanya menyebut hal spesifik, bukan pujian umum.</p>
-              </blockquote>
-              <p class="proof-byline">
-                <span class="proof-tag">CONTOH</span>
-                <cite>Nama siswa · Kelas yang diambil</cite>
-              </p>
-            </article>
-            <article class="proof-quote">
-              <blockquote>
-                <p>Kutipan ketiga. Sebutkan kondisi sebelum dan sesudahnya bila ada.</p>
-              </blockquote>
-              <p class="proof-byline">
-                <span class="proof-tag">CONTOH</span>
-                <cite>Nama siswa · Kelas yang diambil</cite>
-              </p>
-            </article>
-          </div>
-
+               Jangan hapus/ubah teks kedua penanda di bawah, itu yang
+               dicari render-home.js buat tahu di mana menyisipkannya.
                ========================================================== -->
+          <!--TESTIMONI:MULAI--><!--TESTIMONI:SELESAI-->
         </div>
       </section>
 

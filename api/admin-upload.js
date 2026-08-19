@@ -10,6 +10,20 @@ const SLOT_KEYS = {
   ogBanner: 'ogBannerUrl',
 };
 
+// Foto testimoni ditangani BEDA dari empat slot di atas: fotonya bukan
+// satu nilai tetap dengan kunci sendiri, melainkan salah satu field di
+// dalam array "testimonials" yang panjangnya bebas. Jadi endpoint ini
+// cuma mengunggah dan MENGEMBALIKAN URL-nya; yang menaruh URL itu ke
+// item yang benar adalah admin.js, dan baru benar-benar tersimpan waktu
+// admin menekan "Simpan Testimoni" (satu tulisan untuk seluruh array).
+//
+// Konsekuensi yang disengaja: foto yang diupload lalu tidak jadi disimpan
+// tetap tertinggal di Blob sebagai file yatim. Dibiarkan begitu daripada
+// membangun mekanisme pembersihan -- ukurannya kecil (foto profil ~40 KB
+// setelah dikompres) dan kuota Blob 1 GB, jadi butuh puluhan ribu kali
+// batal-upload sebelum jadi masalah.
+const TESTIMONIAL_SLOT = 'testimonialPhoto';
+
 // Vercel Function punya batas body request 4.5 MB. admin.js mengompres
 // foto di browser dulu (lihat processImage() di sana) sebelum dikirim,
 // jadi dalam praktiknya jauh di bawah ini -- angka ini cuma jaring
@@ -36,8 +50,9 @@ module.exports = async function handler(req, res) {
   const body = req.body || {};
   const slot = body.slot;
   const dataUrl = body.dataUrl;
+  const isTestimonial = slot === TESTIMONIAL_SLOT;
   const key = SLOT_KEYS[slot];
-  if (!key || !dataUrl) {
+  if ((!key && !isTestimonial) || !dataUrl) {
     return res.status(400).json({ ok: false, reason: 'invalid_request' });
   }
 
@@ -53,13 +68,19 @@ module.exports = async function handler(req, res) {
   try {
     const { put } = await import('@vercel/blob');
     const ext = contentType.split('/')[1] || 'jpg';
-    const blob = await put('site/' + slot + '.' + ext, buffer, {
+    const folder = isTestimonial ? 'testimoni/' : 'site/';
+    const blob = await put(folder + slot + '.' + ext, buffer, {
       access: 'public',
       addRandomSuffix: true,
       contentType,
     });
 
-    await writeOverrides({ [key]: blob.url });
+    // Foto testimoni cuma dikembalikan URL-nya (lihat TESTIMONIAL_SLOT di
+    // atas) -- admin.js yang menaruhnya ke item yang benar, lalu tersimpan
+    // bareng seluruh array waktu tombol "Simpan Testimoni" ditekan.
+    if (!isTestimonial) {
+      await writeOverrides({ [key]: blob.url });
+    }
 
     return res.status(200).json({ ok: true, url: blob.url });
   } catch (err) {
