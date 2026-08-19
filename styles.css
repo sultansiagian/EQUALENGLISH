@@ -29,6 +29,12 @@
 
 html {
   scroll-behavior: smooth;
+  /* Font dasar dipasang di akar, bukan cuma di <body>. Times New Roman
+     yang sempat muncul di halaman admin berasal dari sini: apa pun yang
+     lolos dari aturan body (mis. isian form yang memang tidak mewarisi
+     font) jatuh ke font bawaan browser. Dipasang di <html>, tidak ada
+     lagi jalan keluar ke font sistem. */
+  font-family: var(--body);
 }
 
 body {
@@ -52,6 +58,43 @@ a {
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+}
+
+/* ============================================================
+   FONT UNTUK ELEMEN FORM DAN KODE
+   ============================================================
+   Elemen form TIDAK mewarisi font dari halaman: browser memberi
+   input/select/textarea/button font sistemnya sendiri (Arial di
+   Windows, dan serif untuk beberapa jenis input). Akibatnya satu
+   isian yang belum disetel fontnya secara khusus akan tampil beda
+   sendiri di tengah halaman, dan itu langsung terbaca sebagai
+   halaman yang tidak digarap.
+
+   Ditaruh sebagai aturan DASAR di sini, bukan diketik ulang di tiap
+   selector, supaya isian baru yang ditambahkan nanti otomatis ikut
+   benar tanpa harus diingat satu per satu. Aturan yang lebih spesifik
+   di kelas.css/admin.css/daftar.css tetap menang atas ini.
+
+   Font-size sengaja TIDAK ikut diwariskan di sini -- ukuran tiap
+   isian diatur masing-masing, dan mewariskannya dari induk akan
+   membuat isian di dalam teks kecil ikut mengecil sampai susah
+   disentuh di HP. */
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+
+/* Elemen kode dipakai di halaman admin buat menyebut nama env var dan
+   kata kunci seperti "done". Tanpa ini, browser memakai font monospace
+   bawaan sistem yang bentuknya jauh berbeda dari DM Mono di sekitarnya. */
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--mono);
+  font-size: 0.92em;
 }
 
 img {

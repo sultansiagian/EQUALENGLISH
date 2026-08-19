@@ -89,11 +89,6 @@
 
         <section class="admin-card">
           <h2>Buka / Tutup Pendaftaran</h2>
-          <p class="admin-hint">
-            Waktu tertutup, halaman /daftar menampilkan pesan dan formulirnya
-            tidak digambar sama sekali. Kiriman juga ditolak di server, jadi
-            tidak bisa diakali lewat cara lain.
-          </p>
 
           <div class="form-mode">
             <label class="form-mode-opsi">
@@ -132,11 +127,7 @@
                 <small class="admin-field-bantuan">Kosongkan kalau belum ada rencana ditutup.</small>
               </label>
             </div>
-            <p class="admin-hint">
-              Jamnya memakai <strong>WIB</strong>. Kalau ada tanggal tutup,
-              tanggalnya ikut disebut di halaman pendaftaran supaya orang tidak
-              menunda-nunda.
-            </p>
+            <p class="admin-hint">Jam memakai WIB.</p>
           </div>
 
           <label class="admin-field">
@@ -150,15 +141,10 @@
         <section class="admin-card">
           <h2>Pertanyaan <span class="admin-card-note" id="form-jumlah"></span></h2>
           <p class="admin-hint">
-            Geser urutannya pakai tombol panah. Pertanyaan bertanda
-            <strong>kunci</strong> tidak bisa dihapus atau dimatikan karena
-            email dan pilihan paket menentukan siapa yang bisa masuk ruang
-            kelas. Teks dan urutannya tetap bisa kamu ubah.
-          </p>
-          <p class="admin-hint">
-            Mengubah urutan di sini <strong>tidak menggeser kolom di
-            spreadsheet</strong>. Tiap pertanyaan punya kolomnya sendiri yang
-            tetap, jadi data lama kamu aman.
+            Yang bertanda <strong>kunci</strong> tidak bisa dihapus: email dan
+            paket menentukan siapa yang bisa masuk ruang kelas. Teks dan
+            urutannya tetap bebas diubah, dan mengubah urutan
+            <strong>tidak menggeser kolom di spreadsheet</strong>.
           </p>
 
           <div id="form-list" class="form-list"></div>
@@ -184,15 +170,9 @@
         <section class="admin-card">
           <h2>Masa Berlaku Akses <span class="admin-card-note">pendaftar dari situs</span></h2>
           <p class="admin-hint">
-            Waktu kamu menekan <strong>Setujui</strong> di halaman Pendaftar,
-            tanggal ini ikut dicatat di baris orang itu. Lewat tanggal tersebut,
-            dia otomatis tidak bisa lagi membuka ruang kelas.
-          </p>
-          <p class="admin-hint">
-            <strong>Peserta lama tidak terpengaruh.</strong> Yang masuk lewat
-            Google Form dan sheet manual tidak punya tanggal ini, jadi tetap
-            kamu atur sendiri dengan mengetik <code>done</code> seperti selama
-            ini.
+            Dicatat di baris orang itu waktu kamu menekan Setujui.
+            <strong>Peserta lama tidak terpengaruh</strong>, mereka tetap kamu
+            atur sendiri dengan <code>done</code> seperti biasa.
           </p>
 
           <label class="admin-field">
@@ -207,21 +187,16 @@
           <p id="akses-pratinjau" class="form-status-pratinjau"></p>
 
           <p class="admin-hint">
-            Mengubah tanggal di sini cuma berlaku untuk yang kamu setujui
-            <strong>setelah ini</strong>. Untuk mengubah masa berlaku orang yang
-            sudah disetujui, ganti tanggalnya langsung di kolom
-            <strong>W</strong> spreadsheet, atau kosongkan selnya supaya tidak
-            pernah kedaluwarsa.
+            Berlaku untuk yang disetujui setelah ini. Untuk yang sudah
+            disetujui, ubah kolom <strong>W</strong> di spreadsheet.
           </p>
         </section>
 
         <section class="admin-card">
           <h2>Folder Google Drive <span class="admin-card-note">tempat unggahan disimpan</span></h2>
           <p class="admin-hint">
-            Semua file yang diunggah pendaftar masuk ke folder ini di Drive
-            kamu, dan sifatnya privat. Kalau foldernya belum ada, dibuat
-            otomatis. Mengganti nama di sini <strong>tidak memindahkan file
-            lama</strong>, cuma menentukan ke mana unggahan berikutnya masuk.
+            Unggahan pendaftar masuk ke sini, privat, dibuat otomatis kalau
+            belum ada. Mengganti nama <strong>tidak memindahkan file lama</strong>.
           </p>
           <label class="admin-field">
             <span>Nama folder</span>
