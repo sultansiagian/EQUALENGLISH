@@ -397,3 +397,28 @@ body {
     border-radius: 16px;
   }
 }
+
+/* Kartu "Cek Koneksi" -- alat bantu waktu ada error, bukan fitur harian,
+   jadi sengaja dibikin lebih redup dari kartu editor di atasnya. */
+.admin-card-muted {
+  background: transparent;
+  border-style: dashed;
+}
+
+.admin-diagnose-output {
+  margin: 16px 0 0;
+  padding: 14px;
+  background: var(--black);
+  color: var(--pink-light);
+  border-radius: 10px;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  /* Hasil diagnosa bisa panjang dan punya baris lebar (URL, connection
+     string). Dibiarkan scroll di dalam kotaknya sendiri supaya tidak
+     bikin seluruh halaman bisa digeser ke samping. */
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 420px;
+  overflow: auto;
+}

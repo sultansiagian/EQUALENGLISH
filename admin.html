@@ -209,6 +209,22 @@
             </div>
           </div>
         </section>
+
+        <!-- Alat bantu kalau menyimpan gagal. Sengaja ditaruh paling bawah
+             dan tidak mencolok -- ini bukan fitur sehari-hari, cuma dipakai
+             waktu ada yang error. -->
+        <section class="admin-card admin-card-muted">
+          <h2>Cek Koneksi <span class="admin-card-note">buat kalau ada error</span></h2>
+          <p class="admin-hint">
+            Menguji apakah server bisa menyambung ke tempat penyimpanan teks
+            dan harga. Pakai ini kalau tombol Simpan di atas memunculkan pesan
+            merah, lalu kirim hasilnya.
+          </p>
+          <button type="button" id="admin-diagnose-btn" class="admin-btn admin-btn-ghost">
+            Jalankan Cek Koneksi
+          </button>
+          <pre id="admin-diagnose-output" class="admin-diagnose-output" hidden></pre>
+        </section>
       </main>
     </div>
 

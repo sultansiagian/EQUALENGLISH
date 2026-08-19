@@ -311,8 +311,41 @@ async function handlePhotoUpload(container, file) {
   }
 }
 
+// ============================================================
+// CEK KONEKSI -- lihat api/admin-diagnose.js
+// ============================================================
+
+async function runDiagnose() {
+  const btn = document.getElementById('admin-diagnose-btn');
+  const out = document.getElementById('admin-diagnose-output');
+
+  btn.disabled = true;
+  out.hidden = false;
+  out.textContent = 'Mengecek…';
+
+  try {
+    const res = await fetch('/api/admin-diagnose', { headers: authHeaders() });
+    const data = await res.json();
+
+    if (res.status === 401) {
+      handleUnauthorized(data.reason);
+      return;
+    }
+    if (!res.ok || !data.ok) {
+      out.textContent = 'Cek koneksi gagal dijalankan: ' + (data.reason || res.status);
+      return;
+    }
+    out.textContent = JSON.stringify(data.report, null, 2);
+  } catch (err) {
+    out.textContent = 'Cek koneksi gagal dijalankan: ' + err.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('admin-save-btn').addEventListener('click', saveForm);
+  document.getElementById('admin-diagnose-btn').addEventListener('click', runDiagnose);
 
   document.querySelectorAll('.admin-photo').forEach((container) => {
     const input = container.querySelector('.admin-photo-input');
