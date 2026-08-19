@@ -4,29 +4,50 @@ const DEFAULTS = require('./_lib/site-defaults');
 const { readOverrides } = require('./_lib/global-config-store');
 
 /**
- * Menyajikan index.html, tapi disisipi dulu konten dari Global Config
- * (diisi lewat /admin) SEBELUM dikirim ke browser pengunjung -- bukan
- * ditimpa belakangan oleh JavaScript seperti content-sheet.js yang lama.
+ * Menyajikan halaman utama dari home-template.html, tapi disisipi dulu
+ * konten dari Global Config (diisi lewat /admin) SEBELUM dikirim ke
+ * browser pengunjung -- bukan ditimpa belakangan oleh JavaScript seperti
+ * content-sheet.js yang lama.
  *
  * Kenapa begini, bukan tetap client-side: teks yang disisipkan lewat
  * JavaScript baru ada SETELAH script-nya jalan di browser pengunjung --
  * crawler yang tidak menjalankan JS (banyak dipakai AI search seperti
- * ChatGPT/Perplexity) cuma melihat teks HARDCODE lama di index.html.
+ * ChatGPT/Perplexity) cuma melihat teks hardcode lama di template.
  * Dengan cara ini, teks yang sudah diedit dari /admin ada di HTML asli
  * yang dikirim server, siapa pun/apa pun yang membaca sumbernya melihat
  * versi yang benar.
  *
- * File index.html sendiri TIDAK PERNAH diubah oleh fungsi ini -- dibaca
- * ulang dari disk tiap request, konten Global Config cuma menimpa hasil
- * bacanya secara sementara di memori sebelum dikirim. Kalau Global Config
- * kosong/gagal diakses, index.html tampil apa adanya seperti sebelum ada
- * /admin sama sekali (lihat readOverrides()).
+ * home-template.html sendiri TIDAK PERNAH diubah oleh fungsi ini --
+ * dibaca ulang dari disk tiap request, konten Global Config cuma menimpa
+ * hasil bacanya secara sementara di memori sebelum dikirim. Kalau Global
+ * Config kosong/gagal diakses, template tampil apa adanya seperti sebelum
+ * ada /admin sama sekali (lihat readOverrides()).
  *
- * vercel.json men-rewrite "/" ke fungsi ini (bukan langsung serve
- * index.html sebagai file statis), dan "includeFiles": "index.html" di
- * situ yang memastikan index.html ikut ter-bundle ke fungsi ini saat
- * deploy -- tanpa itu, fs.readFileSync di bawah akan gagal (ENOENT) di
- * production walau jalan normal kalau dites lokal.
+ * ====================================================================
+ * KENAPA FILENYA BERNAMA home-template.html, BUKAN index.html
+ *
+ * Vercel mengecek FILE STATIS DULU, baru menerapkan aturan "rewrites".
+ * Selama file bernama index.html ada di root, "/" selalu dilayani file
+ * itu langsung dan rewrite ke fungsi ini TIDAK PERNAH JALAN -- fungsi
+ * ini hidup dan benar, tapi tidak pernah dipanggil, jadi semua editan
+ * dari /admin tidak pernah muncul di halaman publik.
+ *
+ * Ini sempat terjadi beneran dan lolos ke production, karena waktu itu
+ * yang diuji cuma OUTPUT fungsi ini secara terpisah, bukan route "/"
+ * di deployment sungguhan. Gejalanya menyesatkan: /api/render-home
+ * mengembalikan HTML yang benar, tapi "/" mengembalikan versi lama.
+ *
+ * Jadi: JANGAN pernah mengembalikan nama file ini jadi index.html, dan
+ * kalau menambah halaman ber-SSR lain nanti, pastikan tidak ada file
+ * statis yang namanya bertabrakan dengan path-nya. Cara cepat mengecek
+ * ulang: bandingkan hasil fetch "/" dengan "/api/render-home" di situs
+ * yang sudah live; kalau beda, rewrite-nya tidak jalan.
+ * ====================================================================
+ *
+ * "includeFiles": "home-template.html" di vercel.json yang memastikan
+ * file template ikut ter-bundle ke fungsi ini saat deploy -- tanpa itu,
+ * fs.readFileSync di bawah gagal (ENOENT) di production walau jalan
+ * normal waktu dites lokal.
  */
 
 const TEXT_ID_MAP = {
@@ -302,13 +323,21 @@ function renderHtml(raw, overrides) {
 }
 
 module.exports = async function handler(req, res) {
-  const htmlPath = path.join(process.cwd(), 'index.html');
+  const htmlPath = path.join(process.cwd(), 'home-template.html');
 
   let raw;
   try {
     raw = fs.readFileSync(htmlPath, 'utf8');
   } catch (err) {
-    console.error('render-home: gagal membaca index.html dari disk:', err.message);
+    // Tidak ada lagi file statis yang bisa jadi jaring pengaman di "/"
+    // (itu justru inti perbaikannya, lihat catatan panjang di atas), jadi
+    // kalau ini gagal halaman utama benar-benar mati. Penyebab yang paling
+    // mungkin cuma satu: "includeFiles" di vercel.json tidak lagi cocok
+    // dengan nama file ini.
+    console.error(
+      'render-home: GAGAL membaca home-template.html dari disk (' + err.message +
+        '). Cek "includeFiles" di vercel.json masih menunjuk nama file yang benar.'
+    );
     return res.status(500).send('Internal Server Error');
   }
 
@@ -321,7 +350,7 @@ module.exports = async function handler(req, res) {
   } catch (err) {
     // Kalau proses templating-nya sendiri gagal (bukan cuma Global Config-nya
     // yang gagal diakses -- itu sudah ditangani gracefully di readOverrides),
-    // lebih baik kirim index.html APA ADANYA daripada halaman utama situs
+    // lebih baik kirim template APA ADANYA daripada halaman utama situs
     // jadi error total.
     console.error('render-home: gagal menyisipkan konten, kirim versi default:', err.message);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');

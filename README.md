@@ -5,26 +5,31 @@ reading, dan writing, serta program intensif Bootcamp EPT UI.
 
 ## Menjalankan secara lokal
 
-Situs ini statis dan tidak punya proses build. Buka `index.html` langsung di
-browser, atau jalankan server statis apa pun dari folder ini:
+Tidak ada proses build. Untuk melihat halaman apa adanya (tanpa konten dari
+/admin), jalankan server statis apa pun dari folder ini:
 
 ```bash
 python -m http.server 4173
 ```
 
-Lalu buka `http://127.0.0.1:4173`.
+Lalu buka `http://127.0.0.1:4173/home-template.html`.
+
+Perlu dicatat: server statis biasa TIDAK menjalankan `api/render-home.js`,
+jadi yang tampil adalah nilai hardcode, bukan yang diedit lewat `/admin`.
+Untuk menguji hasil penyisipannya, panggil `renderHtml()` dari
+`api/render-home.js` lewat skrip Node kecil, atau cek langsung di deployment.
 
 ## Struktur
 
 | Berkas | Isi |
 | --- | --- |
-| `index.html` | Seluruh halaman publik, satu file. Disajikan lewat `api/render-home.js`, BUKAN langsung sebagai file statis -- lihat bagian Panel admin. |
+| `home-template.html` | Seluruh halaman publik, satu file. **Sengaja TIDAK bernama `index.html`**: Vercel mengecek file statis sebelum aturan `rewrites`, jadi selama ada `index.html` di root, `/` dilayani file itu dan `api/render-home.js` tidak pernah dipanggil (pernah kejadian, lihat catatan di file itu). |
 | `styles.css` | Seluruh gaya, termasuk lapisan animasi dan breakpoint |
 | `script.js` | Navigasi, reveal saat scroll, penghitung angka |
 | `shader-background.js` | Latar gradien WebGL di hero |
 | `EDITS/` | Logo dan foto yang dipakai halaman |
 | `admin.html` / `admin.js` / `admin.css` | Panel admin (`/admin`), login Google, ganti teks/harga/foto tanpa commit/push |
-| `api/render-home.js` | Menyisipkan konten yang diedit dari `/admin` ke `index.html` sebelum dikirim ke pengunjung |
+| `api/render-home.js` | Menyisipkan konten yang diedit dari `/admin` ke `home-template.html` sebelum dikirim ke pengunjung. Melayani `/`. |
 | `api/admin-content.js`, `api/admin-upload.js` | Endpoint server panel admin (baca/simpan teks & harga, upload foto) |
 | `api/verify-access.js` | Gerbang login siswa ke `kelas.html`, terpisah total dari panel admin |
 
@@ -61,15 +66,21 @@ ini tidak bisa diubah setelah store dibuat, jadi kalau salah pilih Private,
 buat store baru, jangan coba mengubah yang sudah ada.
 
 Kalau salah satu env var di atas belum diisi/salah, `/admin` menampilkan
-pesan error yang jelas (bukan diam-diam gagal), dan halaman publik
-(`index.html`) tetap tampil normal pakai nilai hardcode -- lihat
+pesan error yang jelas (bukan diam-diam gagal), dan halaman publik tetap
+tampil normal pakai nilai hardcode di `home-template.html` -- lihat
 `readOverrides()` di `api/_lib/global-config-store.js`.
+
+**Kalau editan dari `/admin` tersimpan tapi tidak muncul di beranda**, cek
+dulu apakah `rewrites` di `vercel.json` benar-benar jalan: bandingkan hasil
+membuka `/` dengan `/api/render-home` di situs yang sudah live. Kalau isinya
+beda, berarti ada file statis yang namanya bertabrakan dengan `/` dan Vercel
+melayani file itu duluan (Vercel mengecek file statis SEBELUM `rewrites`).
 
 ## Catatan teknis
 
 - **Zero build step, dua dependency runtime.** Tidak ada bundler atau
   framework, dan tidak perlu apa pun diinstall untuk mengedit/melihat
-  `index.html`, `kelas.html`, atau `admin.html` secara lokal. `package.json`
+  `home-template.html`, `kelas.html`, atau `admin.html` secara lokal. `package.json`
   di root cuma dipakai Vercel supaya fungsi di `api/` (panel admin) punya
   `@vercel/blob` dan `@vercel/global-config` saat deploy -- kedua paket ini
   TIDAK dipakai di file manapun yang jalan di browser pengunjung.
@@ -85,8 +96,9 @@ pesan error yang jelas (bukan diam-diam gagal), dan halaman publik
 
 ## Sebelum dipublikasikan
 
-- [ ] Isi tiga kartu testimoni. Markup-nya ada di `index.html`, sengaja
-      dinonaktifkan dalam komentar sampai kutipan asli dari siswa tersedia.
+- [ ] Isi testimoni lewat `/admin` (kartu "Testimoni"). Section-nya tidak
+      tampil di beranda selama daftarnya kosong, jadi halaman aman
+      dipublikasikan tanpa kutipan karangan.
 - [ ] Buka kembali formulir pendaftaran. Tautan pada tombol utama di bagian
       penutup saat ini mengarah ke Google Form yang berstatus tertutup.
 - [ ] Pastikan jumlah orang pada paket Group. Website menulis 3 orang,

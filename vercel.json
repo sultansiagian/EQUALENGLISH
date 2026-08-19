@@ -1,9 +1,21 @@
 {
   "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/home-template.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/home-template",
+      "destination": "/",
+      "permanent": true
+    }
+  ],
   "rewrites": [{ "source": "/", "destination": "/api/render-home" }],
   "functions": {
     "api/render-home.js": {
-      "includeFiles": "index.html"
+      "includeFiles": "home-template.html"
     }
   }
 }
