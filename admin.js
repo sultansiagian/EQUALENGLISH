@@ -1,123 +1,26 @@
 /**
- * Logika halaman /admin. Tidak ada session/cookie -- ID token Google yang
- * didapat sekali dari tombol Sign in disimpan di variabel JS (currentIdToken)
- * dan dikirim ulang di header Authorization tiap kali admin.js manggil
- * /api/admin-content atau /api/admin-upload. Token ini berlaku sekitar 1
- * jam; kalau server balas token_expired/token_invalid, halaman ini minta
- * login ulang (lihat handleUnauthorized()).
+ * Logika halaman /admin: konten beranda (teks, harga, foto) dan testimoni.
+ *
+ * Login-nya TIDAK di sini -- ditangani admin-auth.js yang dimuat lebih
+ * dulu dan dipakai bersama halaman /pendaftar. File ini cuma menyediakan
+ * window.onAdminReady di bawah, yang dipanggil admin-auth.js setelah
+ * login terverifikasi sebagai admin.
+ *
+ * Daftar pendaftar baru juga TIDAK di sini lagi -- pindah ke
+ * pendaftar.js, karena jumlahnya tumbuh terus sementara isi halaman ini
+ * tetap.
  */
 
-let currentIdToken = null;
-
-function showPanel(name) {
-  ['signin', 'loading', 'denied', 'error', 'dashboard'].forEach((p) => {
-    document.getElementById('admin-panel-' + p).hidden = p !== name;
-  });
-}
-
-function authHeaders() {
-  return { Authorization: 'Bearer ' + currentIdToken };
-}
-
-// Penjelasan per-alasan yang dikembalikan server (lihat verifyGoogleIdToken
-// di api/_lib/google-verify.js). Ditulis sebagai kalimat yang bisa
-// ditindaklanjuti, bukan kode mentah, karena yang baca ini bukan programmer.
-const AUTH_REASON_TEXT = {
-  token_expired:
-    'Sesi login kamu sudah kedaluwarsa (token Google cuma berlaku sekitar 1 jam). Login lagi.',
-  wrong_audience:
-    'Client ID Google di halaman ini tidak cocok dengan yang diharapkan server. Ini salah konfigurasi kode, bukan salah kamu.',
-  email_unverified:
-    'Google melaporkan email akun ini belum terverifikasi, jadi tidak bisa dipakai masuk.',
-  missing_credential:
-    'Browser tidak mengirim token login ke server. Coba muat ulang halaman ini.',
-  token_invalid:
-    'Server tidak bisa memvalidasi token login dari Google. Coba login ulang; kalau tetap begini, cek Vercel > Deployments > Functions log untuk pesan lengkapnya.',
+window.onAdminReady = function (data) {
+  fillForm(data.values);
+  loadPhotoPreviews(data.values);
+  testimonials = Array.isArray(data.values.testimonials)
+    ? data.values.testimonials.map(function (t) {
+        return Object.assign({}, t);
+      })
+    : [];
+  renderTestiList();
 };
-
-// Dipanggil kalau sebuah fetch admin balas 401 (token habis/tidak valid) --
-// beda dari 403 (login sah tapi bukan admin), yang punya panel sendiri.
-//
-// WAJIB selalu memberi tahu alasannya. Versi pertama fungsi ini cuma
-// memanggil showPanel('signin') tanpa pesan apa pun, dan dari sisi pengguna
-// itu terlihat seperti "diklik tapi tidak terjadi apa-apa" -- gagal
-// diam-diam yang bikin masalah aslinya mustahil didiagnosis.
-function handleUnauthorized(reason) {
-  currentIdToken = null;
-  showPanel('signin');
-
-  const box = document.getElementById('admin-signin-error');
-  box.textContent =
-    (AUTH_REASON_TEXT[reason] || 'Server menolak login ini.') +
-    (reason ? ' (kode: ' + reason + ')' : '');
-  box.hidden = false;
-
-  console.error('Login admin ditolak server. reason=' + reason);
-}
-
-// Dipanggil otomatis oleh Google Identity Services lewat
-// data-callback="handleAdminCredential" di admin.html.
-window.handleAdminCredential = async function handleAdminCredential(response) {
-  showPanel('loading');
-  currentIdToken = response.credential;
-
-  let payloadEmail = '';
-  try {
-    const parts = response.credential.split('.');
-    const profile = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-    payloadEmail = profile.email || '';
-  } catch (err) {
-    // Cuma buat ditampilkan; kalau gagal decode, server tetap yang menentukan.
-  }
-
-  try {
-    const res = await fetch('/api/admin-content', { headers: authHeaders() });
-    const data = await res.json();
-
-    if (res.ok && data.ok) {
-      const userEl = document.getElementById('admin-user');
-      userEl.textContent = data.email;
-      userEl.hidden = false;
-      fillForm(data.values);
-      loadPhotoPreviews(data.values);
-      testimonials = Array.isArray(data.values.testimonials)
-        ? data.values.testimonials.map((t) => Object.assign({}, t))
-        : [];
-      renderTestiList();
-      showPanel('dashboard');
-      return;
-    }
-
-    if (res.status === 403 && data.reason === 'not_admin') {
-      document.getElementById('admin-denied-email').textContent = payloadEmail;
-      showPanel('denied');
-      return;
-    }
-
-    if (res.status === 401) {
-      handleUnauthorized(data.reason);
-      return;
-    }
-
-    document.getElementById('admin-error-detail').textContent =
-      'Server menolak dengan status ' + res.status + ' (' + (data.reason || 'tanpa keterangan') +
-      '). Kalau tertulis server_not_configured, berarti ADMIN_EMAILS belum keisi di Vercel.';
-    showPanel('error');
-  } catch (err) {
-    document.getElementById('admin-error-detail').textContent =
-      'Tidak bisa menghubungi server: ' + err.message;
-    showPanel('error');
-  }
-};
-
-function trySwitchAdminAccount() {
-  if (window.google && window.google.accounts && window.google.accounts.id) {
-    window.google.accounts.id.disableAutoSelect();
-  }
-  currentIdToken = null;
-  showPanel('signin');
-}
-window.trySwitchAdminAccount = trySwitchAdminAccount;
 
 // ============================================================
 // FORM TEKS & HARGA
@@ -328,181 +231,6 @@ async function handlePhotoUpload(container, file) {
 }
 
 // ============================================================
-// PENDAFTAR BARU (dari form /daftar)
-//
-// Datanya TIDAK disimpan di Global Config seperti konten lain, melainkan
-// di tab "Pendaftar Web" pada spreadsheet pendaftaran. Semua akses ke
-// situ lewat /api/admin-pendaftar -> Apps Script (lihat apps-script.gs).
-// ============================================================
-
-function pendaftarStatus(teks, state) {
-  const list = document.getElementById('admin-pendaftar-list');
-  list.textContent = '';
-  const p = document.createElement('p');
-  p.className = 'admin-hint admin-pendaftar-kosong';
-  if (state) p.dataset.state = state;
-  p.textContent = teks;
-  list.appendChild(p);
-}
-
-function barisInfo(label, isi) {
-  if (!isi) return '';
-  return (
-    '<div class="admin-pendaftar-info"><span>' +
-    label +
-    '</span><strong>' +
-    isi +
-    '</strong></div>'
-  );
-}
-
-function linkBukti(label, url) {
-  if (!url) return '';
-  return (
-    '<a class="admin-pendaftar-bukti" href="' +
-    encodeURI(url) +
-    '" target="_blank" rel="noopener">' +
-    label +
-    ' <span aria-hidden="true">↗</span></a>'
-  );
-}
-
-function renderPendaftar(daftar) {
-  const list = document.getElementById('admin-pendaftar-list');
-
-  if (!daftar || daftar.length === 0) {
-    pendaftarStatus('Belum ada pendaftar baru yang menunggu persetujuan.');
-    return;
-  }
-
-  list.textContent = '';
-  daftar.forEach((p) => {
-    const kartu = document.createElement('div');
-    kartu.className = 'admin-pendaftar';
-
-    // Peserta ditampilkan sebagai satu daftar email, karena email itulah
-    // yang menentukan siapa saja yang nanti bisa masuk ruang kelas.
-    const peserta = [
-      { nama: p.namaDiri || p.nama, email: p.emailDiri },
-      { nama: p.p2Nama, email: p.p2Email },
-      { nama: p.p3Nama, email: p.p3Email },
-    ].filter((x) => x.email);
-
-    kartu.innerHTML =
-      '<div class="admin-pendaftar-head">' +
-      '<h3>' + (p.nama || '(tanpa nama)') + '</h3>' +
-      '<span class="admin-pendaftar-paket">' + (p.paket || '-') + '</span>' +
-      '</div>' +
-      '<div class="admin-pendaftar-grid">' +
-      barisInfo('Fakultas', p.fakultas) +
-      barisInfo('No. HP', p.telepon) +
-      barisInfo('ID Line', p.idLine) +
-      barisInfo('Masuk', p.timestamp) +
-      '</div>' +
-      '<div class="admin-pendaftar-peserta">' +
-      '<span class="admin-pendaftar-subjudul">Email yang akan dapat akses</span>' +
-      peserta
-        .map((x) => '<div><strong>' + (x.nama || '-') + '</strong> ' + x.email + '</div>')
-        .join('') +
-      '</div>' +
-      '<div class="admin-pendaftar-bukti-baris">' +
-      (linkBukti('Bukti bayar', p.buktiBayar) || '<span class="admin-pendaftar-nobukti">Tidak ada bukti bayar</span>') +
-      linkBukti('Broadcast', p.buktiBroadcast) +
-      linkBukti('Instagram', p.buktiInstagram) +
-      '</div>' +
-      '<div class="admin-pendaftar-aksi">' +
-      '<button type="button" class="admin-btn admin-btn-primary" data-aksi="setujui">Setujui &amp; Beri Akses</button>' +
-      '<button type="button" class="admin-pendaftar-tolak" data-aksi="tolak">Tolak</button>' +
-      '<span class="admin-pendaftar-status"></span>' +
-      '</div>';
-
-    kartu.querySelectorAll('[data-aksi]').forEach((btn) => {
-      btn.addEventListener('click', () => prosesPendaftar(kartu, p, btn.dataset.aksi));
-    });
-
-    list.appendChild(kartu);
-  });
-}
-
-async function muatPendaftar() {
-  const btn = document.getElementById('admin-pendaftar-refresh');
-  btn.disabled = true;
-  pendaftarStatus('Memuat…');
-
-  try {
-    const res = await fetch('/api/admin-pendaftar', { headers: authHeaders() });
-    const data = await res.json();
-
-    if (res.status === 401) {
-      handleUnauthorized(data.reason);
-      return;
-    }
-    if (!res.ok || !data.ok) {
-      pendaftarStatus('Gagal memuat: ' + (data.pesan || data.reason || res.status), 'error');
-      return;
-    }
-    renderPendaftar(data.pendaftar);
-  } catch (err) {
-    pendaftarStatus('Gagal memuat: ' + err.message, 'error');
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-async function prosesPendaftar(kartu, p, aksi) {
-  // Menyetujui berarti membuka akses ke seluruh materi kelas berbayar, dan
-  // menolak berarti menghapus barisnya. Dua-duanya tidak bisa dibatalkan
-  // dari sini, jadi dikonfirmasi dulu.
-  const nama = p.nama || 'pendaftar ini';
-  const pesan =
-    aksi === 'setujui'
-      ? 'Setujui ' + nama + '? Semua email di kartu ini langsung bisa masuk ruang kelas.'
-      : 'Tolak dan hapus pendaftaran ' + nama + '? Datanya hilang dari daftar ini.';
-  if (!window.confirm(pesan)) return;
-
-  const tombol = kartu.querySelectorAll('[data-aksi]');
-  const status = kartu.querySelector('.admin-pendaftar-status');
-  tombol.forEach((b) => (b.disabled = true));
-  status.removeAttribute('data-state');
-  status.textContent = 'Memproses…';
-
-  try {
-    const res = await fetch('/api/admin-pendaftar', {
-      method: 'POST',
-      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
-      body: JSON.stringify({ id: p.id, aksi }),
-    });
-    const data = await res.json();
-
-    if (res.ok && data.ok) {
-      status.dataset.state = 'ok';
-      status.textContent = aksi === 'setujui' ? 'Disetujui.' : 'Ditolak.';
-      // Kartunya dibuang dari layar supaya daftar yang tersisa persis sama
-      // dengan isi tab Pendaftar Web (barisnya sudah tidak ada di sana).
-      setTimeout(() => {
-        kartu.remove();
-        if (document.querySelectorAll('.admin-pendaftar').length === 0) {
-          pendaftarStatus('Belum ada pendaftar baru yang menunggu persetujuan.');
-        }
-      }, 900);
-      return;
-    }
-
-    if (res.status === 401) {
-      handleUnauthorized(data.reason);
-      return;
-    }
-    status.dataset.state = 'error';
-    status.textContent = 'Gagal: ' + (data.pesan || data.reason || res.status);
-    tombol.forEach((b) => (b.disabled = false));
-  } catch (err) {
-    status.dataset.state = 'error';
-    status.textContent = 'Gagal: ' + err.message;
-    tombol.forEach((b) => (b.disabled = false));
-  }
-}
-
-// ============================================================
 // TESTIMONI
 //
 // Beda dari field lain di halaman ini yang tiap satunya punya elemen
@@ -709,7 +437,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('admin-save-btn').addEventListener('click', saveForm);
   document.getElementById('admin-diagnose-btn').addEventListener('click', runDiagnose);
   document.getElementById('admin-testi-save').addEventListener('click', saveTestimonials);
-  document.getElementById('admin-pendaftar-refresh').addEventListener('click', muatPendaftar);
   document.getElementById('admin-testi-add').addEventListener('click', () => {
     testimonials.push({ nama: '', fakultas: '', skorEpt: '', pesan: '', fotoUrl: '' });
     renderTestiList();

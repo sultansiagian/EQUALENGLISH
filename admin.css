@@ -695,3 +695,56 @@ body {
 .admin-pendaftar-status[data-state='error'] {
   color: var(--red);
 }
+
+/* Navigasi antar halaman admin (/admin dan /pendaftar). */
+.admin-nav {
+  margin-bottom: 20px;
+}
+
+.admin-nav a {
+  font-family: var(--body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--black);
+  text-decoration: none;
+  border-bottom: 2px solid var(--pink);
+  padding-bottom: 2px;
+}
+
+.admin-pendaftar-topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-pendaftar-topbar .admin-btn {
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
+.admin-pendaftar-topbar h2 {
+  margin-bottom: 8px;
+}
+
+.admin-pendaftar-cari {
+  margin-top: 18px;
+}
+
+.admin-pendaftar-cari input[type='search'] {
+  width: 100%;
+  font-family: var(--body);
+  font-size: 0.95rem;
+  padding: 10px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--black);
+}
+
+.admin-pendaftar-cari input[type='search']:focus {
+  outline: none;
+  border-color: var(--pink);
+  background: var(--white);
+}

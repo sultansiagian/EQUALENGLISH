@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Halaman privat, sama seperti /admin dan /kelas. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Pendaftar · EQUAL English</title>
+    <link rel="icon" type="image/png" href="/EDITS/favicon.png" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Syne:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <!-- admin.css dipakai ulang penuh: halaman ini bagian dari panel admin
+         yang sama, jadi semua gayanya (kartu, tombol, kartu pendaftar)
+         sudah ada di sana. -->
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/admin.css" />
+  </head>
+  <body>
+    <div class="admin-shell">
+      <header class="admin-topbar">
+        <span class="admin-topbar-brand">EQUAL English <em>Pendaftar</em></span>
+        <span id="admin-user" class="admin-topbar-user" hidden></span>
+      </header>
+
+      <!-- Empat panel state di bawah bentuknya harus sama dengan admin.html,
+           karena admin-auth.js yang mengaturnya lewat id yang sama. -->
+      <section id="admin-panel-signin" class="admin-panel admin-panel-center">
+        <h1>Masuk dulu</h1>
+        <p class="admin-hint">
+          Halaman ini menampilkan pendaftar yang menunggu persetujuan. Pakai akun
+          Google yang sudah terdaftar sebagai admin.
+        </p>
+        <div class="admin-signin-box">
+          <div
+            id="g_id_onload"
+            data-client_id="367439644430-4t8r204v4h6ufouinpd2ctdftgndbehf.apps.googleusercontent.com"
+            data-callback="handleAdminCredential"
+            data-auto_prompt="false"
+          ></div>
+          <div class="g_id_signin" data-type="standard" data-shape="pill" data-size="large"></div>
+        </div>
+        <p id="admin-signin-error" class="admin-signin-error" hidden></p>
+      </section>
+
+      <section id="admin-panel-loading" class="admin-panel admin-panel-center" hidden>
+        <p class="admin-status"><span class="admin-spinner" aria-hidden="true"></span> Memeriksa akses…</p>
+      </section>
+
+      <section id="admin-panel-denied" class="admin-panel admin-panel-center" hidden>
+        <h1>Bukan akun admin.</h1>
+        <p class="admin-hint">
+          Email <strong id="admin-denied-email"></strong> belum terdaftar di
+          <code>ADMIN_EMAILS</code>.
+        </p>
+        <button type="button" class="admin-btn admin-btn-ghost" onclick="trySwitchAdminAccount()">
+          Coba akun lain
+        </button>
+      </section>
+
+      <section id="admin-panel-error" class="admin-panel admin-panel-center" hidden>
+        <h1>Gagal memuat.</h1>
+        <p class="admin-hint" id="admin-error-detail">
+          Ada masalah menghubungi server. Coba muat ulang halaman ini.
+        </p>
+        <button type="button" class="admin-btn admin-btn-ghost" onclick="location.reload()">
+          Muat ulang
+        </button>
+      </section>
+
+      <main id="admin-panel-dashboard" class="admin-panel" hidden>
+        <nav class="admin-nav">
+          <a href="/admin">← Konten beranda</a>
+        </nav>
+
+        <section class="admin-card">
+          <div class="admin-pendaftar-topbar">
+            <div>
+              <h2>Pendaftar Baru <span class="admin-card-note" id="admin-pendaftar-jumlah"></span></h2>
+              <p class="admin-hint">
+                Mereka <strong>belum bisa membuka ruang kelas</strong>. Cek bukti
+                pembayarannya, lalu Setujui. Barisnya otomatis pindah ke sheet
+                Form_Responses dan aksesnya langsung terbuka.
+              </p>
+            </div>
+            <button type="button" id="admin-pendaftar-refresh" class="admin-btn admin-btn-ghost">
+              Muat Ulang
+            </button>
+          </div>
+
+          <label class="admin-field admin-pendaftar-cari">
+            <span>Cari</span>
+            <input
+              type="search"
+              id="admin-pendaftar-cari"
+              placeholder="Ketik nama, email, fakultas, atau paket…"
+            />
+          </label>
+
+          <div id="admin-pendaftar-list" class="admin-pendaftar-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/admin-auth.js"></script>
+    <script src="/pendaftar.js"></script>
+  </body>
+</html>
