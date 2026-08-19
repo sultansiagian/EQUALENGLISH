@@ -16,10 +16,13 @@
   font-family: var(--body);
 }
 
+/* Hitam, bukan putih. Logo EQUAL berwarna pink, dan pink di atas putih
+   nyaris tidak terlihat. Sekalian menyamakan dengan topbar halaman admin
+   yang memang sudah hitam, jadi seluruh halaman non-beranda punya kepala
+   yang sama. */
 .daftar-topbar {
   padding: 20px 24px;
-  border-bottom: 1px solid var(--line);
-  background: var(--white);
+  background: var(--black);
 }
 
 .daftar-brand {
@@ -27,7 +30,7 @@
   align-items: center;
   gap: 8px;
   text-decoration: none;
-  color: var(--black);
+  color: var(--white);
   font-family: var(--display);
   font-weight: 700;
 }
