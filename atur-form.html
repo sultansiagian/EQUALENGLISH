@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Atur Formulir · EQUAL English</title>
+    <link rel="icon" type="image/png" href="/EDITS/favicon.png" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Syne:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/admin.css" />
+  </head>
+  <body>
+    <div class="admin-shell">
+      <header class="admin-topbar">
+        <span class="admin-topbar-brand">EQUAL English <em>Atur Formulir</em></span>
+        <span id="admin-user" class="admin-topbar-user" hidden></span>
+      </header>
+
+      <!-- Empat panel state di bawah bentuknya harus sama dengan admin.html,
+           karena admin-auth.js yang mengaturnya lewat id yang sama. -->
+      <section id="admin-panel-signin" class="admin-panel admin-panel-center">
+        <h1>Masuk dulu</h1>
+        <p class="admin-hint">
+          Halaman ini untuk menyusun pertanyaan di formulir pendaftaran. Pakai
+          akun Google yang sudah terdaftar sebagai admin.
+        </p>
+        <p id="admin-signin-error" class="admin-signin-error" role="alert" hidden></p>
+        <div class="admin-signin-box">
+          <div
+            id="g_id_onload"
+            data-client_id="367439644430-4t8r204v4h6ufouinpd2ctdftgndbehf.apps.googleusercontent.com"
+            data-callback="handleAdminCredential"
+            data-auto_prompt="false"
+          ></div>
+          <div class="g_id_signin" data-type="standard" data-shape="pill" data-size="large"></div>
+        </div>
+      </section>
+
+      <section id="admin-panel-loading" class="admin-panel admin-panel-center" hidden>
+        <p class="admin-status"><span class="admin-spinner" aria-hidden="true"></span> Memeriksa akses…</p>
+      </section>
+
+      <section id="admin-panel-denied" class="admin-panel admin-panel-center" hidden>
+        <h1>Bukan akun admin.</h1>
+        <p class="admin-hint">
+          Email <strong id="admin-denied-email"></strong> belum terdaftar di
+          <code>ADMIN_EMAILS</code>.
+        </p>
+        <button type="button" class="admin-btn admin-btn-ghost" onclick="trySwitchAdminAccount()">
+          Coba akun lain
+        </button>
+      </section>
+
+      <section id="admin-panel-error" class="admin-panel admin-panel-center" hidden>
+        <h1>Gagal memuat.</h1>
+        <p class="admin-hint" id="admin-error-detail">
+          Ada masalah menghubungi server. Coba muat ulang halaman ini.
+        </p>
+        <button type="button" class="admin-btn admin-btn-ghost" onclick="location.reload()">
+          Muat ulang
+        </button>
+      </section>
+
+      <main id="admin-panel-dashboard" class="admin-panel" hidden>
+        <nav class="admin-nav">
+          <a href="/admin">← Konten beranda</a>
+          <a href="/pendaftar">Pendaftar baru →</a>
+          <a href="/daftar" target="_blank" rel="noopener">Lihat formulirnya ↗</a>
+        </nav>
+
+        <section class="admin-card">
+          <h2>Judul Halaman <span class="admin-card-note">/daftar</span></h2>
+          <label class="admin-field">
+            <span>Judul</span>
+            <input type="text" data-key="daftarTitle" />
+          </label>
+          <label class="admin-field">
+            <span>Kalimat pengantar</span>
+            <textarea data-key="daftarDesc" rows="3"></textarea>
+          </label>
+        </section>
+
+        <section class="admin-card">
+          <h2>Pertanyaan <span class="admin-card-note" id="form-jumlah"></span></h2>
+          <p class="admin-hint">
+            Geser urutannya pakai tombol panah. Pertanyaan bertanda
+            <strong>kunci</strong> tidak bisa dihapus atau dimatikan karena
+            email dan pilihan paket menentukan siapa yang bisa masuk ruang
+            kelas. Teks dan urutannya tetap bisa kamu ubah.
+          </p>
+          <p class="admin-hint">
+            Mengubah urutan di sini <strong>tidak menggeser kolom di
+            spreadsheet</strong>. Tiap pertanyaan punya kolomnya sendiri yang
+            tetap, jadi data lama kamu aman.
+          </p>
+
+          <div id="form-list" class="form-list"></div>
+
+          <div class="form-tambah">
+            <label class="admin-field">
+              <span>Tambah pertanyaan baru</span>
+              <select id="form-tipe-baru">
+                <option value="teks">Isian singkat</option>
+                <option value="teksPanjang">Isian panjang</option>
+                <option value="email">Email</option>
+                <option value="telepon">Nomor HP</option>
+                <option value="pilihan">Pilihan (dropdown)</option>
+                <option value="upload">Unggah gambar</option>
+              </select>
+            </label>
+            <button type="button" id="form-tambah-btn" class="admin-btn admin-btn-ghost">
+              + Tambah
+            </button>
+          </div>
+        </section>
+
+        <section class="admin-card">
+          <h2>Folder Google Drive <span class="admin-card-note">tempat unggahan disimpan</span></h2>
+          <p class="admin-hint">
+            Semua file yang diunggah pendaftar masuk ke folder ini di Drive
+            kamu, dan sifatnya privat. Kalau foldernya belum ada, dibuat
+            otomatis. Mengganti nama di sini <strong>tidak memindahkan file
+            lama</strong>, cuma menentukan ke mana unggahan berikutnya masuk.
+          </p>
+          <label class="admin-field">
+            <span>Nama folder</span>
+            <input type="text" data-key="driveFolder" />
+          </label>
+        </section>
+
+        <div class="admin-save-bar">
+          <button type="button" id="form-save" class="admin-btn admin-btn-primary">
+            Simpan Formulir
+          </button>
+          <span id="form-status" class="admin-save-status"></span>
+        </div>
+      </main>
+    </div>
+
+    <script src="/admin-auth.js"></script>
+    <script src="/atur-form.js"></script>
+  </body>
+</html>

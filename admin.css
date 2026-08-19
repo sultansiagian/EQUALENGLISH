@@ -748,3 +748,129 @@ body {
   border-color: var(--pink);
   background: var(--white);
 }
+
+/* ============================================================
+   PENYUSUN FORMULIR (/atur-form)
+   ============================================================ */
+
+.form-list {
+  margin-top: 18px;
+}
+
+.form-field {
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+  background: var(--white);
+}
+
+/* Pertanyaan yang dimatikan tetap terlihat tapi diredupkan, supaya jelas
+   dia masih ada dan bisa dinyalakan lagi, bukan terhapus. */
+.form-field-mati {
+  opacity: 0.55;
+  background: var(--paper);
+}
+
+.form-field-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.form-field-tipe {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+
+.form-field-kunci {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--pink);
+  color: var(--black);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+
+.form-field-aksi {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+
+.form-field-aksi button {
+  font-family: var(--body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid var(--line);
+  background: var(--white);
+  border-radius: 8px;
+  padding: 5px 11px;
+  cursor: pointer;
+  color: var(--black);
+}
+
+.form-field-aksi button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.form-field-hapus {
+  color: var(--red) !important;
+  border-color: rgba(229, 72, 77, 0.35) !important;
+}
+
+.form-field-toggle {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.form-tambah {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.form-tambah .admin-field {
+  margin-top: 0;
+  flex: 1;
+  min-width: 200px;
+}
+
+.form-tambah .admin-btn {
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
+.form-tambah select {
+  width: 100%;
+  font-family: var(--body);
+  font-size: 0.95rem;
+  padding: 10px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--black);
+}
+
+/* Beberapa halaman admin sekarang punya lebih dari satu tautan. */
+.admin-nav {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}

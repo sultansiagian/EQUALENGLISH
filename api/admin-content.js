@@ -1,6 +1,7 @@
 const DEFAULTS = require('./_lib/site-defaults');
 const { requireAdmin } = require('./_lib/admin-guard');
 const { readOverrides, writeOverrides } = require('./_lib/global-config-store');
+const { normalisasiFields } = require('./_lib/form-schema');
 
 // Batas jumlah testimoni & panjang tiap field. Angkanya dipilih longgar
 // (jauh di atas kebutuhan wajar) tapi tetap terbatas, semata supaya satu
@@ -82,6 +83,15 @@ module.exports = async function handler(req, res) {
         // memutuskan item mana yang layak tampil di halaman publik adalah
         // renderTestimonials() di api/render-home.js, bukan di sini.
         .filter((t) => t.nama || t.pesan || t.fakultas || t.skorEpt || t.fotoUrl);
+    }
+
+    // formFields juga array bebas seperti testimonials, tapi taruhannya
+    // jauh lebih tinggi: susunan yang salah bisa menghapus pertanyaan
+    // email (kunci akses ruang kelas) atau menulis jawaban ke kolom
+    // spreadsheet yang keliru. Semua penjagaannya ada di
+    // normalisasiFields() -- lihat komentar panjang di form-schema.js.
+    if (filtered.formFields !== undefined) {
+      filtered.formFields = normalisasiFields(filtered.formFields);
     }
 
     try {
