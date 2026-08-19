@@ -65,9 +65,26 @@ const KOLOM = {
   buktiInstagram: 21, // V
 };
 
-// Pertanyaan tambahan buatan admin mulai dari kolom W. User sudah
-// mengonfirmasi kolom setelah V tidak dipakai apa pun.
-const KOLOM_TAMBAHAN_MULAI = 22;
+/**
+ * Kolom W DIPESAN khusus untuk tanggal berakhirnya akses ruang kelas.
+ * Diisi otomatis waktu admin menekan Setujui di /pendaftar.
+ *
+ * Kenapa berupa tanggal di tiap baris, bukan satu setelan global:
+ * baris lama (dari Google Form dan sheet manual) tidak punya isi di
+ * kolom ini, jadi mereka OTOMATIS tidak pernah kedaluwarsa tanpa perlu
+ * penanda "ini pendaftar web" terpisah. Persis yang diminta: yang lama
+ * tetap diatur manual dengan kata "done", yang baru punya batas waktu
+ * sendiri.
+ *
+ * Nilainya juga kelihatan dan bisa diubah langsung di spreadsheet, jadi
+ * memperpanjang akses satu orang cukup dengan mengganti tanggalnya, dan
+ * mencabut batas waktunya cukup dengan mengosongkan selnya.
+ */
+const KOLOM_BERLAKU_SAMPAI = 22; // W
+
+// Pertanyaan tambahan buatan admin mulai dari kolom X, MELEWATI kolom W
+// yang sudah dipesan di atas.
+const KOLOM_TAMBAHAN_MULAI = 23;
 
 const TIPE_SAH = ['teks', 'teksPanjang', 'email', 'telepon', 'pilihan', 'upload', 'paket', 'peserta'];
 
@@ -297,6 +314,7 @@ function susunBaris(fields, jawaban, linkUpload, stempelWaktu) {
   const semua = normalisasiFields(fields);
   const lebar = Math.max(
     KOLOM_TAMBAHAN_MULAI,
+  KOLOM_BERLAKU_SAMPAI,
     ...semua.map((f) => f.kolom + 1)
   );
   const baris = new Array(lebar).fill('');
@@ -408,6 +426,7 @@ module.exports = {
   PILIHAN_PAKET,
   KOLOM,
   KOLOM_TAMBAHAN_MULAI,
+  KOLOM_BERLAKU_SAMPAI,
   TIPE_SAH,
   MAKS_FIELD,
   normalisasiFields,

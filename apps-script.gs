@@ -72,7 +72,7 @@ function doPost(e) {
     if (body.action === 'upload') return handleUpload(body.berkas, body.folder);
     if (body.action === 'submit') return handleSubmit(body.baris);
     if (body.action === 'list') return handleList();
-    if (body.action === 'approve') return handleApprove(body.id);
+    if (body.action === 'approve') return handleApprove(body.id, body.isiTambahan);
     if (body.action === 'reject') return handleReject(body.id);
     if (body.action === 'ping') return jsonOut({ ok: true, pesan: 'terhubung' });
 
@@ -213,7 +213,7 @@ function cariBarisById(sh, id) {
  * gagal, datanya hilang selamanya. Dengan urutan ini, kegagalan paling
  * buruk cuma menyisakan baris ganda yang bisa dihapus manual.
  */
-function handleApprove(id) {
+function handleApprove(id, isiTambahan) {
   var shPending = sheetPending();
   var ketemu = cariBarisById(shPending, id);
   if (!ketemu) return jsonOut({ ok: false, reason: 'id_tidak_ketemu' });
@@ -222,7 +222,22 @@ function handleApprove(id) {
   var shRoster = ss.getSheetByName(TAB_ROSTER);
   if (!shRoster) return jsonOut({ ok: false, reason: 'tab_roster_tidak_ketemu' });
 
-  shRoster.appendRow(ketemu.nilai.slice(1)); // buang kolom id
+  var baris = ketemu.nilai.slice(1); // buang kolom id
+
+  // Nilai yang baru ditentukan SAAT menyetujui, bukan saat mendaftar --
+  // sekarang dipakai untuk tanggal berakhirnya akses ruang kelas. Bentuknya
+  // { "22": "2027-03-31" }, indeksnya kolom (0 = A). Sengaja generik supaya
+  // kebutuhan serupa nanti tidak menuntut file ini ditempel ulang lagi.
+  if (isiTambahan) {
+    Object.keys(isiTambahan).forEach(function (k) {
+      var idx = Number(k);
+      if (!Number.isFinite(idx) || idx < 0) return;
+      while (baris.length <= idx) baris.push('');
+      baris[idx] = String(isiTambahan[k]);
+    });
+  }
+
+  shRoster.appendRow(baris);
   SpreadsheetApp.flush(); // pastikan tertulis sebelum menghapus sumbernya
   shPending.deleteRow(ketemu.nomorBaris);
 

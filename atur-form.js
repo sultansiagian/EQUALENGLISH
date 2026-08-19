@@ -31,6 +31,8 @@ window.onAdminReady = function (data) {
   document.querySelector('[data-key="formBukaPada"]').value = data.values.formBukaPada || '';
   document.querySelector('[data-key="formTutupPada"]').value = data.values.formTutupPada || '';
   document.querySelector('[data-key="formPesanTutup"]').value = data.values.formPesanTutup || '';
+  document.querySelector('[data-key="aksesBerakhirPada"]').value = data.values.aksesBerakhirPada || '';
+  perbaruiAkses();
 
   var mode = data.values.formMode || 'buka';
   var radio = document.querySelector('input[name="formMode"][value="' + mode + '"]');
@@ -98,6 +100,39 @@ function perbaruiPratinjau() {
   el.textContent =
     'Terbuka ' + (buka ? 'mulai ' + buka : 'sejak sekarang') +
     (tutup ? ', ditutup ' + tutup : ', tanpa batas akhir') + '.';
+}
+
+// Pratinjau masa berlaku akses, memakai kalimat biasa supaya akibatnya
+// terbaca tanpa harus membayangkan sendiri.
+function perbaruiAkses() {
+  var el = document.getElementById('akses-pratinjau');
+  var nilai = document.querySelector('[data-key="aksesBerakhirPada"]').value;
+
+  if (!nilai) {
+    el.dataset.state = 'buka';
+    el.textContent =
+      'Belum ada batas waktu. Pendaftar yang kamu setujui punya akses sampai kamu cabut sendiri.';
+    return;
+  }
+
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(nilai);
+  if (!m) {
+    el.removeAttribute('data-state');
+    el.textContent = 'Tanggalnya belum terbaca.';
+    return;
+  }
+
+  var bulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  var teks = Number(m[3]) + ' ' + bulan[Number(m[2]) - 1] + ' ' + m[1];
+
+  // Tanggal yang sudah lewat itu kekeliruan yang gampang terjadi (mis.
+  // salah ketik tahun) dan akibatnya berat: siapa pun yang disetujui
+  // setelah ini langsung terkunci di percobaan login pertama.
+  var sudahLewat = new Date(nilai + 'T23:59:59+07:00').getTime() < Date.now();
+  el.dataset.state = sudahLewat ? 'tutup' : 'buka';
+  el.textContent = sudahLewat
+    ? 'Hati-hati: ' + teks + ' SUDAH LEWAT. Siapa pun yang kamu setujui setelah ini langsung tidak bisa masuk kelas.'
+    : 'Pendaftar yang disetujui mulai sekarang bisa masuk ruang kelas sampai akhir hari ' + teks + '.';
 }
 
 // Susunan diambil dari endpoint publik yang sama dengan yang dipakai
@@ -279,6 +314,7 @@ async function simpan() {
           formBukaPada: document.querySelector('[data-key="formBukaPada"]').value,
           formTutupPada: document.querySelector('[data-key="formTutupPada"]').value,
           formPesanTutup: document.querySelector('[data-key="formPesanTutup"]').value,
+          aksesBerakhirPada: document.querySelector('[data-key="aksesBerakhirPada"]').value,
         },
       }),
     });
@@ -310,5 +346,6 @@ document.addEventListener('DOMContentLoaded', function () {
   ['formBukaPada', 'formTutupPada', 'formPesanTutup'].forEach(function (k) {
     document.querySelector('[data-key="' + k + '"]').addEventListener('input', perbaruiPratinjau);
   });
+  document.querySelector('[data-key="aksesBerakhirPada"]').addEventListener('input', perbaruiAkses);
   document.getElementById('form-save').addEventListener('click', simpan);
 });

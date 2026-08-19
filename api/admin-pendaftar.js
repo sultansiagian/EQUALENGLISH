@@ -1,7 +1,8 @@
 const { requireAdmin } = require('./_lib/admin-guard');
 const { panggilAppsScript } = require('./_lib/apps-script');
 const { readOverrides } = require('./_lib/global-config-store');
-const { bacaBaris } = require('./_lib/form-schema');
+const { bacaBaris, KOLOM_BERLAKU_SAMPAI } = require('./_lib/form-schema');
+const DEFAULTS = require('./_lib/site-defaults');
 
 /**
  * Daftar pendaftar yang menunggu persetujuan, plus tombol Setujui/Tolak.
@@ -51,7 +52,33 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-      await panggilAppsScript(aksi, { id });
+      // Waktu MENYETUJUI, tanggal berakhirnya akses disalin ke kolom W
+      // barisnya. Dihitung di sini (bukan waktu orangnya mendaftar) supaya
+      // yang berlaku adalah tanggal yang sedang disetel saat kamu memberi
+      // akses, bukan yang kebetulan tersimpan berminggu-minggu lalu.
+      //
+      // Kalau tanggalnya belum disetel, kolomnya dibiarkan kosong dan
+      // orang itu tidak punya batas waktu -- sama persis dengan peserta
+      // lama dari Google Form.
+      let isiTambahan;
+      if (aksi === 'approve') {
+        const overrides = await readOverrides().catch(() => ({}));
+        const tanggal = String(
+          overrides.aksesBerakhirPada !== undefined
+            ? overrides.aksesBerakhirPada
+            : DEFAULTS.aksesBerakhirPada
+        ).trim();
+        // Cuma format yang benar-benar dikenali yang ditulis. Nilai
+        // setengah jadi di kolom itu lebih berbahaya daripada kolom
+        // kosong: verify-access mengabaikan yang tidak terbaca, jadi
+        // hasilnya akan terlihat seperti batas waktu terpasang padahal
+        // tidak pernah berlaku.
+        if (/^\d{4}-\d{2}-\d{2}$/.test(tanggal)) {
+          isiTambahan = { [KOLOM_BERLAKU_SAMPAI]: tanggal };
+        }
+      }
+
+      await panggilAppsScript(aksi, { id, isiTambahan });
       // Dicatat karena ini keputusan yang memberi/menolak akses berbayar --
       // berguna kalau nanti perlu ditelusuri siapa menyetujui apa.
       console.log('admin-pendaftar: ' + admin.email + ' -> ' + aksi + ' ' + id);

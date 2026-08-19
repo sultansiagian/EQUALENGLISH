@@ -182,6 +182,40 @@
         </section>
 
         <section class="admin-card">
+          <h2>Masa Berlaku Akses <span class="admin-card-note">pendaftar dari situs</span></h2>
+          <p class="admin-hint">
+            Waktu kamu menekan <strong>Setujui</strong> di halaman Pendaftar,
+            tanggal ini ikut dicatat di baris orang itu. Lewat tanggal tersebut,
+            dia otomatis tidak bisa lagi membuka ruang kelas.
+          </p>
+          <p class="admin-hint">
+            <strong>Peserta lama tidak terpengaruh.</strong> Yang masuk lewat
+            Google Form dan sheet manual tidak punya tanggal ini, jadi tetap
+            kamu atur sendiri dengan mengetik <code>done</code> seperti selama
+            ini.
+          </p>
+
+          <label class="admin-field">
+            <span>Akses berlaku sampai</span>
+            <input type="date" data-key="aksesBerakhirPada" />
+            <small class="admin-field-bantuan">
+              Aksesnya masih hidup sampai akhir hari itu waktu WIB. Kosongkan
+              kalau pendaftar baru tidak mau diberi batas waktu.
+            </small>
+          </label>
+
+          <p id="akses-pratinjau" class="form-status-pratinjau"></p>
+
+          <p class="admin-hint">
+            Mengubah tanggal di sini cuma berlaku untuk yang kamu setujui
+            <strong>setelah ini</strong>. Untuk mengubah masa berlaku orang yang
+            sudah disetujui, ganti tanggalnya langsung di kolom
+            <strong>W</strong> spreadsheet, atau kosongkan selnya supaya tidak
+            pernah kedaluwarsa.
+          </p>
+        </section>
+
+        <section class="admin-card">
           <h2>Folder Google Drive <span class="admin-card-note">tempat unggahan disimpan</span></h2>
           <p class="admin-hint">
             Semua file yang diunggah pendaftar masuk ke folder ini di Drive

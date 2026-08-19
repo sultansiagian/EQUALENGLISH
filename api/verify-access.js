@@ -270,6 +270,38 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // (form atau manual). Tidak perlu ubah tanggal atau env var apa pun.
 const REVOKED_MARKER = 'done';
 
+// Kolom W di sheet: tanggal berakhirnya akses ruang kelas untuk pendaftar
+// yang masuk lewat form di situs. Angkanya HARUS sama dengan
+// KOLOM_BERLAKU_SAMPAI di api/_lib/form-schema.js -- sengaja ditulis ulang
+// di sini, bukan di-import, supaya file ini tetap berdiri sendiri tanpa
+// bergantung pada modul lain (kalau modul itu error, gerbang kelas ikut
+// mati, dan itu risiko yang tidak sebanding untuk satu angka).
+const KOLOM_BERLAKU_SAMPAI = 22;
+
+/**
+ * Apakah tanggal "YYYY-MM-DD" sudah lewat?
+ *
+ * Aksesnya berlaku SAMPAI AKHIR hari itu waktu WIB, bukan sampai jam 00.00.
+ * "Berlaku sampai 31 Maret" yang mati pada 31 Maret dini hari akan terasa
+ * seperti kecolongan sehari bagi orang yang membacanya.
+ *
+ * Balik false untuk apa pun yang tidak bisa dibaca, supaya sel yang salah
+ * ketik tidak pernah mengunci orang keluar (gagal terbuka).
+ */
+function sudahKedaluwarsa(teks) {
+  const cocok = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(teks || '').trim());
+  if (!cocok) return false;
+
+  const [, thn, bln, tgl] = cocok.map(Number);
+  if (bln < 1 || bln > 12 || tgl < 1 || tgl > 31) return false;
+
+  // Akhir hari WIB = 16:59:59 UTC di hari yang sama (WIB = UTC+7).
+  const batasMs = Date.UTC(thn, bln - 1, tgl, 16, 59, 59, 999);
+  if (!Number.isFinite(batasMs)) return false;
+
+  return Date.now() > batasMs;
+}
+
 function findColumnIndex(headerRow, keyword) {
   // Cocok dengan huruf saja (angka/spasi/tanda hubung dibuang) supaya
   // variasi kecil di nama kolom tetap ketemu -- lihat bug "E-mail" vs
@@ -297,18 +329,42 @@ function extractEmailsFromSheet(csvText, cutoffDate) {
   if (rows.length === 0) return [];
 
   const timestampCol = findColumnIndex(rows[0], 'timestamp');
-  // Dihitung dari baris TERPANJANG di seluruh sheet, bukan panjang baris
-  // saat itu -- supaya "kolom paling kanan" konsisten sama untuk semua
-  // baris, walau ada baris yang pendek/tidak lengkap (lihat sheet manual,
-  // yang barisnya suka tidak rata).
-  const rightmostCol = Math.max(...rows.map((r) => r.length)) - 1;
   const emails = [];
 
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
 
-    const marker = (row[rightmostCol] || '').trim().toLowerCase();
-    if (marker === REVOKED_MARKER) continue;
+    // Baris dicabut aksesnya kalau ADA SEL MANA PUN yang isinya persis
+    // kata "done".
+    //
+    // Dulu yang diperiksa cuma sel PALING KANAN, dihitung dari baris
+    // terlebar di seluruh sheet. Itu diam-diam rapuh: begitu ada kolom
+    // baru terisi di sheet (mis. kolom W untuk tanggal berakhirnya akses
+    // pendaftar web), posisi "paling kanan" bergeser, dan semua tanda
+    // "done" lama berhenti berfungsi TANPA gejala apa pun -- orang yang
+    // sudah dicabut aksesnya diam-diam bisa masuk lagi.
+    //
+    // Memindai seluruh sel menghilangkan ketergantungan pada lebar sheet
+    // sama sekali. Risiko salah tangkap sangat kecil karena yang dicocokkan
+    // adalah SELURUH isi sel yang persis "done", bukan sel yang mengandung
+    // kata itu; jawaban wajar tidak pernah berbentuk begitu.
+    const dicabut = row.some((cell) => (cell || '').trim().toLowerCase() === REVOKED_MARKER);
+    if (dicabut) continue;
+
+    // Tanggal berakhirnya akses, diisi otomatis waktu admin menyetujui
+    // pendaftar dari /pendaftar (lihat KOLOM_BERLAKU_SAMPAI di
+    // api/_lib/form-schema.js). Formatnya "YYYY-MM-DD".
+    //
+    // Baris lama dari Google Form dan sheet manual TIDAK punya isi di
+    // kolom ini, jadi mereka tidak pernah kedaluwarsa dan tetap diatur
+    // manual dengan kata "done" seperti selama ini.
+    //
+    // GAGAL TERBUKA: sel kosong, format tidak dikenali, atau tanggal yang
+    // tidak masuk akal semuanya diperlakukan sebagai "tanpa batas waktu".
+    // Mengunci orang yang sudah bayar gara-gara satu sel salah ketik jauh
+    // lebih merugikan daripada akses yang telat dicabut beberapa hari.
+    const berlakuSampai = (row[KOLOM_BERLAKU_SAMPAI] || '').trim();
+    if (berlakuSampai && sudahKedaluwarsa(berlakuSampai)) continue;
 
     if (cutoffDate && timestampCol !== -1) {
       const raw = (row[timestampCol] || '').trim();

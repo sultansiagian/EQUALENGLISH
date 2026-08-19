@@ -125,4 +125,20 @@ module.exports = {
   formBukaPada: '',
   formTutupPada: '',
   formPesanTutup: '',
+
+  // ============================================================
+  // BOM WAKTU AKSES RUANG KELAS untuk pendaftar dari form situs.
+  //
+  // Format "YYYY-MM-DD". Waktu admin menekan Setujui di /pendaftar,
+  // tanggal ini DISALIN ke kolom W barisnya di spreadsheet, lalu
+  // api/verify-access.js menolak baris yang tanggalnya sudah lewat.
+  //
+  // Sengaja disalin per baris, bukan dibaca langsung sebagai satu setelan
+  // global, karena: (1) baris lama dari Google Form dan sheet manual tidak
+  // punya isi di kolom itu sehingga tidak pernah kedaluwarsa, persis
+  // seperti yang diminta; (2) tanggalnya kelihatan dan bisa diubah manual
+  // per orang langsung di sheet.
+  //
+  // Kosong = pendaftar baru tidak diberi batas waktu sama sekali.
+  aksesBerakhirPada: '',
 };
