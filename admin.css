@@ -971,3 +971,118 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================================
+   LATAR FOTO
+   ============================================================
+   Dipasang lewat pseudo-element position:fixed, BUKAN
+   background-attachment:fixed pada body. Keduanya terlihat sama, tapi
+   background-attachment:fixed memaksa browser menggambar ulang latarnya
+   tiap kali halaman digulir, dan itu sumber lag yang khas di HP. Lapisan
+   fixed tersendiri cukup digeser oleh compositor tanpa menggambar ulang
+   apa pun.
+
+   Gambarnya 13 KB (dari 6,47 MB aslinya). Bisa sekecil itu karena
+   isinya gradien halus tanpa detail; rentang warnanya tetap utuh 98
+   tingkat, jadi tidak ada banding.
+
+   Kartu-kartu di atasnya tetap berlatar terang, jadi teks di dalamnya
+   tidak terpengaruh sama sekali. Yang perlu disesuaikan cuma teks yang
+   duduk LANGSUNG di atas latar ini (panel login, navigasi). */
+body {
+  /* Warna cadangan kalau gambarnya gagal dimuat: tetap gelap, supaya
+     teks terang di atasnya tidak pernah jadi putih-di-atas-putih. */
+  background-color: #12100f;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  /* Lapisan gelap di atas fotonya. Titik paling terang foto aslinya ada
+     di nilai 93, dan di titik itu aksen pink cuma mencapai kontras 3,8:1
+     terhadap teks -- di bawah ambang baca. Diredupkan 45%, titik
+     tercerahnya turun ke sekitar 51 dan SELURUH rentang foto jadi aman
+     untuk teks putih maupun pink, tanpa perlu menambal warna satu per
+     satu. Fotonya juga jadi latar yang menemani, bukan yang bersaing
+     dengan isi halaman. */
+  background-image: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)),
+    url('/EDITS/bg-panel.webp');
+  background-size: cover;
+  background-position: center;
+}
+
+/* Teks yang duduk langsung di atas foto, bukan di dalam kartu. */
+.admin-panel-center h1 {
+  color: var(--white);
+}
+
+.admin-panel-center .admin-hint {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.admin-panel-center .admin-hint strong,
+.admin-panel-center code {
+  color: var(--pink);
+}
+
+.admin-panel-center .admin-btn-ghost {
+  color: var(--white);
+  border-color: var(--white);
+}
+
+.admin-nav a {
+  color: var(--white);
+}
+
+/* Pesan error login juga di luar kartu, jadi versi terangnya dipakai
+   supaya tetap terbaca di atas foto gelap. */
+.admin-panel-center .admin-signin-error {
+  color: #ffd7d8;
+  background: rgba(229, 72, 77, 0.18);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.admin-status {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Kartu "Cek Koneksi" sengaja dibuat transparan supaya terlihat sekunder
+   dibanding kartu editor. Waktu latar halaman masih terang itu bekerja,
+   tapi di atas foto gelap isinya jadi teks gelap di atas gelap (terukur
+   1,87:1). Diberi latar terang setengah tembus: tetap terbaca sekunder,
+   tapi isinya kembali terbaca. */
+.admin-card-muted {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.admin-card-muted h2,
+.admin-card-muted .admin-card-note,
+.admin-card-muted .admin-hint {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.admin-card-muted .admin-btn-ghost {
+  color: var(--white);
+  border-color: var(--white);
+}
+
+/* Item grid bawaannya punya min-width:auto, artinya dia MENOLAK menyusut
+   di bawah lebar minimum isinya. Input file punya lebar minimum bawaan
+   yang lumayan besar (tombol + nama berkas), jadi di layar HP kotaknya
+   melebar melewati kartu dan seluruh halaman jadi bisa digeser ke
+   samping.
+
+   Bug ini sudah ada sebelum latar foto dipasang; ketahuan waktu
+   memeriksa tampilan HP setelahnya. */
+.admin-photo-grid > *,
+.admin-pkg-grid > * {
+  min-width: 0;
+}
+
+.admin-photo-input,
+.admin-testi-file {
+  width: 100%;
+}

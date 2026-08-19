@@ -403,3 +403,83 @@
     transform: rotate(360deg);
   }
 }
+
+/* ============================================================
+   LATAR FOTO
+   ============================================================
+   Sama persis pendekatannya dengan admin.css: lapisan position:fixed
+   tersendiri, bukan background-attachment:fixed, supaya menggulir
+   halaman tidak memicu gambar ulang. Lihat catatan lengkapnya di sana.
+
+   Halaman ini formulir panjang yang digulir jauh, jadi bedanya paling
+   terasa di sini. */
+body.daftar-body {
+  background-color: #12100f;
+}
+
+body.daftar-body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  /* Lapisan gelap di atas fotonya. Titik paling terang foto aslinya ada
+     di nilai 93, dan di titik itu aksen pink cuma mencapai kontras 3,8:1
+     terhadap teks -- di bawah ambang baca. Diredupkan 45%, titik
+     tercerahnya turun ke sekitar 51 dan SELURUH rentang foto jadi aman
+     untuk teks putih maupun pink, tanpa perlu menambal warna satu per
+     satu. Fotonya juga jadi latar yang menemani, bukan yang bersaing
+     dengan isi halaman. */
+  background-image: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)),
+    url('/EDITS/bg-panel.webp');
+  background-size: cover;
+  background-position: center;
+}
+
+/* Judul, pengantar, dan panel hasil duduk langsung di atas foto.
+   Isian formulirnya sendiri ada di dalam kotak terang, jadi tidak
+   terpengaruh. */
+.daftar-shell h1 {
+  color: var(--white);
+}
+
+.daftar-lede {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.daftar-shell .section-kicker {
+  color: var(--pink);
+}
+
+.daftar-status {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Tombol kirim tadinya hitam, dan hitam di atas foto gelap hampir
+   hilang. Diganti pink, yang juga menjadikannya satu-satunya elemen
+   paling mencolok di halaman ini, sesuai perannya. */
+#daftar-submit {
+  background: var(--pink);
+  border-color: var(--pink);
+  color: var(--black);
+}
+
+.daftar-topbar {
+  /* Topbar hitam pekat tidak lagi perlu jadi kotak tersendiri di atas
+     foto; dibuat setengah tembus supaya menyatu dengan latarnya. */
+  background: rgba(0, 0, 0, 0.55);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* .button-outline dipakai bersama dengan beranda, di mana latarnya terang
+   dan teks hitam memang benar. Di halaman ini latarnya foto gelap, jadi
+   versi terangnya dipakai. DIBATASI ke .daftar-body supaya tampilan
+   tombol yang sama di beranda tidak ikut berubah. */
+.daftar-body .button-outline {
+  color: var(--white);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.daftar-body .button-outline:hover {
+  border-color: var(--white);
+  background: rgba(255, 255, 255, 0.1);
+}
