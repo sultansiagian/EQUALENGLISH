@@ -264,6 +264,49 @@ function csvToRows(csvText) {
 // salah menganggap nomor telepon atau nama sebagai email.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/**
+ * Samakan bentuk email sebelum dicocokkan.
+ *
+ * MASALAH YANG DIPECAHKAN: Gmail memperlakukan titik dan tanda plus di
+ * bagian sebelum @ sebagai TIDAK ADA. budi.santoso@gmail.com,
+ * budisantoso@gmail.com, dan budi.santoso+kelas@gmail.com semuanya kotak
+ * masuk yang sama persis. Google mengirimkan satu bentuk kanonik di token
+ * login, sementara siswa mengetik bentuk lain waktu mengisi formulir.
+ *
+ * Tanpa penyamaan ini, siswa yang sudah bayar akan ditolak masuk dengan
+ * pesan "email belum terdaftar", padahal emailnya SAMA. Gejalanya
+ * membingungkan karena dari matanya, yang tertulis di sheet dan yang dia
+ * pakai login terlihat identik.
+ *
+ * HANYA untuk gmail.com dan googlemail.com. Di domain lain (termasuk
+ * kampus seperti @ui.ac.id), titik itu BERARTI: budi.s@ui.ac.id dan
+ * budis@ui.ac.id bisa jadi dua orang berbeda, dan menyamakannya akan
+ * memberi akses ke orang yang salah.
+ */
+function normalisasiEmail(email) {
+  const bersih = String(email || '').trim().toLowerCase();
+  const posAt = bersih.lastIndexOf('@');
+  if (posAt === -1) return bersih;
+
+  let lokal = bersih.slice(0, posAt);
+  let domain = bersih.slice(posAt + 1);
+
+  // googlemail.com itu alias resmi gmail.com dari Google sendiri.
+  if (domain === 'googlemail.com') domain = 'gmail.com';
+
+  if (domain === 'gmail.com') {
+    lokal = lokal.split('+')[0].replace(/\./g, '');
+  }
+
+  // Kalau penyamaan malah menghabiskan bagian sebelum @ (mis. email
+  // berbentuk "...@gmail.com" yang isinya cuma titik), pakai bentuk
+  // aslinya saja daripada menghasilkan email cacat yang bisa tidak
+  // sengaja cocok dengan baris lain.
+  if (!lokal) return bersih;
+
+  return lokal + '@' + domain;
+}
+
 // Cara mencabut akses satu siswa (atau satu baris pendaftaran Pair/
 // Group, yang otomatis mencabut semua nama di baris itu): ketik kata
 // ini persis di sel PALING KANAN baris tersebut di sheet mana pun
@@ -380,7 +423,7 @@ function extractEmailsFromSheet(csvText, cutoffDate) {
 
     row.forEach((cell) => {
       const value = cell.trim().toLowerCase();
-      if (EMAIL_PATTERN.test(value)) emails.push(value);
+      if (EMAIL_PATTERN.test(value)) emails.push(normalisasiEmail(value));
     });
   }
 
@@ -974,7 +1017,10 @@ module.exports = async function handler(req, res) {
       scheduleUrl ? fetchSchedule(scheduleUrl) : Promise.resolve({ sessions: [] }),
       materialsUrl ? fetchMaterialsOverrides(materialsUrl) : Promise.resolve({}),
     ]);
-    if (!enrolledEmails.has(verified.email)) {
+    // Dicocokkan dalam bentuk yang sudah disamakan di KEDUA sisi. Email
+    // aslinya tetap dipakai buat ditampilkan ke siswa dan dicatat di log,
+    // supaya yang dia lihat sama dengan yang dia ketik.
+    if (!enrolledEmails.has(normalisasiEmail(verified.email))) {
       return res.status(403).json({ ok: false, reason: 'not_enrolled' });
     }
 
