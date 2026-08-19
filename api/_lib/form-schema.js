@@ -345,8 +345,66 @@ function susunBaris(fields, jawaban, linkUpload, stempelWaktu) {
   return baris;
 }
 
+/**
+ * Kebalikan susunBaris(): terjemahkan satu baris spreadsheet (array yang
+ * indeksnya = kolom) kembali jadi nilai bernama, supaya bisa ditampilkan
+ * di halaman /pendaftar.
+ *
+ * Ini HARUS ada karena Apps Script sengaja dibuat tidak tahu apa-apa soal
+ * isi formulir -- dia cuma mengirim baris mentah. Penerjemahannya
+ * dilakukan di sini, di tempat yang sama dengan penulisannya, supaya
+ * keduanya tidak mungkin berbeda pendapat soal kolom mana artinya apa.
+ *
+ * Pernah tidak ada, dan akibatnya seluruh kartu di /pendaftar tampil
+ * "(tanpa nama)" tanpa satu pun data: barisnya tersimpan benar di
+ * spreadsheet, tapi tidak ada yang menerjemahkannya kembali.
+ */
+function bacaBaris(fields, baris) {
+  const arr = Array.isArray(baris) ? baris : [];
+  const ambil = (i) => String(arr[i] === undefined || arr[i] === null ? '' : arr[i]).trim();
+  const semua = normalisasiFields(fields);
+
+  const hasil = {
+    timestamp: ambil(KOLOM.timestamp),
+    // Kolom H/I/J berisi data pendaftar itu sendiri (blok Person 1 di
+    // sheet lama). Dibaca terpisah karena bukan milik field mana pun.
+    namaDiri: ambil(KOLOM.namaDiri),
+    teleponDiri: ambil(KOLOM.teleponDiri),
+    p2Nama: ambil(KOLOM.p2Nama),
+    p2Telepon: ambil(KOLOM.p2Telepon),
+    p2Email: ambil(KOLOM.p2Email),
+    p3Nama: ambil(KOLOM.p3Nama),
+    p3Telepon: ambil(KOLOM.p3Telepon),
+    p3Email: ambil(KOLOM.p3Email),
+    // Jawaban pertanyaan buatan admin, dibawa lengkap dengan labelnya
+    // supaya /pendaftar bisa menampilkannya tanpa perlu tahu ada
+    // pertanyaan apa saja.
+    tambahan: [],
+  };
+
+  semua.forEach((f) => {
+    if (f.tipe === 'peserta') return; // sudah dibaca di atas
+    const nilai = ambil(f.kolom);
+    hasil[f.id] = nilai;
+
+    // Field bawaan punya tempatnya sendiri di kartu /pendaftar; yang
+    // buatan admin dikumpulkan terpisah supaya ikut tampil juga.
+    const bawaan = FIELD_BAWAAN.some((b) => b.id === f.id);
+    if (!bawaan && nilai) hasil.tambahan.push({ label: f.label, nilai: nilai });
+  });
+
+  // Email pendaftar bisa berada di kolom J (data dirinya) atau kolom M
+  // (blok Person 1) tergantung paketnya. Diambil mana pun yang terisi,
+  // karena inilah email yang menentukan dia bisa masuk kelas atau tidak.
+  if (!hasil.emailDiri) hasil.emailDiri = ambil(KOLOM.p1Email);
+  if (!hasil.nama) hasil.nama = hasil.namaDiri || ambil(KOLOM.p1Nama);
+
+  return hasil;
+}
+
 module.exports = {
   FIELD_BAWAAN,
+  bacaBaris,
   PILIHAN_PAKET,
   KOLOM,
   KOLOM_TAMBAHAN_MULAI,

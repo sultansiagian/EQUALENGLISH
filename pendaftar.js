@@ -110,6 +110,10 @@ function renderPendaftar(daftar) {
       barisInfo('No. HP', p.telepon) +
       barisInfo('ID Line', p.idLine) +
       barisInfo('Masuk', p.timestamp) +
+      // Jawaban pertanyaan buatan admin ikut tampil, supaya pertanyaan
+      // yang ditambahkan lewat /atur-form tidak jadi data yang tersimpan
+      // tapi tidak pernah kelihatan.
+      (p.tambahan || []).map(function (t) { return barisInfo(t.label, t.nilai); }).join('') +
       '</div>' +
       '<div class="admin-pendaftar-peserta">' +
       '<span class="admin-pendaftar-subjudul">Email yang akan dapat akses</span>' +

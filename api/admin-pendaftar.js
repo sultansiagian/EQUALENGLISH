@@ -1,5 +1,7 @@
 const { requireAdmin } = require('./_lib/admin-guard');
 const { panggilAppsScript } = require('./_lib/apps-script');
+const { readOverrides } = require('./_lib/global-config-store');
+const { bacaBaris } = require('./_lib/form-schema');
 
 /**
  * Daftar pendaftar yang menunggu persetujuan, plus tombol Setujui/Tolak.
@@ -19,8 +21,20 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const hasil = await panggilAppsScript('list');
-      return res.status(200).json({ ok: true, pendaftar: hasil.pendaftar || [] });
+      // Apps Script sengaja tidak tahu apa-apa soal isi formulir, jadi
+      // yang dikirimnya baris mentah per kolom. Diterjemahkan di sini
+      // memakai susunan field yang sedang berlaku -- lihat bacaBaris()
+      // di form-schema.js, pasangan dari susunBaris() yang menulisnya.
+      const [hasil, overrides] = await Promise.all([
+        panggilAppsScript('list'),
+        readOverrides().catch(() => ({})),
+      ]);
+
+      const pendaftar = (hasil.pendaftar || []).map((p) =>
+        Object.assign({ id: p.id }, bacaBaris(overrides.formFields, p.baris))
+      );
+
+      return res.status(200).json({ ok: true, pendaftar });
     } catch (err) {
       console.error('admin-pendaftar GET:', err.message);
       return res.status(502).json({ ok: false, reason: 'gagal_baca', pesan: err.message });
