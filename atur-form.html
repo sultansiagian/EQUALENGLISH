@@ -193,6 +193,53 @@
         </section>
 
         <section class="admin-card">
+          <h2>Email ke Pendaftar</h2>
+          <p class="admin-hint">
+            Dikirim otomatis dari akun Google kamu. Tulis <code>{nama}</code>
+            untuk menyisipkan nama pendaftar, dan <code>{link}</code> untuk
+            alamat ruang kelas. Kosongkan centangnya kalau tidak mau mengirim.
+          </p>
+
+          <div class="admin-pkg">
+            <label class="admin-checkbox">
+              <input type="checkbox" data-key="emailTerimaAktif" />
+              <span>Kirim tanda terima saat formulir masuk</span>
+            </label>
+            <label class="admin-field">
+              <span>Judul email</span>
+              <input type="text" data-key="emailTerimaSubjek" />
+            </label>
+            <label class="admin-field">
+              <span>Isi email</span>
+              <textarea data-key="emailTerimaIsi" rows="7"></textarea>
+            </label>
+          </div>
+
+          <div class="admin-pkg" style="margin-top: 16px">
+            <label class="admin-checkbox">
+              <input type="checkbox" data-key="emailSetujuAktif" />
+              <span>Kirim pemberitahuan saat kamu menyetujui</span>
+            </label>
+            <label class="admin-field">
+              <span>Judul email</span>
+              <input type="text" data-key="emailSetujuSubjek" />
+            </label>
+            <label class="admin-field">
+              <span>Isi email</span>
+              <textarea data-key="emailSetujuIsi" rows="9"></textarea>
+            </label>
+            <label class="admin-field">
+              <span>Alamat ruang kelas (untuk penanda {link})</span>
+              <input type="text" data-key="linkRuangKelas" />
+            </label>
+            <p class="admin-hint">
+              Pada paket Pair dan Group, email ini dikirim ke semua peserta di
+              baris itu, bukan cuma yang mendaftar.
+            </p>
+          </div>
+        </section>
+
+        <section class="admin-card">
           <h2>Folder Google Drive <span class="admin-card-note">tempat unggahan disimpan</span></h2>
           <p class="admin-hint">
             Unggahan pendaftar masuk ke sini, privat, dibuat otomatis kalau

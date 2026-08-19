@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Halaman error tidak perlu diindeks; kalau terindeks, dia bisa
+         muncul di hasil pencarian sebagai kalau itu halaman biasa. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Halaman tidak ditemukan · EQUAL English</title>
+    <link rel="icon" type="image/png" href="/EDITS/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Syne:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      /* Gaya ditulis di sini, bukan di berkas terpisah, supaya halaman ini
+         tetap tampil utuh walau permintaan CSS lain gagal. Halaman error
+         adalah tempat paling buruk untuk menemukan error kedua. */
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 24px;
+        background-color: #12100f;
+        color: var(--white);
+        font-family: var(--body);
+      }
+
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background-image: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)),
+          url('/EDITS/bg-panel.webp');
+        background-size: cover;
+        background-position: center;
+      }
+
+      .nf {
+        max-width: 520px;
+      }
+
+      .nf-kode {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.14em;
+        color: var(--pink);
+        margin: 0;
+      }
+
+      .nf h1 {
+        font-family: var(--display);
+        font-size: clamp(2rem, 6vw, 3rem);
+        letter-spacing: -0.04em;
+        line-height: 1.05;
+        margin: 0.9rem 0 0;
+      }
+
+      .nf p.nf-teks {
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 1rem;
+        line-height: 1.6;
+        margin: 1.1rem 0 0;
+      }
+
+      .nf-aksi {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 30px;
+      }
+
+      .nf-aksi a {
+        font-family: var(--body);
+        font-weight: 600;
+        font-size: 0.94rem;
+        text-decoration: none;
+        border-radius: 999px;
+        padding: 13px 26px;
+        border: 2px solid transparent;
+      }
+
+      .nf-utama {
+        background: var(--pink);
+        color: var(--black);
+      }
+
+      .nf-kedua {
+        border-color: rgba(255, 255, 255, 0.55);
+        color: var(--white);
+      }
+
+      .nf-kedua:hover {
+        border-color: var(--white);
+        background: rgba(255, 255, 255, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="nf">
+      <p class="nf-kode">404</p>
+      <h1>Halaman ini tidak ada.</h1>
+      <p class="nf-teks">
+        Mungkin alamatnya salah ketik, atau halamannya sudah dipindah. Dua
+        tautan di bawah ini yang paling sering dicari.
+      </p>
+      <div class="nf-aksi">
+        <a class="nf-utama" href="/">Ke beranda</a>
+        <a class="nf-kedua" href="/daftar">Halaman pendaftaran</a>
+      </div>
+    </main>
+  </body>
+</html>

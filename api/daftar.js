@@ -3,6 +3,7 @@ const { readOverrides } = require('./_lib/global-config-store');
 const { panggilAppsScript } = require('./_lib/apps-script');
 const { fieldAktif, validasiJawaban, susunBaris } = require('./_lib/form-schema');
 const { statusForm } = require('./_lib/form-status');
+const { kirimTandaTerima } = require('./_lib/kirim-email');
 
 /**
  * Endpoint form pendaftaran di /daftar. INI SATU-SATUNYA endpoint di
@@ -127,6 +128,15 @@ module.exports = async function handler(req, res) {
     const baris = susunBaris(overrides.formFields, jawaban, link, stempel);
 
     const hasil = await panggilAppsScript('submit', { baris });
+
+    // Tanda terima dikirim SETELAH barisnya tersimpan, dan sengaja TIDAK
+    // ditunggu hasilnya sebelum membalas berhasil ke pendaftar. Email yang
+    // gagal terkirim tidak boleh membuat pendaftaran yang sudah tersimpan
+    // terlihat gagal di layar orangnya.
+    kirimTandaTerima(overrides, jawaban.emailDiri, jawaban.nama).catch(function (err) {
+      console.error('daftar: tanda terima gagal dikirim:', err.message);
+    });
+
     return res.status(200).json({ ok: true, id: hasil.id });
   } catch (err) {
     console.error('daftar: gagal mengirim ke Apps Script:', err.message);

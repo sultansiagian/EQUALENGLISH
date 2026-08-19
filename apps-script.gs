@@ -74,6 +74,7 @@ function doPost(e) {
     if (body.action === 'list') return handleList();
     if (body.action === 'approve') return handleApprove(body.id, body.isiTambahan);
     if (body.action === 'reject') return handleReject(body.id);
+    if (body.action === 'email') return handleEmail(body.ke, body.subjek, body.isi);
     if (body.action === 'ping') return jsonOut({ ok: true, pesan: 'terhubung' });
 
     return jsonOut({ ok: false, reason: 'action_tidak_dikenal' });
@@ -242,6 +243,41 @@ function handleApprove(id, isiTambahan) {
   shPending.deleteRow(ketemu.nomorBaris);
 
   return jsonOut({ ok: true });
+}
+
+/**
+ * Kirim satu email dari akun Google pemilik sheet ini.
+ *
+ * Isi dan subjeknya DIKARANG DI SITUS, bukan di sini. Sama alasannya
+ * dengan baris spreadsheet: pemilik situs bisa mengubah kalimatnya kapan
+ * saja lewat /atur-form, dan kalau teksnya ikut ditulis di file ini,
+ * tiap perubahan kata menuntut file ini ditempel dan di-deploy ulang.
+ *
+ * Kuota akun Gmail biasa 100 penerima per hari. Kalau habis,
+ * MailApp.sendEmail melempar error, dan pemanggil di situs sengaja
+ * memperlakukan kegagalan kirim sebagai hal yang TIDAK menggagalkan
+ * pendaftaran maupun persetujuan.
+ */
+function handleEmail(ke, subjek, isi) {
+  var alamat = String(ke || '').trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(alamat)) {
+    return jsonOut({ ok: false, reason: 'alamat_tidak_sah' });
+  }
+  if (!String(subjek || '').trim() || !String(isi || '').trim()) {
+    return jsonOut({ ok: false, reason: 'isi_kosong' });
+  }
+
+  try {
+    MailApp.sendEmail({
+      to: alamat,
+      subject: String(subjek),
+      body: String(isi),
+      name: 'EQUAL English',
+    });
+    return jsonOut({ ok: true, sisaKuota: MailApp.getRemainingDailyQuota() });
+  } catch (err) {
+    return jsonOut({ ok: false, reason: 'gagal_kirim', pesan: String(err) });
+  }
 }
 
 function handleReject(id) {

@@ -3,6 +3,7 @@ const { panggilAppsScript } = require('./_lib/apps-script');
 const { readOverrides } = require('./_lib/global-config-store');
 const { bacaBaris, KOLOM_BERLAKU_SAMPAI } = require('./_lib/form-schema');
 const DEFAULTS = require('./_lib/site-defaults');
+const { kirimAksesDibuka } = require('./_lib/kirim-email');
 
 /**
  * Daftar pendaftar yang menunggu persetujuan, plus tombol Setujui/Tolak.
@@ -61,8 +62,10 @@ module.exports = async function handler(req, res) {
       // orang itu tidak punya batas waktu -- sama persis dengan peserta
       // lama dari Google Form.
       let isiTambahan;
+      let overridesSetuju = null;
       if (aksi === 'approve') {
         const overrides = await readOverrides().catch(() => ({}));
+        overridesSetuju = overrides;
         const tanggal = String(
           overrides.aksesBerakhirPada !== undefined
             ? overrides.aksesBerakhirPada
@@ -79,6 +82,24 @@ module.exports = async function handler(req, res) {
       }
 
       await panggilAppsScript(aksi, { id, isiTambahan });
+
+      // Pemberitahuan "akses sudah dibuka" dikirim SETELAH barisnya benar-
+      // benar pindah ke roster. Kalau dikirim lebih dulu lalu pemindahannya
+      // gagal, orangnya akan mencoba masuk dan ditolak, yang jauh lebih
+      // membingungkan daripada telat dapat email.
+      //
+      // Tidak ditunggu hasilnya: kegagalan kirim tidak boleh membuat
+      // persetujuan yang sudah berhasil terlihat gagal di layar admin.
+      if (aksi === 'approve') {
+        const p = req.body && req.body.pendaftar ? req.body.pendaftar : {};
+        kirimAksesDibuka(
+          overridesSetuju || {},
+          [p.emailDiri, p.p2Email, p.p3Email],
+          p.nama
+        ).catch(function (err) {
+          console.error('admin-pendaftar: email akses gagal dikirim:', err.message);
+        });
+      }
       // Dicatat karena ini keputusan yang memberi/menolak akses berbayar --
       // berguna kalau nanti perlu ditelusuri siapa menyetujui apa.
       console.log('admin-pendaftar: ' + admin.email + ' -> ' + aksi + ' ' + id);

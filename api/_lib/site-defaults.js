@@ -141,4 +141,47 @@ module.exports = {
   //
   // Kosong = pendaftar baru tidak diberi batas waktu sama sekali.
   aksesBerakhirPada: '',
+
+  // ============================================================
+  // EMAIL OTOMATIS KE PENDAFTAR
+  //
+  // Dikirim dari akun Google pemilik spreadsheet lewat Apps Script, jadi
+  // tidak butuh layanan email berbayar. Kuota akun Gmail biasa 100
+  // penerima per hari, jauh di atas kebutuhan satu batch.
+  //
+  // Kegagalan kirim TIDAK PERNAH menggagalkan pendaftaran atau
+  // persetujuan. Orang yang sudah bayar tidak boleh gagal terdaftar cuma
+  // karena kuota email habis: emailnya bisa disusulkan manual, datanya
+  // tidak bisa dikembalikan.
+  //
+  // Penanda di dalam teks, diganti nilai sebenarnya waktu dikirim:
+  //   {nama}  nama pendaftar
+  //   {link}  alamat ruang kelas
+  emailTerimaAktif: true,
+  emailTerimaSubjek: 'Pendaftaran kamu sudah kami terima',
+  emailTerimaIsi:
+    'Halo {nama},\n\n' +
+    'Terima kasih sudah mendaftar Bootcamp EPT UI. Pendaftaran kamu sudah masuk ' +
+    'dan sedang kami cek bukti pembayarannya.\n\n' +
+    'Kalau sudah dikonfirmasi, kamu akan dapat email lagi berisi cara masuk ke ' +
+    'ruang kelas. Biasanya tidak sampai sehari.\n\n' +
+    'Ada yang mau ditanyakan? Balas email ini, atau hubungi kami di WhatsApp ' +
+    '0858-8834-5058.\n\n' +
+    'EQUAL English',
+
+  emailSetujuAktif: true,
+  emailSetujuSubjek: 'Akses ruang kelas kamu sudah dibuka',
+  emailSetujuIsi:
+    'Halo {nama},\n\n' +
+    'Pembayaran kamu sudah kami konfirmasi. Ruang kelas sudah bisa dibuka ' +
+    'sekarang:\n\n' +
+    '{link}\n\n' +
+    'Masuk pakai akun Google dengan email yang sama seperti yang kamu isi waktu ' +
+    'mendaftar. Kalau pakai email lain, sistem tidak akan mengenali kamu.\n\n' +
+    'Di dalamnya ada link Zoom, folder materi, grup WhatsApp, dan latihan soal.\n\n' +
+    'Sampai ketemu di kelas.\n\n' +
+    'EQUAL English',
+
+  // Alamat yang disisipkan lewat penanda {link} di email persetujuan.
+  linkRuangKelas: 'https://equalenglish.vercel.app/kelas',
 };

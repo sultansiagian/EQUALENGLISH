@@ -96,13 +96,16 @@ melayani file itu duluan (Vercel mengecek file statis SEBELUM `rewrites`).
 
 ## Sebelum dipublikasikan
 
-- [ ] Isi testimoni lewat `/admin` (kartu "Testimoni"). Section-nya tidak
-      tampil di beranda selama daftarnya kosong, jadi halaman aman
-      dipublikasikan tanpa kutipan karangan.
-- [ ] Buka kembali formulir pendaftaran. Tautan pada tombol utama di bagian
-      penutup saat ini mengarah ke Google Form yang berstatus tertutup.
-- [ ] Pastikan jumlah orang pada paket Group. Website menulis 3 orang,
-      sedangkan guidebook menulis "with 3 of your friends" yang berarti 4.
+- [x] Testimoni sudah diisi lewat `/admin`. Section-nya tidak tampil di
+      beranda selama daftarnya kosong, jadi halaman tetap aman kalau nanti
+      dikosongkan lagi.
+- [ ] **Pastikan status buka/tutup pendaftaran sebelum menyebar link.**
+      Tombol utama sekarang mengarah ke `/daftar` (form bawaan situs, bukan
+      Google Form lagi). Status buka/tutupnya diatur di `/atur-form`, dan
+      kalau berstatus tutup, pengunjung melihat pesan penutup.
+- [x] Jumlah orang paket Group sudah dipastikan: **3 orang**, seperti yang
+      tertulis di website. Kalimat "with 3 of your friends" di guidebook yang
+      keliru, bukan situsnya.
 
 ## Kredit
 

@@ -34,6 +34,14 @@ window.onAdminReady = function (data) {
   document.querySelector('[data-key="aksesBerakhirPada"]').value = data.values.aksesBerakhirPada || '';
   perbaruiAkses();
 
+  // Pengaturan email. Centangnya pakai .checked, bukan .value.
+  ['emailTerimaSubjek', 'emailTerimaIsi', 'emailSetujuSubjek', 'emailSetujuIsi', 'linkRuangKelas'].forEach(function (k) {
+    document.querySelector('[data-key="' + k + '"]').value = data.values[k] || '';
+  });
+  ['emailTerimaAktif', 'emailSetujuAktif'].forEach(function (k) {
+    document.querySelector('[data-key="' + k + '"]').checked = data.values[k] !== false;
+  });
+
   var mode = data.values.formMode || 'buka';
   var radio = document.querySelector('input[name="formMode"][value="' + mode + '"]');
   if (radio) radio.checked = true;
@@ -315,6 +323,13 @@ async function simpan() {
           formTutupPada: document.querySelector('[data-key="formTutupPada"]').value,
           formPesanTutup: document.querySelector('[data-key="formPesanTutup"]').value,
           aksesBerakhirPada: document.querySelector('[data-key="aksesBerakhirPada"]').value,
+          emailTerimaAktif: document.querySelector('[data-key="emailTerimaAktif"]').checked,
+          emailTerimaSubjek: document.querySelector('[data-key="emailTerimaSubjek"]').value,
+          emailTerimaIsi: document.querySelector('[data-key="emailTerimaIsi"]').value,
+          emailSetujuAktif: document.querySelector('[data-key="emailSetujuAktif"]').checked,
+          emailSetujuSubjek: document.querySelector('[data-key="emailSetujuSubjek"]').value,
+          emailSetujuIsi: document.querySelector('[data-key="emailSetujuIsi"]').value,
+          linkRuangKelas: document.querySelector('[data-key="linkRuangKelas"]').value,
         },
       }),
     });

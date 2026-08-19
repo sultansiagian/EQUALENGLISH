@@ -189,7 +189,19 @@ async function prosesPendaftar(kartu, p, aksi) {
     const res = await fetch('/api/admin-pendaftar', {
       method: 'POST',
       headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
-      body: JSON.stringify({ id: p.id, aksi }),
+      // Data orangnya ikut dikirim supaya server tahu ke mana email
+      // "akses sudah dibuka" ditujukan, tanpa perlu membaca ulang
+      // barisnya dari spreadsheet (barisnya sudah pindah waktu itu).
+      body: JSON.stringify({
+        id: p.id,
+        aksi,
+        pendaftar: {
+          nama: p.nama,
+          emailDiri: p.emailDiri,
+          p2Email: p.p2Email,
+          p3Email: p.p3Email,
+        },
+      }),
     });
     const data = await res.json();
 

@@ -9,6 +9,29 @@
     />
     <title>Pendaftaran · EQUAL English</title>
     <link rel="canonical" href="https://equalenglish.vercel.app/daftar" />
+
+    <!-- Tag berbagi link. Halaman inilah yang dibagikan di Instagram dan
+         WhatsApp, jadi tanpa ini previewnya kosong dan link pendaftaran
+         berbayar malah terlihat mencurigakan. Gambarnya memakai banner
+         yang sama dengan beranda, yang juga bisa diganti dari /admin. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://equalenglish.vercel.app/daftar" />
+    <meta property="og:title" content="Daftar Bootcamp EPT UI · EQUAL English" />
+    <meta
+      property="og:description"
+      content="Isi formulir pendaftaran Bootcamp EPT UI. Listening, reading, dan writing, dipandu mentor IELTS 8 dan EPT UI 673."
+    />
+    <meta property="og:image" content="https://equalenglish.vercel.app/EDITS/og-banner.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="id_ID" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Daftar Bootcamp EPT UI · EQUAL English" />
+    <meta
+      name="twitter:description"
+      content="Isi formulir pendaftaran Bootcamp EPT UI. Listening, reading, dan writing, dipandu mentor IELTS 8 dan EPT UI 673."
+    />
+    <meta name="twitter:image" content="https://equalenglish.vercel.app/EDITS/og-banner.jpg" />
     <link rel="icon" type="image/png" href="/EDITS/favicon.png" />
     <link rel="apple-touch-icon" href="/EDITS/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -116,5 +139,9 @@
     </main>
 
     <script src="/daftar.js"></script>
+    <!-- Analytics. Tanpa ini tidak ada cara tahu berapa orang membuka
+         formulir dibanding berapa yang benar-benar mengirimnya, padahal
+         selisih itu justru angka yang paling berguna. -->
+    <script defer src="/_vercel/insights/script.js"></script>
   </body>
 </html>
