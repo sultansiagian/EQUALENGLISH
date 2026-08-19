@@ -7,6 +7,21 @@
   box-sizing: border-box;
 }
 
+/* Atribut [hidden] bawaan browser kalah dari class display apa pun di sini
+   (.admin-panel-center dst pakai display:flex), berapa pun spesifik
+   selectornya -- stylesheet penulis selalu menang atas stylesheet browser.
+   Tanpa baris ini, SEMUA panel state (signin, loading, denied, error)
+   tampil menumpuk sekaligus walau admin.js sudah benar men-toggle atribut
+   hidden-nya.
+
+   Bug yang sama persis pernah kejadian di kelas.html dan diperbaiki dengan
+   aturan identik di kelas.css -- lalu terulang lagi di sini. Kalau nanti
+   ada halaman baru yang punya pola "beberapa panel, satu terlihat", copy
+   aturan ini DULUAN sebelum menulis CSS layout-nya. */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   background: var(--paper);
@@ -84,9 +99,10 @@ body {
 .admin-signin-error {
   margin: 18px 0 0;
   padding: 12px 16px;
-  border-left: 3px solid var(--red);
-  background: rgba(229, 72, 77, 0.08);
-  border-radius: 0 8px 8px 0;
+  border: 1px solid rgba(229, 72, 77, 0.35);
+  background: rgba(229, 72, 77, 0.07);
+  color: #8a2226;
+  border-radius: 10px;
   font-size: 0.9rem;
   line-height: 1.5;
   max-width: 60ch;
