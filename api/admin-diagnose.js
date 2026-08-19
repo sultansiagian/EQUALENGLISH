@@ -125,21 +125,120 @@ module.exports = async function handler(req, res) {
       'KESIMPULAN: koneksi berhasil TANPA teamId. Hapus env var VERCEL_TEAM_ID ' +
         'dari project (atau kosongkan), lalu redeploy.'
     );
-  } else if (denganTeam && denganTeam.berhasil && !tanpaTeam.berhasil) {
+    return res.status(200).json({ ok: true, report });
+  }
+  if (denganTeam && denganTeam.berhasil && !tanpaTeam.berhasil) {
     report.catatan.push(
       'KESIMPULAN: koneksi berhasil DENGAN teamId, jadi VERCEL_TEAM_ID sudah benar. ' +
         'Kalau menyimpan masih gagal, masalahnya bukan di sini.'
     );
-  } else if (!tanpaTeam.berhasil && (!denganTeam || !denganTeam.berhasil)) {
+    return res.status(200).json({ ok: true, report });
+  }
+  if (tanpaTeam.berhasil && denganTeam && denganTeam.berhasil) {
+    report.catatan.push('KESIMPULAN: dua-duanya berhasil, koneksi baik-baik saja.');
+    return res.status(200).json({ ok: true, report });
+  }
+
+  // ============================================================
+  // Dua-duanya gagal. JANGAN langsung menyimpulkan "token salah scope" --
+  // itu tebakan. Tanya langsung ke Vercel: token ini milik siapa, dan
+  // store apa saja yang sebenarnya bisa dia lihat. Kalau ternyata dia
+  // bisa melihat store lain (atau store yang SAMA di scope berbeda),
+  // penyebabnya langsung kelihatan tanpa perlu user coba-coba setting.
+  // ============================================================
+  report.catatan.push(
+    'Dua-duanya gagal. Mendaftar semua store yang bisa dilihat token ini, ' +
+      'supaya ketahuan store-nya sebenarnya ada di scope mana.'
+  );
+
+  async function listConfigs(label, url) {
+    try {
+      const res2 = await fetch(url, { headers: { Authorization: 'Bearer ' + apiToken } });
+      const text = await res2.text();
+      let parsed = null;
+      try {
+        parsed = JSON.parse(text);
+      } catch (err) {
+        /* dibiarkan null */
+      }
+
+      if (!res2.ok) {
+        return {
+          label,
+          status: res2.status,
+          error: parsed && parsed.error ? parsed.error.code + ': ' + parsed.error.message : text.slice(0, 200),
+        };
+      }
+      const arr = Array.isArray(parsed) ? parsed : [];
+      return {
+        label,
+        status: res2.status,
+        jumlahStore: arr.length,
+        store: arr.map((c) => ({ id: c.id, slug: c.slug, itemCount: c.itemCount })),
+      };
+    } catch (err) {
+      return { label, status: null, error: 'fetch gagal: ' + err.message };
+    }
+  }
+
+  const listUrl = 'https://api.vercel.com/v1/global-config';
+  report.daftarStoreTerlihat = [
+    await listConfigs('scope personal (tanpa teamId)', listUrl),
+    teamId
+      ? await listConfigs(
+          'scope team (' + teamId + ')',
+          listUrl + '?teamId=' + encodeURIComponent(teamId)
+        )
+      : { label: 'scope team -- dilewati, VERCEL_TEAM_ID kosong' },
+  ];
+
+  // Siapa pemilik token ini. Dipakai buat memastikan token dibuat di akun
+  // yang sama dengan yang dipakai login ke dashboard.
+  try {
+    const who = await fetch('https://api.vercel.com/v2/user', {
+      headers: { Authorization: 'Bearer ' + apiToken },
+    });
+    const whoData = await who.json().catch(() => null);
+    report.pemilikToken = who.ok
+      ? {
+          username: whoData && whoData.user ? whoData.user.username : null,
+          email: whoData && whoData.user ? whoData.user.email : null,
+        }
+      : { error: 'status ' + who.status + ' -- token kemungkinan tidak valid/kedaluwarsa' };
+  } catch (err) {
+    report.pemilikToken = { error: 'fetch gagal: ' + err.message };
+  }
+
+  // Kesimpulan otomatis dari hasil pendaftaran di atas.
+  const semuaStore = [];
+  report.daftarStoreTerlihat.forEach((d) => {
+    if (d.store) d.store.forEach((s) => semuaStore.push({ scope: d.label, id: s.id, slug: s.slug }));
+  });
+
+  if (semuaStore.length === 0) {
     report.catatan.push(
-      'KESIMPULAN: dua-duanya gagal. Berarti VERCEL_API_TOKEN tidak punya akses ke ' +
-        'Global Config store ini. Penyebab paling umum: token dibuat di akun/scope ' +
-        'yang berbeda dari pemilik store. Buat ulang token di vercel.com/account/tokens ' +
-        'dan pastikan bagian Scope-nya menunjuk ke akun/tim yang sama dengan yang ' +
-        'memiliki project EQUALENGLISH.'
+      'HASIL: token ini tidak bisa melihat SATU PUN Global Config store, baik di scope ' +
+        'personal maupun team. Artinya store-nya dibuat di akun/tim yang BERBEDA dari ' +
+        'pemilik token (lihat "pemilikToken" di atas), atau tokennya sudah dicabut. ' +
+        'Solusi: buat token baru sambil login sebagai akun yang sama dengan yang kamu ' +
+        'pakai membuat store-nya.'
     );
   } else {
-    report.catatan.push('KESIMPULAN: dua-duanya berhasil, koneksi baik-baik saja.');
+    const cocok = semuaStore.find((s) => s.id === configId);
+    if (cocok) {
+      report.catatan.push(
+        'HASIL: store yang dicari TERNYATA TERLIHAT di "' + cocok.scope + '". ' +
+          'Berarti pemanggilan tadi cuma salah scope. Ini bug di kode, bukan salah setting kamu.'
+      );
+    } else {
+      report.catatan.push(
+        'HASIL: token bisa melihat ' + semuaStore.length + ' store, tapi TIDAK ADA yang ' +
+          'ID-nya cocok dengan ' + configId + ' (lihat daftar di atas). Berarti env var ' +
+          'GLOBAL_CONFIG di project ini menunjuk ke store yang beda dari yang dimiliki ' +
+          'akun token. Paling gampang: pakai salah satu store di daftar itu, atau ' +
+          'connect ulang store yang benar ke project.'
+      );
+    }
   }
 
   return res.status(200).json({ ok: true, report });
