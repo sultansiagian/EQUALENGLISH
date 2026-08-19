@@ -19,11 +19,40 @@ function authHeaders() {
   return { Authorization: 'Bearer ' + currentIdToken };
 }
 
+// Penjelasan per-alasan yang dikembalikan server (lihat verifyGoogleIdToken
+// di api/_lib/google-verify.js). Ditulis sebagai kalimat yang bisa
+// ditindaklanjuti, bukan kode mentah, karena yang baca ini bukan programmer.
+const AUTH_REASON_TEXT = {
+  token_expired:
+    'Sesi login kamu sudah kedaluwarsa (token Google cuma berlaku sekitar 1 jam). Login lagi.',
+  wrong_audience:
+    'Client ID Google di halaman ini tidak cocok dengan yang diharapkan server. Ini salah konfigurasi kode, bukan salah kamu.',
+  email_unverified:
+    'Google melaporkan email akun ini belum terverifikasi, jadi tidak bisa dipakai masuk.',
+  missing_credential:
+    'Browser tidak mengirim token login ke server. Coba muat ulang halaman ini.',
+  token_invalid:
+    'Server tidak bisa memvalidasi token login dari Google. Coba login ulang; kalau tetap begini, cek Vercel > Deployments > Functions log untuk pesan lengkapnya.',
+};
+
 // Dipanggil kalau sebuah fetch admin balas 401 (token habis/tidak valid) --
 // beda dari 403 (login sah tapi bukan admin), yang punya panel sendiri.
-function handleUnauthorized() {
+//
+// WAJIB selalu memberi tahu alasannya. Versi pertama fungsi ini cuma
+// memanggil showPanel('signin') tanpa pesan apa pun, dan dari sisi pengguna
+// itu terlihat seperti "diklik tapi tidak terjadi apa-apa" -- gagal
+// diam-diam yang bikin masalah aslinya mustahil didiagnosis.
+function handleUnauthorized(reason) {
   currentIdToken = null;
   showPanel('signin');
+
+  const box = document.getElementById('admin-signin-error');
+  box.textContent =
+    (AUTH_REASON_TEXT[reason] || 'Server menolak login ini.') +
+    (reason ? ' (kode: ' + reason + ')' : '');
+  box.hidden = false;
+
+  console.error('Login admin ditolak server. reason=' + reason);
 }
 
 // Dipanggil otomatis oleh Google Identity Services lewat
@@ -62,12 +91,13 @@ window.handleAdminCredential = async function handleAdminCredential(response) {
     }
 
     if (res.status === 401) {
-      handleUnauthorized();
+      handleUnauthorized(data.reason);
       return;
     }
 
     document.getElementById('admin-error-detail').textContent =
-      'Server belum siap (' + (data.reason || res.status) + '). Cek env var di Vercel.';
+      'Server menolak dengan status ' + res.status + ' (' + (data.reason || 'tanpa keterangan') +
+      '). Kalau tertulis server_not_configured, berarti ADMIN_EMAILS belum keisi di Vercel.';
     showPanel('error');
   } catch (err) {
     document.getElementById('admin-error-detail').textContent =
@@ -140,7 +170,7 @@ async function saveForm() {
     if (res.ok && data.ok) {
       setSaveStatus('ok', 'Tersimpan. Biasanya tayang di situs dalam ~10 detik.');
     } else if (res.status === 401) {
-      handleUnauthorized();
+      handleUnauthorized(data.reason);
     } else {
       setSaveStatus('error', 'Gagal menyimpan: ' + (data.message || data.reason || res.status));
     }
@@ -269,7 +299,7 @@ async function handlePhotoUpload(container, file) {
       showPhotoPreview(container, data.url);
       setPhotoStatus(container, 'ok', 'Tersimpan dan langsung tayang.');
     } else if (res.status === 401) {
-      handleUnauthorized();
+      handleUnauthorized(data.reason);
     } else {
       setPhotoStatus(container, 'error', 'Gagal upload: ' + (data.message || data.reason || res.status));
     }

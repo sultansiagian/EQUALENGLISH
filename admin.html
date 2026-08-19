@@ -36,6 +36,10 @@
           cuma untuk mengubah teks, harga, dan foto di equalenglish.vercel.app,
           bukan untuk siswa.
         </p>
+        <!-- Diisi oleh handleUnauthorized() di admin.js kalau server menolak
+             login. Tanpa ini, penolakan cuma memulangkan pengguna ke panel
+             yang sama tanpa penjelasan apa pun. -->
+        <p id="admin-signin-error" class="admin-signin-error" role="alert" hidden></p>
         <div class="admin-signin-box">
           <div
             id="g_id_onload"

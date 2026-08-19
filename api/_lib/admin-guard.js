@@ -40,8 +40,18 @@ async function requireAdmin(req) {
   }
 
   const verified = await verifyGoogleIdToken(idToken, CLIENT_ID);
-  if (!verified.valid) return { ok: false, status: 401, reason: verified.reason };
+  if (!verified.valid) {
+    // Dicatat supaya kegagalan login yang tidak jelas bisa didiagnosis dari
+    // Vercel > Deployments > Functions log, tanpa perlu menebak-nebak.
+    // Tidak mencatat token-nya sendiri (itu kredensial), cuma alasannya.
+    console.error('admin: token ditolak, reason=' + verified.reason);
+    return { ok: false, status: 401, reason: verified.reason };
+  }
   if (!adminEmails.includes(verified.email)) {
+    console.error(
+      'admin: email "' + verified.email + '" terverifikasi Google tapi TIDAK ada di ' +
+        'ADMIN_EMAILS (yang terdaftar: ' + adminEmails.join(', ') + ').'
+    );
     return { ok: false, status: 403, reason: 'not_admin' };
   }
 
