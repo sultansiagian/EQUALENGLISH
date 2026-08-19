@@ -29,7 +29,59 @@ body {
   font-family: var(--body);
 }
 
+/* Latar garis melengkung, lihat komentar panjang di admin.html untuk asal
+   dan alasan diterjemahkan jadi statis. position:fixed penuh satu layar,
+   di BELAKANG konten (.admin-shell dinaikkan ke z-index:1 di bawah) --
+   kartu/topbar sudah punya background sendiri (var(--white)/var(--black)),
+   jadi garisnya cuma kelihatan di sela-sela, bukan menembus tulisan. */
+.admin-bg-paths {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.admin-bg-paths svg {
+  width: 100%;
+  height: 100%;
+  color: var(--pink);
+}
+
+.admin-bg-paths path {
+  fill: none;
+  stroke: currentColor;
+  /* --sw = opacity dasar tiap path (dihitung dari rumus sumbernya, makin
+     besar index-nya makin pekat). Animasinya cuma naik-turun DARI titik
+     itu, bukan dari nol -- garis paling tipis tetap kelihatan tipis. */
+  opacity: var(--sw);
+  animation: admin-path-pulse var(--dur) var(--delay) ease-in-out infinite;
+}
+
+/* Cuma opacity yang dianimasikan -- properti compositor-only, tidak
+   memicu layout/paint ulang, jauh lebih murah dari filter blur (goo
+   effect) yang bikin morphic-background.js harus dimatikan total di HP.
+   36 path sekaligus dengan animasi seringan ini tidak perlu jalan pintas
+   serupa (batasi jumlah, matikan di layar sempit, dst). */
+@keyframes admin-path-pulse {
+  0%,
+  100% {
+    opacity: calc(var(--sw) * 0.55);
+  }
+  50% {
+    opacity: var(--sw);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-bg-paths path {
+    animation: none;
+  }
+}
+
 .admin-shell {
+  position: relative; /* z-index di bawah cuma berlaku di atas positioned element */
+  z-index: 1; /* di atas .admin-bg-paths (z-index:0, fixed di belakang) */
   min-height: 100vh;
   display: flex;
   flex-direction: column;
