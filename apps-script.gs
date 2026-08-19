@@ -124,8 +124,17 @@ function handleUpload(berkas, namaFolder) {
       var cocok = /^data:([^;]+);base64,(.+)$/.exec(b.dataUrl || '');
       if (!cocok) continue;
 
+      var tipe = cocok[1];
       var bytes = Utilities.base64Decode(cocok[2]);
-      var blob = Utilities.newBlob(bytes, cocok[1], stempel + '-' + b.id);
+
+      // Ekstensi diambil dari tipe filenya (image/webp -> .webp). Tanpa
+      // ini nama filenya polos tanpa ekstensi: Drive masih bisa
+      // menampilkannya karena tahu tipenya, tapi begitu diunduh, file itu
+      // tidak dikenali sebagai gambar oleh komputer/HP.
+      var ekstensi = (tipe.split('/')[1] || 'jpg').split('+')[0];
+      var namaFile = stempel + '-' + b.id + '.' + ekstensi;
+
+      var blob = Utilities.newBlob(bytes, tipe, namaFile);
       link[b.id] = folder.createFile(blob).getUrl();
     } catch (err) {
       console.error('Gagal menyimpan berkas: ' + err);
