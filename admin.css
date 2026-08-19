@@ -287,12 +287,23 @@ body {
 
 .admin-save-bar .admin-btn {
   margin-top: 0;
+  /* Tanpa dua baris ini, flexbox menyusutkan tombol (bukan teks status)
+     waktu pesan errornya panjang -- tombolnya jadi sempit, tulisannya
+     kepaksa 3 baris, dan border-radius:999px yang harusnya bikin pil
+     malah jadi lingkaran/oval di kotak yang sempit-tinggi begitu. */
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .admin-save-status {
   font-family: var(--mono);
   font-size: 0.82rem;
   color: var(--ink-muted);
+  /* min-width:0 -- default flex item punya min-width:auto yang menolak
+     menyusut di bawah lebar teksnya sendiri; ini yang bikin tombol di
+     sebelahnya kena getok duluan. Ganti ke 0 supaya elemen INI yang
+     boleh membungkus ke baris baru waktu sempit, bukan tombolnya. */
+  min-width: 0;
 }
 
 .admin-save-status[data-state='ok'] {
