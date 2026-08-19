@@ -85,4 +85,31 @@ module.exports = {
   testiDesc:
     'Pengalaman langsung dari peserta yang sudah menjalani kelasnya sampai selesai.',
   testimonials: [],
+
+  // ============================================================
+  // FORM PENDAFTARAN (/daftar), bisa disusun ulang dari /admin.
+  //
+  // Isi formFields adalah ARRAY definisi pertanyaan. Bentuk dan seluruh
+  // aturan penjagaannya ada di api/_lib/form-schema.js -- baca komentar
+  // di file itu sebelum mengubah apa pun di sini, terutama soal kenapa
+  // `urutan` dan `kolom` sengaja dipisah.
+  //
+  // Nilai bawaannya SENGAJA array kosong, bukan salinan FIELD_BAWAAN.
+  // Alasannya: normalisasiFields() mengembalikan susunan bawaan lengkap
+  // untuk masukan kosong, jadi menyimpan salinannya di sini cuma bikin
+  // dua sumber kebenaran yang bisa berbeda kalau salah satu diubah.
+  formFields: [],
+
+  // Judul dan pengantar di halaman /daftar.
+  daftarTitle: 'Daftar Bootcamp EPT UI.',
+  daftarDesc:
+    'Isi data di bawah, lalu unggah bukti pembayaran. Kami cek dulu, dan setelah ' +
+    'dikonfirmasi kamu akan dapat akses ke ruang kelas memakai akun Google yang ' +
+    'emailnya kamu isi di sini.',
+
+  // Nama folder di Google Drive tempat semua file unggahan pendaftar
+  // disimpan. Dibuat otomatis oleh Apps Script kalau belum ada. Diubah
+  // dari /admin; mengubahnya TIDAK memindahkan file lama, cuma menentukan
+  // ke mana unggahan berikutnya masuk.
+  driveFolder: 'Pendaftaran EQUAL (dari situs)',
 };

@@ -296,3 +296,107 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================================
+   Elemen yang muncul sejak form digambar dinamis dari susunan di
+   /admin (lihat daftar.js). Sebelumnya pertanyaan ditulis tetap di
+   daftar.html, jadi beberapa pembungkus ini belum ada.
+   ============================================================ */
+
+/* Pengganti <legend>: dipakai di kotak yang isinya dibuat JavaScript,
+   di mana <fieldset>/<legend> asli tidak lagi dipakai. */
+.daftar-legend {
+  display: block;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+}
+
+.daftar-legend + small {
+  display: block;
+  color: var(--ink-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.daftar-group-paket {
+  padding-bottom: 22px;
+}
+
+.daftar-field select {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--body);
+  font-size: 1rem;
+  padding: 11px 13px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--black);
+}
+
+.daftar-field select:focus {
+  outline: none;
+  border-color: var(--pink);
+  background: var(--white);
+}
+
+.daftar-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--body);
+  font-size: 1rem;
+  padding: 11px 13px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--black);
+  resize: vertical;
+}
+
+.daftar-field textarea:focus {
+  outline: none;
+  border-color: var(--pink);
+  background: var(--white);
+}
+
+/* Kotak unggahan sekarang berdiri sendiri (bukan di dalam satu fieldset
+   "Unggahan" seperti versi sebelumnya), jadi butuh jarak antar kotak. */
+.daftar-upload + .daftar-upload {
+  margin-top: 14px;
+}
+
+.daftar-upload > small {
+  display: block;
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  margin-bottom: 8px;
+}
+
+/* Keadaan memuat sebelum susunan pertanyaan datang dari server. */
+.daftar-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  color: var(--ink-muted);
+  padding: 40px 0;
+}
+
+.daftar-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  border-top-color: var(--pink);
+  animation: daftar-spin 0.8s linear infinite;
+}
+
+@keyframes daftar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

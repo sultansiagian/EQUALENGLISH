@@ -155,7 +155,16 @@ function teks(nilai, maks) {
  *    menabrak kolom A sampai V.
  */
 function normalisasiFields(masukan) {
-  const arr = Array.isArray(masukan) ? masukan : [];
+  // Belum pernah disimpan dari /admin (atau isinya rusak) -> pakai susunan
+  // bawaan LENGKAP, bukan cuma field inti. Kalau di sini cuma field inti
+  // yang dikembalikan, form /daftar akan kehilangan fakultas, nomor HP,
+  // dan seluruh unggahan bukti sejak hari pertama, padahal admin belum
+  // pernah mengubah apa pun.
+  if (!Array.isArray(masukan) || masukan.length === 0) {
+    return FIELD_BAWAAN.map((f) => Object.assign({}, f));
+  }
+
+  const arr = masukan;
   const bawaanPerId = {};
   FIELD_BAWAAN.forEach((f) => {
     bawaanPerId[f.id] = f;

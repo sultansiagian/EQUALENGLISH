@@ -1,4 +1,7 @@
+const DEFAULTS = require('./_lib/site-defaults');
+const { readOverrides } = require('./_lib/global-config-store');
 const { panggilAppsScript } = require('./_lib/apps-script');
+const { fieldAktif, validasiJawaban, susunBaris } = require('./_lib/form-schema');
 
 /**
  * Endpoint form pendaftaran di /daftar. INI SATU-SATUNYA endpoint di
@@ -8,29 +11,25 @@ const { panggilAppsScript } = require('./_lib/apps-script');
  * Yang membuat ini tidak berbahaya walau terbuka: pendaftaran masuk ke
  * tab "Pendaftar Web", yang TIDAK terdaftar di ROSTER_CSV_URLS. Jadi
  * mengirim form ini tidak pernah memberi akses ruang kelas ke siapa pun.
- * Akses baru terbuka setelah admin menekan Setujui di /admin, yang
+ * Akses baru terbuka setelah admin menekan Setujui di /pendaftar, yang
  * memindahkan barisnya ke Form_Responses. Skenario terburuk dari
  * penyalahgunaan endpoint ini cuma baris sampah yang bisa dihapus, bukan
  * orang asing masuk ke kelas berbayar.
+ *
+ * PERTANYAAN FORMNYA TIDAK DIPAKU DI SINI. Susunannya dibaca dari Global
+ * Config (bisa diubah admin lewat /admin), dan validasi mengikuti susunan
+ * itu. Yang dikirim browser TIDAK dipercaya menentukan apa pun soal
+ * struktur -- browser cuma mengirim jawaban, server yang menentukan
+ * pertanyaan apa yang berlaku dan ke kolom mana jawabannya ditulis.
  */
 
 // Batas ukuran total body. Vercel sendiri membatasi 4,5 MB; angka di
 // sini lebih kecil supaya penolakannya datang dari kode ini dengan pesan
-// yang jelas, bukan dari platform dengan error mentah. Ketiga foto sudah
+// yang jelas, bukan dari platform dengan error mentah. Foto sudah
 // dikompres di browser (lihat daftar.js), jadi normalnya jauh di bawah ini.
 const MAKS_BODY_BYTES = 3.5 * 1024 * 1024;
 
-const PAKET_SAH = ['Individual (1 student)', 'Pair (2 students)', 'Group (3 students)'];
-
-function bersihkan(nilai, maks) {
-  return String(nilai === undefined || nilai === null ? '' : nilai)
-    .trim()
-    .slice(0, maks || 200);
-}
-
-function emailSah(nilai) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(nilai || '').trim());
-}
+const POLA_DATA_URL = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/;
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -44,13 +43,12 @@ module.exports = async function handler(req, res) {
   // (disembunyikan lewat CSS, bukan type=hidden, supaya bot pengisi-semua
   // tetap mengisinya). Kalau terisi, pura-pura berhasil supaya bot tidak
   // tahu perangkapnya ketahuan dan mencoba cara lain.
-  if (bersihkan(body.website)) {
+  if (String(body.website || '').trim()) {
     console.log('daftar: submission ditolak karena perangkap bot terisi.');
     return res.status(200).json({ ok: true });
   }
 
-  const perkiraanUkuran = JSON.stringify(body).length;
-  if (perkiraanUkuran > MAKS_BODY_BYTES) {
+  if (JSON.stringify(body).length > MAKS_BODY_BYTES) {
     return res.status(413).json({
       ok: false,
       reason: 'terlalu_besar',
@@ -58,51 +56,23 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  const data = {
-    nama: bersihkan(body.nama, 120),
-    fakultas: bersihkan(body.fakultas, 120),
-    telepon: bersihkan(body.telepon, 40),
-    idLine: bersihkan(body.idLine, 80),
-    paket: bersihkan(body.paket, 60),
-    namaDiri: bersihkan(body.namaDiri, 120),
-    teleponDiri: bersihkan(body.teleponDiri, 40),
-    emailDiri: bersihkan(body.emailDiri, 120),
-    p1Nama: bersihkan(body.p1Nama, 120),
-    p1Telepon: bersihkan(body.p1Telepon, 40),
-    p1Email: bersihkan(body.p1Email, 120),
-    p2Nama: bersihkan(body.p2Nama, 120),
-    p2Telepon: bersihkan(body.p2Telepon, 40),
-    p2Email: bersihkan(body.p2Email, 120),
-    p3Nama: bersihkan(body.p3Nama, 120),
-    p3Telepon: bersihkan(body.p3Telepon, 40),
-    p3Email: bersihkan(body.p3Email, 120),
-    buktiBayar: body.buktiBayar || '',
-    buktiBroadcast: body.buktiBroadcast || '',
-    buktiInstagram: body.buktiInstagram || '',
-  };
-
-  // Validasi ulang di server, bukan cuma di browser. Validasi browser
-  // gampang dilewati (matikan JS, kirim request langsung), jadi tidak
-  // pernah boleh jadi satu-satunya penjaga.
-  const kurang = [];
-  if (!data.nama) kurang.push('nama');
-  if (!data.fakultas) kurang.push('fakultas');
-  if (!data.telepon) kurang.push('nomor HP');
-  if (!PAKET_SAH.includes(data.paket)) kurang.push('pilihan paket');
-  if (!emailSah(data.emailDiri)) kurang.push('email yang benar');
-
-  // Email tiap peserta wajib, karena EMAIL ITU YANG jadi kunci masuk
-  // ruang kelas nanti (api/verify-access.js mencocokkan email akun Google
-  // yang dipakai login dengan email di sheet). Peserta tanpa email yang
-  // benar akan gagal masuk walau sudah bayar.
-  if (data.paket === 'Pair (2 students)' && !emailSah(data.p2Email)) {
-    kurang.push('email peserta kedua');
-  }
-  if (data.paket === 'Group (3 students)') {
-    if (!emailSah(data.p2Email)) kurang.push('email peserta kedua');
-    if (!emailSah(data.p3Email)) kurang.push('email peserta ketiga');
+  let overrides;
+  try {
+    overrides = await readOverrides();
+  } catch (err) {
+    // readOverrides sendiri sudah gagal-diam-diam, tapi dijaga sekali lagi
+    // supaya form tidak pernah menolak orang gara-gara masalah baca config.
+    overrides = {};
   }
 
+  const fields = fieldAktif(overrides.formFields);
+  const jawaban = body.jawaban && typeof body.jawaban === 'object' ? body.jawaban : {};
+
+  // Validasi diulang di server memakai susunan yang sama dengan yang
+  // dipakai menggambar form. Validasi di browser gampang dilewati
+  // (matikan JS, kirim request langsung), jadi tidak pernah boleh jadi
+  // satu-satunya penjaga.
+  const kurang = validasiJawaban(overrides.formFields, jawaban);
   if (kurang.length > 0) {
     return res.status(400).json({
       ok: false,
@@ -111,20 +81,39 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  // Peserta pertama = pendaftar itu sendiri. Disalin ke kolom Person 1
-  // supaya susunan di Form_Responses konsisten dengan baris lama, di mana
-  // paket Pair/Group selalu punya Person 1 terisi.
-  if (data.paket !== 'Individual (1 student)') {
-    data.p1Nama = data.p1Nama || data.namaDiri || data.nama;
-    data.p1Telepon = data.p1Telepon || data.teleponDiri || data.telepon;
-    data.p1Email = data.p1Email || data.emailDiri;
-  } else {
-    data.namaDiri = data.namaDiri || data.nama;
-    data.teleponDiri = data.teleponDiri || data.telepon;
-  }
+  // Pisahkan berkas unggahan dari jawaban teks. Cuma field bertipe
+  // 'upload' yang boleh membawa data URL; kalau ada yang menyelipkan data
+  // URL raksasa ke field teks biasa, itu tidak ikut diproses sebagai file.
+  const berkas = [];
+  fields.forEach((f) => {
+    if (f.tipe !== 'upload') return;
+    const dataUrl = String(jawaban[f.id] || '');
+    if (!POLA_DATA_URL.test(dataUrl)) return;
+    berkas.push({ id: f.id, dataUrl: dataUrl });
+  });
+
+  const folder =
+    overrides.driveFolder !== undefined && String(overrides.driveFolder).trim()
+      ? String(overrides.driveFolder).trim()
+      : DEFAULTS.driveFolder;
 
   try {
-    const hasil = await panggilAppsScript('submit', { data });
+    // Apps Script yang menyimpan berkas ke Drive lalu mengembalikan
+    // linknya, karena file harus mendarat di Drive milik pemilik sheet
+    // (privat), bukan di penyimpanan situs yang bersifat publik.
+    const hasilUpload = await panggilAppsScript('upload', { berkas, folder });
+    const link = (hasilUpload && hasilUpload.link) || {};
+
+    // Baris disusun DI SINI, bukan di Apps Script. Dengan begitu,
+    // menambah atau memindah pertanyaan tidak pernah menuntut skrip di
+    // Google Sheet ditempel ulang, dan pemetaan kolomnya bisa diuji
+    // otomatis (lihat susunBaris di form-schema.js).
+    const stempel = new Date()
+      .toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour12: false })
+      .replace(',', '');
+    const baris = susunBaris(overrides.formFields, jawaban, link, stempel);
+
+    const hasil = await panggilAppsScript('submit', { baris });
     return res.status(200).json({ ok: true, id: hasil.id });
   } catch (err) {
     console.error('daftar: gagal mengirim ke Apps Script:', err.message);

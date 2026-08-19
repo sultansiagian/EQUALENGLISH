@@ -1,50 +1,59 @@
 /**
  * ============================================================
- * JEMBATAN ANTARA FORM DI SITUS DAN SPREADSHEET PENDAFTARAN
+ * JEMBATAN ANTARA SITUS DAN SPREADSHEET PENDAFTARAN
  * ============================================================
  *
  * File ini BUKAN bagian dari situs. Isinya ditempel ke Google Sheet
  * pendaftaran ("FORM PENDAFTARAN PERSIAPAN EPT UI by EQUAL ENGLISH
- * (Responses)"), lewat Extensions > Apps Script. Disimpan di repo ini
- * supaya tidak hilang dan bisa dilacak perubahannya.
+ * (Responses)") lewat Extensions > Apps Script. Disimpan di repo supaya
+ * tidak hilang dan bisa dilacak perubahannya.
  *
- * CARA PASANG (sekali saja):
+ * ------------------------------------------------------------
+ * CARA PASANG (sekali saja)
+ * ------------------------------------------------------------
  *   1. Buka spreadsheet-nya, menu Extensions > Apps Script
- *   2. Hapus isi Code.gs yang ada, tempel SELURUH isi file ini
+ *   2. Hapus isi yang ada, tempel SELURUH isi file ini
  *   3. Ganti nilai SECRET di bawah dengan kata sandi acak buatan sendiri
- *      (bebas, panjang, jangan dipakai di tempat lain)
- *   4. Klik Deploy > New deployment > pilih tipe "Web app"
- *        - Execute as: Me
- *        - Who has access: Anyone
+ *   4. Deploy > New deployment > tipe "Web app"
+ *        Execute as: Me
+ *        Who has access: Anyone
  *      ("Anyone" wajib supaya server situs bisa memanggilnya. Yang
- *      menjaga keamanannya adalah SECRET di bawah, bukan pengaturan ini.)
- *   5. Copy "Web app URL" yang muncul
- *   6. Di Vercel > Settings > Environment Variables, tambahkan:
+ *      menjaga keamanannya adalah SECRET, bukan pengaturan ini.)
+ *   5. Copy "Web app URL"
+ *   6. Di Vercel > Settings > Environment Variables, isi:
  *        APPS_SCRIPT_URL     = URL dari langkah 5
  *        APPS_SCRIPT_SECRET  = SECRET dari langkah 3
  *   7. Redeploy project-nya
  *
- * KALAU NANTI FILE INI DIUBAH: setelah menempel versi barunya, harus
+ * KALAU FILE INI DIUBAH: setelah menempel versi barunya, harus
  * Deploy > Manage deployments > edit > Version: New version. Kalau cuma
  * disimpan tanpa deploy ulang, yang jalan tetap versi lama.
  *
- * ============================================================
- * ALUR YANG DIJALANKAN SKRIP INI
- * ============================================================
+ * ------------------------------------------------------------
+ * KENAPA SKRIP INI SENGAJA "BODOH"
+ * ------------------------------------------------------------
+ * Skrip ini TIDAK tahu apa-apa soal isi formulir: tidak tahu ada
+ * pertanyaan apa saja, kolom mana untuk apa, atau mana yang wajib.
+ * Semua itu dihitung di situs (api/_lib/form-schema.js), dan skrip ini
+ * cuma menerima satu baris jadi lalu menempelkannya.
  *
+ * Alasannya: pemilik situs bisa menambah, menghapus, dan memindah
+ * pertanyaan kapan saja dari /admin. Kalau skrip ini ikut tahu susunan
+ * pertanyaan, tiap perubahan kecil menuntut file ini ditempel ulang dan
+ * di-deploy ulang manual. Dengan begini, file ini idealnya tidak pernah
+ * perlu disentuh lagi.
+ *
+ * ------------------------------------------------------------
+ * ALUR PENDAFTARAN
+ * ------------------------------------------------------------
  * Pendaftar isi form di situs
- *   -> baris masuk ke tab "Pendaftar Web" (BELUM dapat akses kelas,
- *      karena tab ini tidak terdaftar di ROSTER_CSV_URLS)
- *   -> admin melihatnya di /admin, mengecek bukti bayar
- *   -> admin klik Setujui
- *   -> baris DIPINDAH ke tab "Form_Responses" kolom A sampai V
+ *   -> berkas disimpan ke Drive (privat, cuma pemilik akun ini yang bisa
+ *      buka -- isinya bukti transfer, ada nama dan nominal)
+ *   -> baris masuk ke tab "Pendaftar Web", BELUM dapat akses kelas
+ *      karena tab ini tidak terdaftar di ROSTER_CSV_URLS
+ *   -> admin cek bukti bayar di /pendaftar, klik Setujui
+ *   -> baris DIPINDAH ke tab "Form_Responses"
  *   -> api/verify-access.js membacanya seperti biasa, akses terbuka
- *
- * Sengaja TIDAK memakai trik menulis "done" di kolom paling kanan:
- * cara itu bergantung pada posisi kolom terakhir, dan salah satu kolom
- * saja bisa berakibat orang yang belum bayar dapat akses, atau orang
- * yang sudah bayar malah terkunci. Memisahkan tab menghilangkan seluruh
- * kelas kesalahan itu.
  */
 
 // GANTI INI dengan kata sandi acak buatan sendiri sebelum deploy.
@@ -53,40 +62,6 @@ var SECRET = 'GANTI_DENGAN_KATA_SANDI_ACAK_PANJANG';
 var TAB_PENDING = 'Pendaftar Web';
 var TAB_ROSTER = 'Form_Responses';
 
-// Susunan kolom tab Form_Responses, A sampai V. Urutannya HARUS sama
-// persis dengan sheet aslinya -- baris yang disetujui ditulis mengikuti
-// urutan ini. Kolom setelah V sengaja tidak diisi (dikonfirmasi tidak
-// dipakai), dan dibiarkan kosong supaya tidak menimpa apa pun.
-var KOLOM_ROSTER = [
-  'timestamp',        // A
-  'buktiPembayaran',  // B (kolom manual, diisi link bukti bayar juga)
-  'nama',             // C
-  'fakultas',         // D
-  'telepon',          // E
-  'idLine',           // F
-  'paket',            // G
-  'namaDiri',         // H
-  'teleponDiri',      // I
-  'emailDiri',        // J
-  'p1Nama',           // K
-  'p1Telepon',        // L
-  'p1Email',          // M
-  'p2Nama',           // N
-  'p2Telepon',        // O
-  'p2Email',          // P
-  'p3Nama',           // Q
-  'p3Telepon',        // R
-  'p3Email',          // S
-  'buktiBayar',       // T
-  'buktiBroadcast',   // U
-  'buktiInstagram',   // V
-];
-
-// Tab "Pendaftar Web" pakai susunan yang sama, plus satu kolom id di
-// depan supaya tiap baris bisa dirujuk dari /admin tanpa bergantung
-// pada nomor baris (nomor baris bergeser tiap ada yang dihapus).
-var KOLOM_PENDING = ['id'].concat(KOLOM_ROSTER);
-
 function doPost(e) {
   try {
     var body = JSON.parse(e.postData.contents);
@@ -94,7 +69,8 @@ function doPost(e) {
       return jsonOut({ ok: false, reason: 'secret_salah' });
     }
 
-    if (body.action === 'submit') return handleSubmit(body.data);
+    if (body.action === 'upload') return handleUpload(body.berkas, body.folder);
+    if (body.action === 'submit') return handleSubmit(body.baris);
     if (body.action === 'list') return handleList();
     if (body.action === 'approve') return handleApprove(body.id);
     if (body.action === 'reject') return handleReject(body.id);
@@ -116,109 +92,99 @@ function sheetPending() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sh = ss.getSheetByName(TAB_PENDING);
   if (!sh) {
-    // Dibuat otomatis pada pemakaian pertama, lengkap dengan baris judul,
-    // supaya tidak ada langkah manual tambahan waktu pasang.
+    // Dibuat otomatis pada pemakaian pertama supaya tidak ada langkah
+    // manual tambahan waktu pasang. Kolom A dipakai untuk id internal,
+    // sisanya persis mengikuti susunan Form_Responses.
     sh = ss.insertSheet(TAB_PENDING);
-    sh.appendRow(KOLOM_PENDING);
+    sh.appendRow(['ID (jangan diubah)']);
     sh.setFrozenRows(1);
   }
   return sh;
 }
 
 /**
- * Simpan satu file (dikirim sebagai data URL base64) ke Drive, di dalam
- * folder khusus supaya tidak berantakan di Drive utama.
+ * Simpan berkas ke Drive, kembalikan link per field.
  *
- * File-nya PRIVAT (tidak diubah sharing-nya), jadi cuma pemilik akun ini
- * yang bisa membukanya. Ini disengaja: isinya bukti transfer, ada nama
- * dan nominal di situ.
+ * Berkas yang gagal disimpan dilewati DIAM-DIAM (link kosong), bukan
+ * menggagalkan seluruh pendaftaran. Kehilangan satu lampiran jauh lebih
+ * ringan daripada kehilangan seluruh data pendaftar yang sudah repot
+ * mengisi form; kolom yang kosong gampang terlihat admin dan bisa
+ * disusulkan lewat WhatsApp.
  */
-function simpanKeDrive(dataUrl, namaFile) {
-  if (!dataUrl) return '';
+function handleUpload(berkas, namaFolder) {
+  var link = {};
+  if (!berkas || !berkas.length) return jsonOut({ ok: true, link: link });
 
-  var cocok = /^data:([^;]+);base64,(.+)$/.exec(dataUrl);
-  if (!cocok) return '';
+  var folder = folderTujuan(namaFolder);
+  var stempel = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyyMMdd-HHmmss');
 
-  var tipe = cocok[1];
-  var bytes = Utilities.base64Decode(cocok[2]);
-  var blob = Utilities.newBlob(bytes, tipe, namaFile);
+  for (var i = 0; i < berkas.length; i++) {
+    try {
+      var b = berkas[i];
+      var cocok = /^data:([^;]+);base64,(.+)$/.exec(b.dataUrl || '');
+      if (!cocok) continue;
 
-  var namaFolder = 'Pendaftaran EQUAL (dari situs)';
-  var folders = DriveApp.getFoldersByName(namaFolder);
-  var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(namaFolder);
+      var bytes = Utilities.base64Decode(cocok[2]);
+      var blob = Utilities.newBlob(bytes, cocok[1], stempel + '-' + b.id);
+      link[b.id] = folder.createFile(blob).getUrl();
+    } catch (err) {
+      console.error('Gagal menyimpan berkas: ' + err);
+    }
+  }
 
-  return folder.createFile(blob).getUrl();
+  return jsonOut({ ok: true, link: link });
 }
 
-function handleSubmit(d) {
+function folderTujuan(nama) {
+  var namaFolder = String(nama || '').trim() || 'Pendaftaran EQUAL (dari situs)';
+  var folders = DriveApp.getFoldersByName(namaFolder);
+  return folders.hasNext() ? folders.next() : DriveApp.createFolder(namaFolder);
+}
+
+/**
+ * Terima satu baris jadi (array, indeks = kolom) dan tempelkan ke tab
+ * Pendaftar Web, dengan id internal di kolom A.
+ */
+function handleSubmit(baris) {
+  if (!baris || !baris.length) return jsonOut({ ok: false, reason: 'baris_kosong' });
+
   var sh = sheetPending();
   var id = 'REG' + new Date().getTime() + Math.floor(Math.random() * 1000);
-  var stempel = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'M/d/yyyy H:mm:ss');
-  var aman = function (v) {
-    return String(v === undefined || v === null ? '' : v).slice(0, 300);
-  };
-
-  // Upload disimpan lebih dulu; kalau salah satu gagal, pendaftarannya
-  // TETAP dicatat dengan kolom itu kosong, daripada seluruh pendaftaran
-  // hilang gara-gara satu file bermasalah. Admin bisa menyusulkan lewat
-  // WhatsApp kalau ada yang kosong.
-  var linkBayar = simpanKeDrive(d.buktiBayar, id + '-bayar');
-  var linkBroadcast = simpanKeDrive(d.buktiBroadcast, id + '-broadcast');
-  var linkInstagram = simpanKeDrive(d.buktiInstagram, id + '-instagram');
-
-  var isi = {
-    id: id,
-    timestamp: stempel,
-    buktiPembayaran: linkBayar,
-    nama: aman(d.nama),
-    fakultas: aman(d.fakultas),
-    telepon: aman(d.telepon),
-    idLine: aman(d.idLine),
-    paket: aman(d.paket),
-    namaDiri: aman(d.namaDiri),
-    teleponDiri: aman(d.teleponDiri),
-    emailDiri: aman(d.emailDiri),
-    p1Nama: aman(d.p1Nama),
-    p1Telepon: aman(d.p1Telepon),
-    p1Email: aman(d.p1Email),
-    p2Nama: aman(d.p2Nama),
-    p2Telepon: aman(d.p2Telepon),
-    p2Email: aman(d.p2Email),
-    p3Nama: aman(d.p3Nama),
-    p3Telepon: aman(d.p3Telepon),
-    p3Email: aman(d.p3Email),
-    buktiBayar: linkBayar,
-    buktiBroadcast: linkBroadcast,
-    buktiInstagram: linkInstagram,
-  };
-
-  sh.appendRow(
-    KOLOM_PENDING.map(function (k) {
-      return isi[k] || '';
-    })
-  );
-
+  sh.appendRow([id].concat(baris));
   return jsonOut({ ok: true, id: id });
 }
 
+/**
+ * Kirim seluruh isi tab Pendaftar Web apa adanya, plus baris judul dari
+ * Form_Responses. Situs yang menerjemahkan kolom mana artinya apa,
+ * memakai susunan field yang sedang berlaku.
+ */
 function handleList() {
   var sh = sheetPending();
   var nilai = sh.getDataRange().getValues();
   var hasil = [];
 
   for (var i = 1; i < nilai.length; i++) {
-    var baris = nilai[i];
-    if (!baris[0]) continue; // baris kosong
-    var obj = {};
-    KOLOM_PENDING.forEach(function (k, idx) {
-      obj[k] = String(baris[idx] === undefined || baris[idx] === null ? '' : baris[idx]);
+    if (!nilai[i][0]) continue; // baris tanpa id dilewati
+    hasil.push({
+      id: String(nilai[i][0]),
+      baris: nilai[i].slice(1).map(function (v) {
+        return v === undefined || v === null ? '' : String(v);
+      }),
     });
-    hasil.push(obj);
   }
 
-  // Terbaru di atas, supaya yang baru masuk langsung kelihatan di /admin.
+  // Terbaru di atas, supaya yang baru masuk langsung kelihatan di /pendaftar.
   hasil.reverse();
-  return jsonOut({ ok: true, pendaftar: hasil });
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var shRoster = ss.getSheetByName(TAB_ROSTER);
+  var judul = [];
+  if (shRoster && shRoster.getLastColumn() > 0) {
+    judul = shRoster.getRange(1, 1, 1, shRoster.getLastColumn()).getValues()[0].map(String);
+  }
+
+  return jsonOut({ ok: true, pendaftar: hasil, judulKolom: judul });
 }
 
 function cariBarisById(sh, id) {
@@ -232,8 +198,7 @@ function cariBarisById(sh, id) {
 }
 
 /**
- * Setujui: salin baris ke Form_Responses (kolom A sampai V, urutan sama
- * persis), lalu hapus dari tab Pendaftar Web.
+ * Setujui: salin baris ke Form_Responses, lalu hapus dari Pendaftar Web.
  *
  * Urutannya SENGAJA salin dulu baru hapus. Kalau dibalik dan penyalinan
  * gagal, datanya hilang selamanya. Dengan urutan ini, kegagalan paling
@@ -248,10 +213,7 @@ function handleApprove(id) {
   var shRoster = ss.getSheetByName(TAB_ROSTER);
   if (!shRoster) return jsonOut({ ok: false, reason: 'tab_roster_tidak_ketemu' });
 
-  // Lewati kolom id (indeks 0), sisanya sudah urut sesuai KOLOM_ROSTER.
-  var barisRoster = ketemu.nilai.slice(1, KOLOM_ROSTER.length + 1);
-
-  shRoster.appendRow(barisRoster);
+  shRoster.appendRow(ketemu.nilai.slice(1)); // buang kolom id
   SpreadsheetApp.flush(); // pastikan tertulis sebelum menghapus sumbernya
   shPending.deleteRow(ketemu.nomorBaris);
 

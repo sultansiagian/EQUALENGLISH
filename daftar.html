@@ -31,152 +31,25 @@
     </header>
 
     <main class="daftar-shell">
-      <!-- STATE 1: formulir -->
-      <section id="daftar-form-panel">
+      <!-- STATE 1: memuat susunan pertanyaan -->
+      <section id="daftar-memuat">
+        <p class="daftar-status"><span class="daftar-spinner" aria-hidden="true"></span> Memuat formulir…</p>
+      </section>
+
+      <!-- STATE 2: formulir.
+           ISINYA KOSONG DI SINI, SENGAJA. Pertanyaannya digambar
+           daftar.js dari susunan yang dikirim /api/daftar-schema, karena
+           pemilik situs bisa menambah, menghapus, dan memindah pertanyaan
+           kapan saja lewat /admin. Menaruh pertanyaan sebagai HTML tetap
+           di sini berarti ada dua sumber kebenaran yang pasti berbeda
+           begitu formnya diubah sekali saja. -->
+      <section id="daftar-form-panel" hidden>
         <p class="section-kicker">PENDAFTARAN</p>
-        <h1>Daftar Bootcamp EPT UI.</h1>
-        <p class="daftar-lede">
-          Isi data di bawah, lalu unggah bukti pembayaran. Kami cek dulu, dan
-          setelah dikonfirmasi kamu akan dapat akses ke ruang kelas memakai akun
-          Google yang emailnya kamu isi di sini.
-        </p>
+        <h1 id="daftar-judul"></h1>
+        <p class="daftar-lede" id="daftar-deskripsi"></p>
 
         <form id="daftar-form" novalidate>
-          <fieldset class="daftar-group">
-            <legend>Data kamu</legend>
-
-            <label class="daftar-field">
-              <span>Nama lengkap <em>*</em></span>
-              <input type="text" name="nama" autocomplete="name" required />
-            </label>
-
-            <div class="daftar-row">
-              <label class="daftar-field">
-                <span>Fakultas <em>*</em></span>
-                <input type="text" name="fakultas" placeholder="mis. FT, FKM, Fasilkom" required />
-              </label>
-              <label class="daftar-field">
-                <span>Nomor HP <em>*</em></span>
-                <input type="tel" name="telepon" autocomplete="tel" placeholder="08..." required />
-              </label>
-            </div>
-
-            <div class="daftar-row">
-              <label class="daftar-field">
-                <span>ID Line</span>
-                <input type="text" name="idLine" />
-              </label>
-              <label class="daftar-field">
-                <span>Email <em>*</em></span>
-                <input type="email" name="emailDiri" autocomplete="email" required />
-                <small
-                  >Pakai email Google yang aktif. Email ini yang jadi kunci masuk
-                  ruang kelas nanti.</small
-                >
-              </label>
-            </div>
-          </fieldset>
-
-          <fieldset class="daftar-group">
-            <legend>Pilihan paket <em>*</em></legend>
-            <div class="daftar-plans">
-              <label class="daftar-plan">
-                <input type="radio" name="paket" value="Individual (1 student)" required />
-                <span class="daftar-plan-box">
-                  <strong>Individual</strong>
-                  <small>1 orang</small>
-                </span>
-              </label>
-              <label class="daftar-plan">
-                <input type="radio" name="paket" value="Pair (2 students)" />
-                <span class="daftar-plan-box">
-                  <strong>Pair</strong>
-                  <small>2 orang</small>
-                </span>
-              </label>
-              <label class="daftar-plan">
-                <input type="radio" name="paket" value="Group (3 students)" />
-                <span class="daftar-plan-box">
-                  <strong>Group</strong>
-                  <small>3 orang</small>
-                </span>
-              </label>
-            </div>
-          </fieldset>
-
-          <!-- Muncul cuma kalau paket Pair/Group dipilih, diatur daftar.js -->
-          <fieldset class="daftar-group" id="daftar-teman" hidden>
-            <legend>Data teman kamu</legend>
-            <p class="daftar-note">
-              Tiap peserta butuh emailnya sendiri, karena itu yang dipakai untuk
-              masuk ruang kelas.
-            </p>
-
-            <div class="daftar-person" id="daftar-person-2">
-              <h3>Peserta 2</h3>
-              <label class="daftar-field">
-                <span>Nama <em>*</em></span>
-                <input type="text" name="p2Nama" />
-              </label>
-              <div class="daftar-row">
-                <label class="daftar-field">
-                  <span>Nomor HP</span>
-                  <input type="tel" name="p2Telepon" />
-                </label>
-                <label class="daftar-field">
-                  <span>Email <em>*</em></span>
-                  <input type="email" name="p2Email" />
-                </label>
-              </div>
-            </div>
-
-            <div class="daftar-person" id="daftar-person-3" hidden>
-              <h3>Peserta 3</h3>
-              <label class="daftar-field">
-                <span>Nama <em>*</em></span>
-                <input type="text" name="p3Nama" />
-              </label>
-              <div class="daftar-row">
-                <label class="daftar-field">
-                  <span>Nomor HP</span>
-                  <input type="tel" name="p3Telepon" />
-                </label>
-                <label class="daftar-field">
-                  <span>Email <em>*</em></span>
-                  <input type="email" name="p3Email" />
-                </label>
-              </div>
-            </div>
-          </fieldset>
-
-          <fieldset class="daftar-group">
-            <legend>Unggahan</legend>
-            <p class="daftar-note">
-              Foto besar otomatis dikecilkan di HP kamu sebelum dikirim, jadi
-              tidak perlu diedit dulu.
-            </p>
-
-            <div class="daftar-upload" data-upload="buktiBayar">
-              <span class="daftar-upload-label">Bukti pembayaran <em>*</em></span>
-              <input type="file" accept="image/*" />
-              <img class="daftar-upload-preview" alt="" hidden />
-              <span class="daftar-upload-status"></span>
-            </div>
-
-            <div class="daftar-upload" data-upload="buktiBroadcast">
-              <span class="daftar-upload-label">Bukti kirim broadcast ke grup teman</span>
-              <input type="file" accept="image/*" />
-              <img class="daftar-upload-preview" alt="" hidden />
-              <span class="daftar-upload-status"></span>
-            </div>
-
-            <div class="daftar-upload" data-upload="buktiInstagram">
-              <span class="daftar-upload-label">Bukti follow Instagram @equal.english</span>
-              <input type="file" accept="image/*" />
-              <img class="daftar-upload-preview" alt="" hidden />
-              <span class="daftar-upload-status"></span>
-            </div>
-          </fieldset>
+          <div id="daftar-pertanyaan"></div>
 
           <!-- Perangkap bot. Disembunyikan lewat CSS (bukan type=hidden)
                supaya bot yang mengisi semua field ikut mengisinya, sementara
@@ -185,7 +58,7 @@
             <label>Website<input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
           </div>
 
-          <p id="daftar-error" class="daftar-error" hidden></p>
+          <p id="daftar-error" class="daftar-error" role="alert" hidden></p>
 
           <button type="submit" id="daftar-submit" class="button button-dark">
             Kirim Pendaftaran
@@ -193,7 +66,21 @@
         </form>
       </section>
 
-      <!-- STATE 2: berhasil -->
+      <!-- STATE 3: gagal memuat susunan pertanyaan -->
+      <section id="daftar-gagal" hidden>
+        <h1>Formulir gagal dimuat.</h1>
+        <p class="daftar-lede" id="daftar-gagal-detail">
+          Coba muat ulang halaman ini. Kalau tetap begini, daftar lewat WhatsApp saja.
+        </p>
+        <div class="daftar-sukses-aksi">
+          <button type="button" class="button button-dark" onclick="location.reload()">Muat ulang</button>
+          <a class="button button-outline" href="https://wa.me/6285888345058" target="_blank" rel="noopener">
+            Daftar lewat WhatsApp <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- STATE 4: berhasil -->
       <section id="daftar-sukses" hidden>
         <p class="section-kicker">TERKIRIM</p>
         <h1>Pendaftaran kamu masuk.</h1>
