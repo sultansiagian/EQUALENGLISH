@@ -242,8 +242,15 @@ function renderTestimonials(overrides) {
 
       const meta = [];
       if (fakultas) meta.push('<span class="testi-faculty">' + escapeHtml(fakultas) + '</span>');
+      // Label "EPT" dan angkanya dipisah spannya supaya bisa dikasih font
+      // berbeda: mono kecil buat labelnya, Syne buat angkanya. Ini pola
+      // yang sudah dipakai section Mentor buat skor IELTS/EPT UI (lihat
+      // .proof-score di styles.css), jadi skor di halaman ini tampil
+      // konsisten di mana pun muncul.
       const skorHtml = skor
-        ? '<span class="testi-score">EPT ' + escapeHtml(skor) + '</span>'
+        ? '<span class="testi-score"><span class="testi-score-label">EPT</span>' +
+          escapeHtml(skor) +
+          '</span>'
         : '';
 
       // data-testi-variant dipakai CSS buat memilih pasangan warna

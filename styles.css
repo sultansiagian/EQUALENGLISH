@@ -2578,17 +2578,35 @@ section[id] {
   line-height: 1.35;
 }
 
+/* Angkanya pakai Syne (--display), sama seperti skor besar di section
+   Mentor (.proof-score strong) -- di situs ini skor selalu tampil dengan
+   font itu, bukan mono. Mono cuma dipakai buat LABEL-nya, juga mengikuti
+   pola yang sama (.proof-score span). */
 .testi-score {
   flex-shrink: 0;
   align-self: flex-start;
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.04em;
-  padding: 0.4rem 0.6rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.32rem;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: -0.03em;
+  padding: 0.32rem 0.62rem;
   border-radius: 999px;
   background: var(--pink);
   color: var(--black);
   white-space: nowrap;
+}
+
+.testi-score-label {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  /* Sedikit diredupkan supaya angkanya yang jadi fokus, tapi tetap jauh
+     di atas ambang kontras karena dasarnya pink terang. */
+  opacity: 0.72;
 }
 
 @media (max-width: 1000px) {
