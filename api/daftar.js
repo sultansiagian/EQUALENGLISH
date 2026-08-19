@@ -2,6 +2,7 @@ const DEFAULTS = require('./_lib/site-defaults');
 const { readOverrides } = require('./_lib/global-config-store');
 const { panggilAppsScript } = require('./_lib/apps-script');
 const { fieldAktif, validasiJawaban, susunBaris } = require('./_lib/form-schema');
+const { statusForm } = require('./_lib/form-status');
 
 /**
  * Endpoint form pendaftaran di /daftar. INI SATU-SATUNYA endpoint di
@@ -63,6 +64,18 @@ module.exports = async function handler(req, res) {
     // readOverrides sendiri sudah gagal-diam-diam, tapi dijaga sekali lagi
     // supaya form tidak pernah menolak orang gara-gara masalah baca config.
     overrides = {};
+  }
+
+  // Penolakan waktu form tutup DILAKUKAN DI SINI, bukan cuma di halaman.
+  // Orang bisa mengirim langsung ke endpoint ini tanpa pernah membuka
+  // /daftar, jadi pemeriksaan di browser tidak pernah cukup.
+  const status = statusForm(overrides);
+  if (!status.terbuka) {
+    return res.status(403).json({
+      ok: false,
+      reason: 'form_tutup',
+      pesan: [status.pesan, status.pesanTambahan].filter(Boolean).join(' '),
+    });
   }
 
   const fields = fieldAktif(overrides.formFields);

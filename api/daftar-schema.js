@@ -1,6 +1,7 @@
 const DEFAULTS = require('./_lib/site-defaults');
 const { readOverrides } = require('./_lib/global-config-store');
 const { fieldAktif, PILIHAN_PAKET } = require('./_lib/form-schema');
+const { statusForm } = require('./_lib/form-status');
 
 /**
  * Susunan pertanyaan form /daftar, dibaca browser pengunjung buat
@@ -36,9 +37,12 @@ module.exports = async function handler(req, res) {
       pilihan: f.pilihan,
     }));
 
+    const status = statusForm(overrides);
+
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).json({
       ok: true,
+      status: status,
       judul: overrides.daftarTitle !== undefined ? overrides.daftarTitle : DEFAULTS.daftarTitle,
       deskripsi: overrides.daftarDesc !== undefined ? overrides.daftarDesc : DEFAULTS.daftarDesc,
       fields: fields,

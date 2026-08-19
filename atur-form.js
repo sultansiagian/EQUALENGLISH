@@ -28,8 +28,77 @@ window.onAdminReady = function (data) {
   document.querySelector('[data-key="daftarTitle"]').value = data.values.daftarTitle || '';
   document.querySelector('[data-key="daftarDesc"]').value = data.values.daftarDesc || '';
   document.querySelector('[data-key="driveFolder"]').value = data.values.driveFolder || '';
+  document.querySelector('[data-key="formBukaPada"]').value = data.values.formBukaPada || '';
+  document.querySelector('[data-key="formTutupPada"]').value = data.values.formTutupPada || '';
+  document.querySelector('[data-key="formPesanTutup"]').value = data.values.formPesanTutup || '';
+
+  var mode = data.values.formMode || 'buka';
+  var radio = document.querySelector('input[name="formMode"][value="' + mode + '"]');
+  if (radio) radio.checked = true;
+  perbaruiMode();
+
   muatFields();
 };
+
+// ============================================================
+// BUKA / TUTUP PENDAFTARAN
+// ============================================================
+
+function modeTerpilih() {
+  var r = document.querySelector('input[name="formMode"]:checked');
+  return r ? r.value : 'buka';
+}
+
+// Isian tanggal cuma relevan di mode 'jadwal'. Disembunyikan di mode lain
+// supaya tidak ada kesan tanggalnya sedang berlaku padahal tidak.
+function perbaruiMode() {
+  document.getElementById('form-jadwal-isian').hidden = modeTerpilih() !== 'jadwal';
+  perbaruiPratinjau();
+}
+
+// Terjemahan "2026-09-01T23:59" jadi kalimat Indonesia. Sengaja dihitung
+// ulang di sini (bukan meminta ke server) supaya admin langsung melihat
+// akibat pilihannya sebelum menekan Simpan.
+function formatWibLokal(teks) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(String(teks || '').trim());
+  if (!m) return '';
+  var bulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  return Number(m[3]) + ' ' + bulan[Number(m[2]) - 1] + ' ' + m[1] + ' pukul ' + m[4] + '.' + m[5] + ' WIB';
+}
+
+function perbaruiPratinjau() {
+  var el = document.getElementById('form-status-pratinjau');
+  var mode = modeTerpilih();
+  var pesan = document.querySelector('[data-key="formPesanTutup"]').value.trim();
+
+  if (mode === 'buka') {
+    el.dataset.state = 'buka';
+    el.textContent = 'Sekarang: pendaftaran TERBUKA, siapa pun bisa mengisi.';
+    return;
+  }
+  if (mode === 'tutup') {
+    el.dataset.state = 'tutup';
+    el.textContent =
+      'Sekarang: pendaftaran DITUTUP. Pengunjung melihat pesan: "' +
+      (pesan || 'Pendaftaran sedang ditutup.') + '"';
+    return;
+  }
+
+  var buka = formatWibLokal(document.querySelector('[data-key="formBukaPada"]').value);
+  var tutup = formatWibLokal(document.querySelector('[data-key="formTutupPada"]').value);
+  el.dataset.state = 'jadwal';
+
+  if (!buka && !tutup) {
+    // Mode jadwal tanpa satu pun tanggal itu sama saja dengan "buka", dan
+    // itu perlu dikatakan terang-terangan supaya admin tidak mengira sudah
+    // memasang jadwal padahal belum.
+    el.textContent = 'Belum ada tanggal yang diisi, jadi pendaftaran TERBUKA terus.';
+    return;
+  }
+  el.textContent =
+    'Terbuka ' + (buka ? 'mulai ' + buka : 'sejak sekarang') +
+    (tutup ? ', ditutup ' + tutup : ', tanpa batas akhir') + '.';
+}
 
 // Susunan diambil dari endpoint publik yang sama dengan yang dipakai
 // /daftar, supaya yang admin lihat di sini persis yang dilihat pendaftar.
@@ -206,6 +275,10 @@ async function simpan() {
           daftarTitle: document.querySelector('[data-key="daftarTitle"]').value,
           daftarDesc: document.querySelector('[data-key="daftarDesc"]').value,
           driveFolder: document.querySelector('[data-key="driveFolder"]').value,
+          formMode: modeTerpilih(),
+          formBukaPada: document.querySelector('[data-key="formBukaPada"]').value,
+          formTutupPada: document.querySelector('[data-key="formTutupPada"]').value,
+          formPesanTutup: document.querySelector('[data-key="formPesanTutup"]').value,
         },
       }),
     });
@@ -231,5 +304,11 @@ async function simpan() {
 
 document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('form-tambah-btn').addEventListener('click', tambahField);
+  document.querySelectorAll('input[name="formMode"]').forEach(function (r) {
+    r.addEventListener('change', perbaruiMode);
+  });
+  ['formBukaPada', 'formTutupPada', 'formPesanTutup'].forEach(function (k) {
+    document.querySelector('[data-key="' + k + '"]').addEventListener('input', perbaruiPratinjau);
+  });
   document.getElementById('form-save').addEventListener('click', simpan);
 });

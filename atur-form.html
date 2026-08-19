@@ -88,6 +88,66 @@
         </section>
 
         <section class="admin-card">
+          <h2>Buka / Tutup Pendaftaran</h2>
+          <p class="admin-hint">
+            Waktu tertutup, halaman /daftar menampilkan pesan dan formulirnya
+            tidak digambar sama sekali. Kiriman juga ditolak di server, jadi
+            tidak bisa diakali lewat cara lain.
+          </p>
+
+          <div class="form-mode">
+            <label class="form-mode-opsi">
+              <input type="radio" name="formMode" value="buka" />
+              <span class="form-mode-box">
+                <strong>Buka</strong>
+                <small>Terima pendaftaran terus</small>
+              </span>
+            </label>
+            <label class="form-mode-opsi">
+              <input type="radio" name="formMode" value="tutup" />
+              <span class="form-mode-box">
+                <strong>Tutup</strong>
+                <small>Tolak semua pendaftaran</small>
+              </span>
+            </label>
+            <label class="form-mode-opsi">
+              <input type="radio" name="formMode" value="jadwal" />
+              <span class="form-mode-box">
+                <strong>Sesuai jadwal</strong>
+                <small>Buka di antara dua tanggal</small>
+              </span>
+            </label>
+          </div>
+
+          <div id="form-jadwal-isian" hidden>
+            <div class="admin-pkg-grid admin-pkg-grid-2">
+              <label class="admin-field">
+                <span>Dibuka mulai</span>
+                <input type="datetime-local" data-key="formBukaPada" />
+                <small class="admin-field-bantuan">Kosongkan kalau sudah dibuka sejak dulu.</small>
+              </label>
+              <label class="admin-field">
+                <span>Ditutup pada</span>
+                <input type="datetime-local" data-key="formTutupPada" />
+                <small class="admin-field-bantuan">Kosongkan kalau belum ada rencana ditutup.</small>
+              </label>
+            </div>
+            <p class="admin-hint">
+              Jamnya memakai <strong>WIB</strong>. Kalau ada tanggal tutup,
+              tanggalnya ikut disebut di halaman pendaftaran supaya orang tidak
+              menunda-nunda.
+            </p>
+          </div>
+
+          <label class="admin-field">
+            <span>Pesan waktu tertutup (opsional)</span>
+            <input type="text" data-key="formPesanTutup" placeholder="mis. Batch September sudah penuh" />
+          </label>
+
+          <p id="form-status-pratinjau" class="form-status-pratinjau"></p>
+        </section>
+
+        <section class="admin-card">
           <h2>Pertanyaan <span class="admin-card-note" id="form-jumlah"></span></h2>
           <p class="admin-hint">
             Geser urutannya pakai tombol panah. Pertanyaan bertanda

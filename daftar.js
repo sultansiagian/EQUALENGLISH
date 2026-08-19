@@ -27,7 +27,7 @@ function el(id) {
 }
 
 function tampilkanPanel(nama) {
-  ['memuat', 'form-panel', 'gagal', 'sukses'].forEach(function (p) {
+  ['memuat', 'form-panel', 'tutup', 'gagal', 'sukses'].forEach(function (p) {
     var n = el('daftar-' + p);
     if (n) n.hidden = p !== nama;
   });
@@ -452,7 +452,28 @@ async function muatSkema() {
       throw new Error('Susunan formulir tidak terbaca');
     }
     skema = data;
+
+    // Formulir tutup -> jangan digambar sama sekali. Menggambarnya lalu
+    // menonaktifkan tombol menyisakan harapan palsu bahwa isian itu masih
+    // ada gunanya diisi.
+    if (data.status && data.status.terbuka === false) {
+      document.getElementById('daftar-tutup-judul').textContent =
+        data.status.pesan || 'Pendaftaran sedang ditutup.';
+      document.getElementById('daftar-tutup-detail').textContent =
+        data.status.pesanTambahan || 'Hubungi kami untuk tahu kapan batch berikutnya dibuka.';
+      tampilkanPanel('tutup');
+      return;
+    }
+
     gambarForm();
+
+    // Kalau ada tanggal tutupnya, disebut di pengantar supaya calon
+    // pendaftar tahu batasnya dan tidak menunda.
+    if (data.status && data.status.tutupPadaTeks) {
+      var d = document.getElementById('daftar-deskripsi');
+      d.textContent = d.textContent + ' Pendaftaran ditutup ' + data.status.tutupPadaTeks + '.';
+    }
+
     tampilkanPanel('form-panel');
   } catch (err) {
     // Gagal di sini berarti calon pendaftar tidak bisa mendaftar sama

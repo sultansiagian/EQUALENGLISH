@@ -112,4 +112,17 @@ module.exports = {
   // dari /admin; mengubahnya TIDAK memindahkan file lama, cuma menentukan
   // ke mana unggahan berikutnya masuk.
   driveFolder: 'Pendaftaran EQUAL (dari situs)',
+
+  // ============================================================
+  // BUKA/TUTUP FORMULIR. Aturannya di api/_lib/form-status.js.
+  //
+  // formMode: 'buka' (selalu terima), 'tutup' (selalu tolak), atau
+  // 'jadwal' (terima di antara dua tanggal di bawah).
+  //
+  // Tanggalnya berbentuk "2026-09-01T23:59" dan SELALU dibaca sebagai
+  // WIB, bukan UTC -- lihat catatan zona waktu di form-status.js.
+  formMode: 'buka',
+  formBukaPada: '',
+  formTutupPada: '',
+  formPesanTutup: '',
 };
