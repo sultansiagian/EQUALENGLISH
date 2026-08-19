@@ -1,0 +1,298 @@
+/* Halaman /daftar. Token warna/font dari styles.css dipakai ulang, tapi
+   layoutnya ditulis dari nol -- ini formulir panjang, bukan landing page. */
+
+/* Sama seperti kelas.css dan admin.css: aturan display di bawah menang
+   atas [hidden] bawaan browser, jadi ini harus ada supaya panel sukses
+   dan blok Peserta 3 benar-benar tersembunyi. Bug ini sudah dua kali
+   kejadian di proyek ini. */
+[hidden] {
+  display: none !important;
+}
+
+.daftar-body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--black);
+  font-family: var(--body);
+}
+
+.daftar-topbar {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--white);
+}
+
+.daftar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--black);
+  font-family: var(--display);
+  font-weight: 700;
+}
+
+.daftar-brand img {
+  height: 22px;
+  width: auto;
+}
+
+.daftar-shell {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 24px 90px;
+}
+
+.daftar-shell h1 {
+  font-family: var(--display);
+  font-size: clamp(1.9rem, 5vw, 2.7rem);
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  margin: 0.9rem 0 0;
+}
+
+.daftar-lede {
+  color: var(--ink-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 58ch;
+  margin: 1rem 0 0;
+}
+
+.daftar-group {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--white);
+  padding: 22px;
+  margin: 28px 0 0;
+}
+
+.daftar-group legend {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  padding: 0 8px;
+}
+
+/* Tanda wajib. Merah dipakai konsisten dengan --red yang sudah ada di
+   situs, dan tidak berdiri sendiri sebagai penanda -- teks errornya nanti
+   menyebut nama fieldnya, jadi tetap kebaca kalau warnanya tidak terlihat. */
+.daftar-field em,
+.daftar-group legend em,
+.daftar-upload-label em {
+  font-style: normal;
+  color: var(--red);
+}
+
+.daftar-note {
+  color: var(--ink-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: 0 0 4px;
+}
+
+.daftar-field {
+  display: block;
+  margin-top: 16px;
+}
+
+.daftar-field > span {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.daftar-field input {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--body);
+  font-size: 1rem;
+  padding: 11px 13px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--black);
+}
+
+.daftar-field input:focus {
+  outline: none;
+  border-color: var(--pink);
+  background: var(--white);
+}
+
+/* Field yang gagal validasi ditandai border merah DAN pesan teks di
+   bawah tombol -- warna saja tidak cukup buat yang tidak bisa
+   membedakan warna. */
+.daftar-field input[aria-invalid='true'] {
+  border-color: var(--red);
+}
+
+.daftar-field small {
+  display: block;
+  margin-top: 6px;
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.daftar-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.daftar-plans {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.daftar-plan input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.daftar-plan-box {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+  text-align: center;
+  padding: 16px 10px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.daftar-plan-box strong {
+  font-family: var(--display);
+  font-size: 1rem;
+}
+
+.daftar-plan-box small {
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+}
+
+.daftar-plan input:checked + .daftar-plan-box {
+  border-color: var(--black);
+  background: var(--pink);
+}
+
+/* Fokus keyboard harus tetap terlihat walau input aslinya disembunyikan,
+   supaya pilihan paket bisa dipakai tanpa mouse. */
+.daftar-plan input:focus-visible + .daftar-plan-box {
+  outline: 2px solid var(--black);
+  outline-offset: 2px;
+}
+
+.daftar-person {
+  border-top: 1px solid var(--line);
+  margin-top: 18px;
+  padding-top: 14px;
+}
+
+.daftar-person h3 {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-muted);
+  margin: 0;
+}
+
+.daftar-upload {
+  border: 1.5px dashed var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 14px;
+}
+
+.daftar-upload-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.daftar-upload input[type='file'] {
+  font-size: 0.85rem;
+  max-width: 100%;
+}
+
+.daftar-upload-preview {
+  display: block;
+  max-width: 180px;
+  max-height: 130px;
+  object-fit: contain;
+  border-radius: 8px;
+  margin-top: 10px;
+  background: var(--paper);
+}
+
+.daftar-upload-status {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  margin-top: 8px;
+  min-height: 1em;
+}
+
+.daftar-upload-status[data-state='ok'] {
+  color: #1a7f37;
+}
+
+.daftar-upload-status[data-state='error'] {
+  color: var(--red);
+}
+
+/* Perangkap bot: harus tidak terlihat DAN tidak terbaca screen reader,
+   tapi tetap terisi oleh bot yang mengisi semua input. Karena itu bukan
+   display:none (banyak bot melewati field yang display:none). */
+.daftar-hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.daftar-error {
+  margin: 22px 0 0;
+  padding: 13px 16px;
+  border: 1px solid rgba(229, 72, 77, 0.35);
+  background: rgba(229, 72, 77, 0.07);
+  color: #8a2226;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+#daftar-submit {
+  margin-top: 26px;
+  width: 100%;
+  justify-content: center;
+}
+
+#daftar-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.daftar-sukses-aksi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+@media (max-width: 620px) {
+  .daftar-row,
+  .daftar-plans {
+    grid-template-columns: 1fr;
+  }
+}

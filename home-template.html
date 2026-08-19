@@ -623,8 +623,12 @@
           <h2 id="cta-title">Ready to elevate<br />your <em>English?</em></h2>
           <p class="cta-copy">Mulai dari targetmu. Bootcamp-nya satu, tinggal pilih paket yang paling pas buat kamu.</p>
           <div class="cta-actions">
-            <a class="button button-dark" href="https://forms.gle/K2prjksb9XPZbEAs7" target="_blank" rel="noopener">
-              Daftarkan dirimu di sini! <span aria-hidden="true">↗</span>
+            <!-- Dulu mengarah ke Google Form (forms.gle/K2prjksb9XPZbEAs7).
+                 Sekarang ke form bawaan situs di /daftar, yang menulis ke
+                 spreadsheet yang sama lewat Apps Script. Bukan target="_blank"
+                 lagi karena ini halaman sendiri, bukan situs luar. -->
+            <a class="button button-dark" href="/daftar">
+              Daftarkan dirimu di sini! <span aria-hidden="true">→</span>
             </a>
             <a class="button button-outline" href="https://wa.me/6285888345058" target="_blank" rel="noopener">
               Tanya dulu: 0858-8834-5058 <span aria-hidden="true">↗</span>

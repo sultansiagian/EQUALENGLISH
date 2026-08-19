@@ -211,6 +211,29 @@
         </section>
 
         <section class="admin-card">
+          <h2>
+            Pendaftar Baru
+            <span class="admin-card-note">menunggu persetujuan</span>
+          </h2>
+          <p class="admin-hint">
+            Pendaftar dari form di situs masuk ke sini dulu dan
+            <strong>belum bisa membuka ruang kelas</strong>. Cek bukti
+            pembayarannya, lalu klik Setujui. Barisnya otomatis pindah ke sheet
+            Form_Responses dan akses kelasnya langsung terbuka.
+          </p>
+          <p class="admin-hint">
+            Link form untuk dibagikan:
+            <a href="/daftar" target="_blank" rel="noopener">equalenglish.vercel.app/daftar</a>
+          </p>
+
+          <button type="button" id="admin-pendaftar-refresh" class="admin-btn admin-btn-ghost">
+            Muat Daftar Pendaftar
+          </button>
+
+          <div id="admin-pendaftar-list" class="admin-pendaftar-list"></div>
+        </section>
+
+        <section class="admin-card">
           <h2>Testimoni <span class="admin-card-note">beranda</span></h2>
           <p class="admin-hint">
             Selama daftarnya kosong, section testimoni tidak muncul sama

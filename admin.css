@@ -537,3 +537,161 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================================
+   PENDAFTAR BARU. Datanya dari tab "Pendaftar Web" di spreadsheet
+   lewat /api/admin-pendaftar, bukan dari Global Config.
+   ============================================================ */
+
+.admin-pendaftar-list {
+  margin-top: 18px;
+}
+
+.admin-pendaftar-kosong {
+  padding: 18px;
+  border: 1.5px dashed var(--line);
+  border-radius: 12px;
+  margin: 0;
+}
+
+.admin-pendaftar-kosong[data-state='error'] {
+  color: var(--red);
+  border-color: rgba(229, 72, 77, 0.35);
+}
+
+.admin-pendaftar {
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 14px;
+  background: var(--paper);
+}
+
+.admin-pendaftar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-pendaftar-head h3 {
+  font-family: var(--display);
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.admin-pendaftar-paket {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--pink);
+  color: var(--black);
+  white-space: nowrap;
+}
+
+.admin-pendaftar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.admin-pendaftar-info span {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+  margin-bottom: 2px;
+}
+
+.admin-pendaftar-info strong {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.admin-pendaftar-peserta {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  font-size: 0.88rem;
+  line-height: 1.7;
+}
+
+.admin-pendaftar-subjudul {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-muted);
+  margin-bottom: 6px;
+}
+
+.admin-pendaftar-bukti-baris {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.admin-pendaftar-bukti {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--black);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Ditandai merah karena bukti bayar itu satu-satunya dasar buat menekan
+   Setujui -- kalau tidak ada, itu perlu langsung kelihatan. */
+.admin-pendaftar-nobukti {
+  font-size: 0.83rem;
+  color: var(--red);
+  font-weight: 600;
+}
+
+.admin-pendaftar-aksi {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.admin-pendaftar-aksi .admin-btn {
+  margin-top: 0;
+}
+
+.admin-pendaftar-tolak {
+  font-family: var(--body);
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--red);
+  background: transparent;
+  border: 1px solid rgba(229, 72, 77, 0.35);
+  border-radius: 999px;
+  padding: 9px 18px;
+  cursor: pointer;
+}
+
+.admin-pendaftar-aksi button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-pendaftar-status {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
+.admin-pendaftar-status[data-state='ok'] {
+  color: #1a7f37;
+}
+
+.admin-pendaftar-status[data-state='error'] {
+  color: var(--red);
+}

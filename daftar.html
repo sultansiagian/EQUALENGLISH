@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Formulir pendaftaran Bootcamp EPT UI dari EQUAL English."
+    />
+    <title>Pendaftaran · EQUAL English</title>
+    <link rel="canonical" href="https://equalenglish.vercel.app/daftar" />
+    <link rel="icon" type="image/png" href="/EDITS/favicon.png" />
+    <link rel="apple-touch-icon" href="/EDITS/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Syne:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <!-- styles.css dipakai buat token warna/font dan komponen tombol yang
+         sama dengan situs utama; daftar.css khusus layout halaman ini. -->
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/daftar.css" />
+  </head>
+  <body class="daftar-body">
+    <header class="daftar-topbar">
+      <a class="daftar-brand" href="/" aria-label="EQUAL English, kembali ke beranda">
+        <img src="/EDITS/Vector.png" alt="EQUAL" />
+        <span>English</span>
+      </a>
+    </header>
+
+    <main class="daftar-shell">
+      <!-- STATE 1: formulir -->
+      <section id="daftar-form-panel">
+        <p class="section-kicker">PENDAFTARAN</p>
+        <h1>Daftar Bootcamp EPT UI.</h1>
+        <p class="daftar-lede">
+          Isi data di bawah, lalu unggah bukti pembayaran. Kami cek dulu, dan
+          setelah dikonfirmasi kamu akan dapat akses ke ruang kelas memakai akun
+          Google yang emailnya kamu isi di sini.
+        </p>
+
+        <form id="daftar-form" novalidate>
+          <fieldset class="daftar-group">
+            <legend>Data kamu</legend>
+
+            <label class="daftar-field">
+              <span>Nama lengkap <em>*</em></span>
+              <input type="text" name="nama" autocomplete="name" required />
+            </label>
+
+            <div class="daftar-row">
+              <label class="daftar-field">
+                <span>Fakultas <em>*</em></span>
+                <input type="text" name="fakultas" placeholder="mis. FT, FKM, Fasilkom" required />
+              </label>
+              <label class="daftar-field">
+                <span>Nomor HP <em>*</em></span>
+                <input type="tel" name="telepon" autocomplete="tel" placeholder="08..." required />
+              </label>
+            </div>
+
+            <div class="daftar-row">
+              <label class="daftar-field">
+                <span>ID Line</span>
+                <input type="text" name="idLine" />
+              </label>
+              <label class="daftar-field">
+                <span>Email <em>*</em></span>
+                <input type="email" name="emailDiri" autocomplete="email" required />
+                <small
+                  >Pakai email Google yang aktif. Email ini yang jadi kunci masuk
+                  ruang kelas nanti.</small
+                >
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="daftar-group">
+            <legend>Pilihan paket <em>*</em></legend>
+            <div class="daftar-plans">
+              <label class="daftar-plan">
+                <input type="radio" name="paket" value="Individual (1 student)" required />
+                <span class="daftar-plan-box">
+                  <strong>Individual</strong>
+                  <small>1 orang</small>
+                </span>
+              </label>
+              <label class="daftar-plan">
+                <input type="radio" name="paket" value="Pair (2 students)" />
+                <span class="daftar-plan-box">
+                  <strong>Pair</strong>
+                  <small>2 orang</small>
+                </span>
+              </label>
+              <label class="daftar-plan">
+                <input type="radio" name="paket" value="Group (3 students)" />
+                <span class="daftar-plan-box">
+                  <strong>Group</strong>
+                  <small>3 orang</small>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+
+          <!-- Muncul cuma kalau paket Pair/Group dipilih, diatur daftar.js -->
+          <fieldset class="daftar-group" id="daftar-teman" hidden>
+            <legend>Data teman kamu</legend>
+            <p class="daftar-note">
+              Tiap peserta butuh emailnya sendiri, karena itu yang dipakai untuk
+              masuk ruang kelas.
+            </p>
+
+            <div class="daftar-person" id="daftar-person-2">
+              <h3>Peserta 2</h3>
+              <label class="daftar-field">
+                <span>Nama <em>*</em></span>
+                <input type="text" name="p2Nama" />
+              </label>
+              <div class="daftar-row">
+                <label class="daftar-field">
+                  <span>Nomor HP</span>
+                  <input type="tel" name="p2Telepon" />
+                </label>
+                <label class="daftar-field">
+                  <span>Email <em>*</em></span>
+                  <input type="email" name="p2Email" />
+                </label>
+              </div>
+            </div>
+
+            <div class="daftar-person" id="daftar-person-3" hidden>
+              <h3>Peserta 3</h3>
+              <label class="daftar-field">
+                <span>Nama <em>*</em></span>
+                <input type="text" name="p3Nama" />
+              </label>
+              <div class="daftar-row">
+                <label class="daftar-field">
+                  <span>Nomor HP</span>
+                  <input type="tel" name="p3Telepon" />
+                </label>
+                <label class="daftar-field">
+                  <span>Email <em>*</em></span>
+                  <input type="email" name="p3Email" />
+                </label>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="daftar-group">
+            <legend>Unggahan</legend>
+            <p class="daftar-note">
+              Foto besar otomatis dikecilkan di HP kamu sebelum dikirim, jadi
+              tidak perlu diedit dulu.
+            </p>
+
+            <div class="daftar-upload" data-upload="buktiBayar">
+              <span class="daftar-upload-label">Bukti pembayaran <em>*</em></span>
+              <input type="file" accept="image/*" />
+              <img class="daftar-upload-preview" alt="" hidden />
+              <span class="daftar-upload-status"></span>
+            </div>
+
+            <div class="daftar-upload" data-upload="buktiBroadcast">
+              <span class="daftar-upload-label">Bukti kirim broadcast ke grup teman</span>
+              <input type="file" accept="image/*" />
+              <img class="daftar-upload-preview" alt="" hidden />
+              <span class="daftar-upload-status"></span>
+            </div>
+
+            <div class="daftar-upload" data-upload="buktiInstagram">
+              <span class="daftar-upload-label">Bukti follow Instagram @equal.english</span>
+              <input type="file" accept="image/*" />
+              <img class="daftar-upload-preview" alt="" hidden />
+              <span class="daftar-upload-status"></span>
+            </div>
+          </fieldset>
+
+          <!-- Perangkap bot. Disembunyikan lewat CSS (bukan type=hidden)
+               supaya bot yang mengisi semua field ikut mengisinya, sementara
+               manusia tidak pernah melihatnya. Dicek di api/daftar.js. -->
+          <div class="daftar-hp" aria-hidden="true">
+            <label>Website<input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
+          </div>
+
+          <p id="daftar-error" class="daftar-error" hidden></p>
+
+          <button type="submit" id="daftar-submit" class="button button-dark">
+            Kirim Pendaftaran
+          </button>
+        </form>
+      </section>
+
+      <!-- STATE 2: berhasil -->
+      <section id="daftar-sukses" hidden>
+        <p class="section-kicker">TERKIRIM</p>
+        <h1>Pendaftaran kamu masuk.</h1>
+        <p class="daftar-lede">
+          Kami cek dulu bukti pembayarannya. Setelah dikonfirmasi, kamu bisa
+          langsung masuk ke ruang kelas pakai akun Google dengan email yang tadi
+          kamu isi.
+        </p>
+        <p class="daftar-lede">
+          Kalau lebih dari sehari belum ada kabar, hubungi kami lewat WhatsApp
+          supaya dicek manual.
+        </p>
+        <div class="daftar-sukses-aksi">
+          <a class="button button-dark" href="https://wa.me/6285888345058" target="_blank" rel="noopener">
+            Hubungi lewat WhatsApp <span aria-hidden="true">↗</span>
+          </a>
+          <a class="button button-outline" href="/">Kembali ke beranda</a>
+        </div>
+      </section>
+    </main>
+
+    <script src="/daftar.js"></script>
+  </body>
+</html>
