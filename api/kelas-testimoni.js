@@ -19,7 +19,7 @@ const { readOverrides, writeOverrides } = require('./_lib/global-config-store');
  * ISI TESTIMONI TIDAK DISIMPAN DI KONTEN SITUS
  * ============================================================
  * Yang masuk ke Global Config cuma EMAIL pengirimnya, dipakai menentukan
- * sertifikatnya sudah boleh diunduh atau belum. Isi testimoninya sendiri
+ * Final Test-nya sudah boleh dibuka atau belum. Isi testimoninya sendiri
  * ditulis ke tab Testimoni di spreadsheet, yang tidak punya batas.
  *
  * Global Config dibatasi 1 MB untuk SELURUH konten situs (teks beranda,
@@ -81,7 +81,7 @@ module.exports = async function handler(req, res) {
     }
 
     // Ditulis ke spreadsheet DULU. Kalau urutannya dibalik dan penulisan
-    // gagal, emailnya sudah tercatat sudah-mengisi dan sertifikatnya
+    // gagal, emailnya sudah tercatat sudah-mengisi dan Final Test-nya
     // terbuka padahal testimoninya tidak pernah sampai ke mana pun.
     await panggilAppsScript('testimoni', {
       isi: {
@@ -92,12 +92,12 @@ module.exports = async function handler(req, res) {
         pesan,
         // Izin dari siswanya sendiri untuk menampilkan ceritanya di
         // halaman publik. Tanpa ini, testimoninya tetap tersimpan dan
-        // sertifikatnya tetap terbuka, cuma tidak pernah boleh tayang.
+        // Final Test-nya tetap terbuka, cuma tidak pernah boleh tayang.
         izinTayang: kiriman.izinTayang === true,
       },
     });
 
-    // Baru sesudah itu emailnya dicatat sebagai syarat sertifikat.
+    // Baru sesudah itu emailnya dicatat sebagai syarat Final Test.
     //
     // Baca-ubah-tulis ini tidak dikunci. Dua siswa yang mengirim pada
     // detik yang sama bisa membuat salah satu emailnya tidak tercatat;
@@ -116,20 +116,20 @@ module.exports = async function handler(req, res) {
       }
     } catch (err) {
       // Testimoninya sudah tersimpan, jadi ini bukan kegagalan kiriman.
-      // Yang hilang cuma pembuka sertifikatnya, dan itu bisa disusulkan
+      // Yang hilang cuma pembuka Final Test-nya, dan itu bisa disusulkan
       // manual. Dicatat supaya ketahuan kalau sering terjadi.
       console.error('kelas-testimoni: gagal mencatat email pengisi: ' + err.message);
       return res.status(200).json({
         ok: true,
-        sertifikatTerbuka: false,
+        finalTestTerbuka: false,
         pesan:
-          'Testimonimu sudah kami terima, terima kasih. Tapi tombol sertifikatnya ' +
+          'Testimonimu sudah kami terima, terima kasih. Tapi Final Test-nya ' +
           'belum bisa dibuka otomatis. Hubungi kami lewat WhatsApp supaya dibukakan.',
       });
     }
 
     console.log('kelas-testimoni: testimoni masuk dari ' + verified.email);
-    return res.status(200).json({ ok: true, sertifikatTerbuka: true });
+    return res.status(200).json({ ok: true, finalTestTerbuka: true });
   } catch (err) {
     console.error('kelas-testimoni:', err.message);
     return res.status(502).json({

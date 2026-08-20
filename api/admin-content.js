@@ -179,7 +179,7 @@ module.exports = async function handler(req, res) {
           topik: trimTo(s && s.topik, 120),
         }))
         // Sesi tanpa tanggal tidak berarti apa-apa: jadwal, timer, progres,
-        // dan syarat sertifikat semuanya bergantung pada tanggalnya.
+        // dan bar progres semuanya bergantung pada tanggalnya.
         .filter((s) => /^\d{4}-\d{2}-\d{2}$/.test(s.tanggal))
         // Diurutkan di sini, bukan dipercayakan ke urutan pengetikan admin.
         // Sesi berikutnya, progres, dan kunci Zoom semuanya menganggap

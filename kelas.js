@@ -73,9 +73,6 @@ revealNow(document.querySelector('.kelas-hero-content > [data-reveal]'));
 revealNow(gateStates.signin);
 
 var kredensialTerakhir = null;
-// Disimpan supaya tombol unduh bisa menggambar sertifikat tanpa
-// meminta ulang datanya ke server.
-var dataSertifikat = null;
 
 function renderMaterials(materials) {
   const zoomLink = document.getElementById('kelas-zoom-link');
@@ -96,7 +93,7 @@ function renderMaterials(materials) {
 
   renderSchedule(materials.schedule || []);
   renderProgres(materials.progres);
-  renderSertifikat(materials);
+  renderFinalTest(materials);
 
   // Default terbuka kalau server belum kirim zoomUnlocked (mis. materials
   // lama yang di-cache) -- gagal terbuka, sama seperti practiceUnlocked.
@@ -515,71 +512,136 @@ if (errorReloadBtn) errorReloadBtn.addEventListener('click', () => window.locati
 // perlu dipanggil dari sini -- lihat urutan <script> di kelas.html.
 
 // ============================================================
-// SERTIFIKAT KELULUSAN
+// FINAL TEST
 // ============================================================
-// Syaratnya ditentukan SERVER (hitungSertifikat di
-// api/verify-access.js), bukan di sini: seluruh sesi sudah lewat DAN
-// siswa ini sudah mengisi testimoni. File ini cuma menggambarkan
-// keadaannya dan menyediakan tombolnya.
+// Syaratnya ditentukan SERVER (hitungFinalTest di
+// api/verify-access.js): waktunya sudah lewat DAN siswa ini sudah
+// mengisi testimoni. File ini cuma menggambarkan keadaannya.
+//
+// Link ujiannya juga datang dari server dan CUMA dikirim kalau kedua
+// syaratnya terpenuhi, jadi tidak ada yang bisa didapat dengan membuka
+// isi balasan server lebih awal.
 
-var SERTIFIKAT_LEBAR = 1600;
-var SERTIFIKAT_TINGGI = 1131; // sekitar rasio A4 mendatar
+var finalPenanda = null; // id setInterval hitung mundur
 
-function renderSertifikat(materials) {
-  var kartu = document.getElementById('kelas-sertifikat');
+function renderFinalTest(materials) {
+  var kartu = document.getElementById('kelas-final');
   if (!kartu) return;
 
-  var s = materials.sertifikat;
+  var f = materials.finalTest;
   // materials lama (mis. dari cache) belum punya field ini. Kartunya
   // disembunyikan saja, bukan menampilkan keadaan yang salah.
-  if (!s) {
+  if (!f) {
     kartu.hidden = true;
     return;
   }
 
-  dataSertifikat = {
-    nama: materials.namaLengkap || '',
-    mentorNama: materials.sertifikatMentorNama || '',
-    tandaTanganUrl: materials.sertifikatTandaTanganUrl || '',
-    // Setelan templat buatan pemilik situs. Kalau url-nya terisi,
-    // seluruh desain bawaan dilewati (lihat buatSertifikat).
-    templat: materials.sertifikatTemplate || null,
-  };
-
-  var status = document.getElementById('sertifikat-status');
-  var form = document.getElementById('sertifikat-form');
-  var unduh = document.getElementById('sertifikat-unduh');
+  var status = document.getElementById('final-status');
+  var form = document.getElementById('final-form');
+  var buka = document.getElementById('final-buka');
+  var timer = document.getElementById('final-timer');
 
   kartu.hidden = false;
   form.hidden = true;
-  unduh.hidden = true;
+  buka.hidden = true;
+  timer.hidden = true;
+  hentikanHitungMundurFinal();
 
-  if (!s.adaJadwal) {
-    // Tanpa jadwal, tidak ada cara tahu kelasnya sudah selesai. Dikatakan
-    // apa adanya, bukan dibiarkan seperti tombol yang rusak.
+  if (!f.adaJadwal || !f.adaLink) {
+    // Belum disiapkan admin. Dikatakan apa adanya, bukan dibiarkan
+    // seperti tombol yang rusak.
     status.textContent =
-      'Sertifikat terbuka setelah sesi terakhir selesai. Jadwal sesi belum terbaca di sini, ' +
-      'jadi hubungi kami lewat WhatsApp kalau kelasmu sebenarnya sudah selesai.';
+      'Final Test belum dijadwalkan. Pantau pengumuman atau tanya lewat grup ' +
+      'WhatsApp kalau menurutmu seharusnya sudah dibuka.';
     return;
   }
 
-  if (!s.kelasSelesai) {
-    status.textContent =
-      'Sertifikatmu terbuka setelah sesi terakhir selesai. Sedikit lagi, teruskan sampai tuntas.';
+  // Form testimoni ditampilkan selama belum diisi, TERMASUK sebelum
+  // waktunya tiba. Supaya bisa disiapkan lebih dulu dan tidak menumpuk
+  // di menit terakhir saat semua orang mau mulai bersamaan.
+  if (!f.sudahTestimoni) form.hidden = false;
+
+  if (!f.sudahWaktunya) {
+    status.textContent = f.sudahTestimoni
+      ? 'Testimonimu sudah masuk, terima kasih. Tinggal menunggu waktunya tiba.'
+      : 'Final Test dibuka ' + waktuFinalTerbaca(f.bukaPada) +
+        '. Sambil menunggu, isi dulu ceritanya di bawah supaya nanti kamu ' +
+        'langsung bisa masuk.';
+    timer.hidden = false;
+    mulaiHitungMundurFinal(f.bukaPada);
     return;
   }
 
-  if (!s.sudahTestimoni) {
+  if (!f.sudahTestimoni) {
     status.textContent =
-      'Kelasmu sudah selesai. Tinggal satu langkah: ceritakan pengalamanmu di bawah, ' +
-      'lalu sertifikatmu langsung bisa diunduh.';
-    form.hidden = false;
+      'Final Test sudah dibuka. Tinggal satu langkah: ceritakan pengalamanmu ' +
+      'di bawah, lalu tombol ujiannya langsung muncul.';
     return;
   }
 
-  status.textContent =
-    'Selamat, kamu sudah menyelesaikan kelasnya. Terima kasih sudah menulis testimoni.';
-  unduh.hidden = false;
+  status.textContent = 'Final Test sudah dibuka. Semoga lancar.';
+  document.getElementById('final-link').href = materials.finalTestUrl || '#';
+  buka.hidden = false;
+}
+
+function waktuFinalTerbaca(iso) {
+  var d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) return 'nanti';
+  return d.toLocaleString('id-ID', {
+    timeZone: 'Asia/Jakarta',
+    day: 'numeric', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  }) + ' WIB';
+}
+
+function hentikanHitungMundurFinal() {
+  if (finalPenanda) {
+    window.clearInterval(finalPenanda);
+    finalPenanda = null;
+  }
+}
+
+/**
+ * Hitung mundur sampai waktunya tiba.
+ *
+ * Begitu habis, halaman TIDAK membuka sendiri tombolnya: yang menentukan
+ * boleh atau tidak tetap server, dan link-nya memang belum ada di browser
+ * ini. Jadi siswa diminta memuat ulang, dan permintaan berikutnya itulah
+ * yang membawa link-nya.
+ */
+function mulaiHitungMundurFinal(iso) {
+  var target = new Date(iso).getTime();
+  var el = document.getElementById('final-timer');
+  if (!Number.isFinite(target) || !el) return;
+
+  function perbarui() {
+    var sisa = target - Date.now();
+
+    if (sisa <= 0) {
+      hentikanHitungMundurFinal();
+      el.textContent = 'Waktunya sudah tiba. Muat ulang halaman ini untuk membukanya.';
+      return;
+    }
+
+    var detik = Math.floor(sisa / 1000);
+    var hari = Math.floor(detik / 86400);
+    var jam = Math.floor((detik % 86400) / 3600);
+    var menit = Math.floor((detik % 3600) / 60);
+
+    var bagian = [];
+    if (hari > 0) bagian.push(hari + ' hari');
+    if (hari > 0 || jam > 0) bagian.push(jam + ' jam');
+    bagian.push(menit + ' menit');
+
+    // Detik cuma ditampilkan kalau sudah dekat, supaya angka yang
+    // berkedip tiap detik tidak mengganggu padahal masih berhari-hari.
+    if (sisa < 3600000) bagian.push((detik % 60) + ' detik');
+
+    el.textContent = bagian.join(' ') + ' lagi';
+  }
+
+  perbarui();
+  finalPenanda = window.setInterval(perbarui, 1000);
 }
 
 async function kirimTestimoni(e) {
@@ -611,7 +673,6 @@ async function kirimTestimoni(e) {
       body: JSON.stringify({
         credential: kredensialTerakhir,
         testimoni: {
-          nama: dataSertifikat ? dataSertifikat.nama : '',
           fakultas: document.getElementById('testi-fakultas').value.trim(),
           skorEpt: document.getElementById('testi-skor').value.trim(),
           izinTayang: document.getElementById('testi-izin').checked,
@@ -622,11 +683,17 @@ async function kirimTestimoni(e) {
     var data = await res.json();
 
     if (res.ok && data.ok) {
-      document.getElementById('sertifikat-form').hidden = true;
-      document.getElementById('sertifikat-status').textContent = data.pesan
-        ? data.pesan
-        : 'Terima kasih. Sertifikatmu sudah bisa diunduh.';
-      document.getElementById('sertifikat-unduh').hidden = data.sertifikatTerbuka === false;
+      document.getElementById('final-form').hidden = true;
+      status.dataset.state = 'ok';
+      status.textContent = 'Terima kasih, testimonimu sudah masuk.';
+
+      // Materi diminta ULANG ke server, bukan ditebak sendiri di sini.
+      // Link ujiannya memang belum pernah dikirim ke browser ini (server
+      // menahannya sampai kedua syarat terpenuhi), jadi satu-satunya cara
+      // mendapatkannya adalah bertanya lagi sekarang setelah syaratnya
+      // berubah. Memakai kredensial yang masih tersimpan, jadi siswa
+      // tidak perlu login ulang.
+      await segarkanMateri();
       return;
     }
 
@@ -640,256 +707,32 @@ async function kirimTestimoni(e) {
   }
 }
 
-/**
- * Muat satu gambar, balik null kalau gagal.
- *
- * Sengaja tidak pernah melempar: sertifikat tanpa logo atau tanpa tanda
- * tangan masih berguna, sedangkan sertifikat yang gagal dibuat sama
- * sekali tidak.
- */
-function muatGambar(src) {
-  return new Promise(function (resolve) {
-    if (!src) return resolve(null);
-    var img = new Image();
-    // Tanda tangan disimpan di Vercel Blob (domain lain). Tanpa ini,
-    // menggambarnya ke canvas membuat canvas tercemar dan toBlob ditolak
-    // browser, jadi unduhannya gagal total.
-    img.crossOrigin = 'anonymous';
-    img.onload = function () { resolve(img); };
-    img.onerror = function () { resolve(null); };
-    img.src = src;
-  });
-}
-
-function teksTengah(ctx, teks, y, font, warna) {
-  ctx.font = font;
-  ctx.fillStyle = warna;
-  ctx.textAlign = 'center';
-  ctx.fillText(teks, SERTIFIKAT_LEBAR / 2, y);
-}
+(function pasangFinalTest() {
+  var form = document.getElementById('final-form');
+  if (form) form.addEventListener('submit', kirimTestimoni);
+})();
 
 /**
- * Tulis nama siswa di atas templat buatan pemilik situs.
+ * Minta ulang materi ke server memakai kredensial yang masih tersimpan.
  *
- * Semua nilai posisinya PERSEN terhadap ukuran templat, bukan piksel,
- * supaya setelan yang sama tetap benar kalau templatnya nanti diganti
- * dengan yang resolusinya berbeda.
- *
- * Dipakai bersama pratinjau di /admin (lihat gambarPratinjauSertifikat di
- * admin.js). Kalau perhitungan di sini berubah, yang di sana harus ikut,
- * kalau tidak pratinjaunya berbohong.
+ * Dipakai setelah testimoni terkirim: syarat Final Test berubah di sisi
+ * server, dan link ujiannya baru ikut dikirim pada permintaan berikutnya.
+ * Tanpa ini siswa harus memuat ulang halaman dan login lagi.
  */
-function gambarNamaDiTemplat(ctx, lebar, tinggi, nama, t) {
-  var font = t.namaFont === 'DM Sans' ? '"DM Sans", sans-serif' : '"Syne", sans-serif';
-  var px = (Number(t.namaUkuran) / 100) * lebar;
-  if (!Number.isFinite(px) || px <= 0) px = lebar * 0.06;
-
-  ctx.font = '700 ' + px + 'px ' + font;
-
-  // Nama panjang dikecilkan supaya tidak keluar dari templat. Batasnya
-  // 84% lebar, menyisakan tepi kiri kanan supaya tidak menempel bingkai
-  // desain apa pun yang dipakai.
-  var maks = lebar * 0.84;
-  while (ctx.measureText(nama).width > maks && px > 10) {
-    px -= Math.max(1, px * 0.04);
-    ctx.font = '700 ' + px + 'px ' + font;
-  }
-
-  ctx.fillStyle = t.namaWarna || '#000000';
-  ctx.textAlign = 'center';
-  // 'middle' supaya titik Y yang diatur admin adalah TENGAH tinggi
-  // hurufnya. Dengan baseline bawaan ('alphabetic'), menggeser Y akan
-  // terasa meleset karena yang dipindah adalah garis dasar huruf.
-  ctx.textBaseline = 'middle';
-  ctx.fillText(nama, (Number(t.namaX) / 100) * lebar, (Number(t.namaY) / 100) * tinggi);
-}
-
-async function buatSertifikat() {
-  var status = document.getElementById('sertifikat-unduh-status');
-  var tombol = document.getElementById('sertifikat-tombol');
-
-  tombol.disabled = true;
-  status.removeAttribute('data-state');
-  status.textContent = 'Menyiapkan...';
+async function segarkanMateri() {
+  if (!kredensialTerakhir) return;
 
   try {
-    // Font harus benar-benar termuat sebelum digambar. Canvas tidak
-    // menunggu font seperti HTML: kalau digambar terlalu cepat, hasilnya
-    // memakai font cadangan dan sertifikatnya terlihat asal jadi.
-    if (document.fonts && document.fonts.ready) await document.fonts.ready;
-
-    var nama = (dataSertifikat && dataSertifikat.nama) || 'Peserta EQUAL English';
-    var templat = (dataSertifikat && dataSertifikat.templat) || null;
-
-    var canvas = document.createElement('canvas');
-    var ctx = canvas.getContext('2d');
-
-    // Templat buatan sendiri menang atas desain bawaan. Kalau gambarnya
-    // gagal dimuat (URL mati, jaringan bermasalah), TIDAK jatuh ke desain
-    // bawaan diam-diam: pemilik situs sudah memutuskan sertifikatnya
-    // berbentuk lain, dan mengirim bentuk yang berbeda tanpa memberi tahu
-    // siapa pun lebih buruk daripada berterus terang gagal.
-    var tmplImg = templat && templat.url ? await muatGambar(templat.url) : null;
-    if (templat && templat.url && !tmplImg) {
-      throw new Error('templat sertifikat gagal dimuat');
-    }
-
-    if (tmplImg) {
-      canvas.width = tmplImg.width;
-      canvas.height = tmplImg.height;
-      ctx.drawImage(tmplImg, 0, 0);
-      gambarNamaDiTemplat(ctx, canvas.width, canvas.height, nama, templat);
-    } else {
-      await gambarDesainBawaan(ctx, canvas, nama);
-    }
-
-    var blob = await new Promise(function (resolve) {
-      canvas.toBlob(resolve, 'image/png');
+    var res = await fetch('/api/verify-access', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: kredensialTerakhir }),
     });
-    if (!blob) throw new Error('gambar gagal dibuat');
-
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = 'Sertifikat EQUAL English - ' + nama + '.png';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    // Ditunda sebentar sebelum dilepas: sebagian browser membatalkan
-    // unduhan kalau URL blob-nya sudah dicabut waktu unduhan mulai.
-    window.setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
-
-    status.dataset.state = 'ok';
-    status.textContent = 'Tersimpan ke folder unduhanmu.';
+    var data = await res.json();
+    if (res.ok && data.ok) renderMaterials(data.materials || {});
   } catch (err) {
-    status.dataset.state = 'error';
-    status.textContent =
-      'Gagal membuat sertifikat: ' + err.message + '. Hubungi kami lewat WhatsApp.';
-  } finally {
-    tombol.disabled = false;
+    // Bukan kegagalan yang perlu dibesarkan: testimoninya sudah tersimpan,
+    // dan memuat ulang halaman akan memberi hasil yang sama.
+    console.error('Gagal menyegarkan materi setelah testimoni:', err.message);
   }
 }
-
-/**
- * Desain bawaan, dipakai selama pemilik situs belum mengunggah templat
- * sendiri. Menggambar seluruh sertifikat dari nol: bingkai, logo, teks,
- * dan blok tanda tangan.
- */
-async function gambarDesainBawaan(ctx, canvas, nama) {
-  canvas.width = SERTIFIKAT_LEBAR;
-  canvas.height = SERTIFIKAT_TINGGI;
-
-  var hasil = await Promise.all([
-    muatGambar('/EDITS/logo-equal-black.png'),
-    muatGambar(dataSertifikat && dataSertifikat.tandaTanganUrl),
-  ]);
-  var logo = hasil[0];
-  var ttd = hasil[1];
-
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, SERTIFIKAT_LEBAR, SERTIFIKAT_TINGGI);
-
-  // Bingkai: garis pink tebal di luar, garis hitam tipis di dalam.
-  ctx.strokeStyle = '#ffacdf';
-  ctx.lineWidth = 18;
-  ctx.strokeRect(40, 40, SERTIFIKAT_LEBAR - 80, SERTIFIKAT_TINGGI - 80);
-  ctx.strokeStyle = '#000000';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(72, 72, SERTIFIKAT_LEBAR - 144, SERTIFIKAT_TINGGI - 144);
-
-  if (logo) {
-    var lebarLogo = 260;
-    var tinggiLogo = (logo.height / logo.width) * lebarLogo;
-    ctx.drawImage(logo, (SERTIFIKAT_LEBAR - lebarLogo) / 2, 140, lebarLogo, tinggiLogo);
-  }
-
-  teksTengah(ctx, 'SERTIFIKAT KELULUSAN', 330, '500 30px "DM Mono", monospace', '#5c5b5b');
-  teksTengah(ctx, 'Diberikan kepada', 420, '400 30px "DM Sans", sans-serif', '#5c5b5b');
-
-  // Nama panjang dikecilkan supaya tetap muat di dalam bingkai, bukan
-  // terpotong di tepinya.
-  var ukuran = 90;
-  ctx.font = '700 ' + ukuran + 'px "Syne", sans-serif';
-  while (ctx.measureText(nama).width > SERTIFIKAT_LEBAR - 320 && ukuran > 36) {
-    ukuran -= 4;
-    ctx.font = '700 ' + ukuran + 'px "Syne", sans-serif';
-  }
-  teksTengah(ctx, nama, 530, '700 ' + ukuran + 'px "Syne", sans-serif', '#000000');
-
-  ctx.strokeStyle = '#ffacdf';
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.moveTo(SERTIFIKAT_LEBAR / 2 - 320, 570);
-  ctx.lineTo(SERTIFIKAT_LEBAR / 2 + 320, 570);
-  ctx.stroke();
-
-  teksTengah(
-    ctx,
-    'atas keikutsertaannya dalam Bootcamp Persiapan EPT UI',
-    650,
-    '400 32px "DM Sans", sans-serif',
-    '#000000'
-  );
-  teksTengah(
-    ctx,
-    'yang diselenggarakan oleh EQUAL English.',
-    700,
-    '400 32px "DM Sans", sans-serif',
-    '#000000'
-  );
-
-  var bulan = [
-    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
-  ];
-  var kini = new Date();
-  teksTengah(
-    ctx,
-    kini.getDate() + ' ' + bulan[kini.getMonth()] + ' ' + kini.getFullYear(),
-    770,
-    '500 26px "DM Mono", monospace',
-    '#5c5b5b'
-  );
-
-  // Blok tanda tangan. Kalau tidak ada nama mentor yang disetel, seluruh
-  // blok ini dilewati -- garis tanda tangan kosong tanpa nama terlihat
-  // seperti sertifikat yang belum selesai dibuat.
-  var namaMentor = (dataSertifikat && dataSertifikat.mentorNama) || '';
-  if (namaMentor) {
-    // 915, bukan lebih rendah: di bawah garis masih ada nama mentor
-    // (+45) dan kata Mentor (+82), jadi barisan terakhirnya mendarat di
-    // 997 sementara bingkai dalam berakhir di 1059. Sisa 62px itu yang
-    // membuatnya tidak terlihat mepet.
-    var yGaris = 915;
-    if (ttd) {
-      var lebarTtd = 240;
-      var tinggiTtd = (ttd.height / ttd.width) * lebarTtd;
-      if (tinggiTtd > 120) {
-        tinggiTtd = 120;
-        lebarTtd = (ttd.width / ttd.height) * tinggiTtd;
-      }
-      ctx.drawImage(
-        ttd,
-        (SERTIFIKAT_LEBAR - lebarTtd) / 2,
-        yGaris - tinggiTtd - 10,
-        lebarTtd,
-        tinggiTtd
-      );
-    }
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(SERTIFIKAT_LEBAR / 2 - 200, yGaris);
-    ctx.lineTo(SERTIFIKAT_LEBAR / 2 + 200, yGaris);
-    ctx.stroke();
-    teksTengah(ctx, namaMentor, yGaris + 45, '600 28px "DM Sans", sans-serif', '#000000');
-    teksTengah(ctx, 'Mentor', yGaris + 82, '400 24px "DM Mono", monospace', '#5c5b5b');
-  }
-}
-
-(function pasangSertifikat() {
-  var form = document.getElementById('sertifikat-form');
-  if (form) form.addEventListener('submit', kirimTestimoni);
-  var tombol = document.getElementById('sertifikat-tombol');
-  if (tombol) tombol.addEventListener('click', buatSertifikat);
-})();

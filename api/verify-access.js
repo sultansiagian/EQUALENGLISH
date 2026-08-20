@@ -7,10 +7,13 @@ const crypto = require('crypto');
 // sheet yang sama persis. Perilakunya sudah dibuktikan identik dengan
 // versi yang dulu ada di file ini.
 const { csvToRows } = require('./_lib/csv');
-// Dipakai HANYA untuk syarat sertifikat (siapa yang sudah mengisi
+// Dipakai untuk isi ruang kelas dan syarat Final Test (siapa yang sudah mengisi
 // testimoni). Global Config dioptimalkan untuk dibaca tiap request --
 // api/render-home.js melakukannya untuk tiap pengunjung beranda.
 const { readOverrides } = require('./_lib/global-config-store');
+// Pembaca waktu WIB yang sama dengan yang dipakai jadwal buka/tutup
+// formulir, supaya "2026-09-09T19:00" berarti hal yang sama di keduanya.
+const { waktuWibKeEpoch } = require('./_lib/form-status');
 
 /**
  * Endpoint terlindungi untuk halaman kelas EQUAL English.
@@ -640,44 +643,6 @@ function hitungProgres(sessions) {
   return { selesai, total: sessions.length };
 }
 
-/**
- * Boleh atau tidak siswa ini mengunduh sertifikat.
- *
- * Dua syarat, dan keduanya harus terpenuhi:
- *   1. Seluruh sesi batch ini sudah lewat
- *   2. Dia sudah mengisi form testimoni
- *
- * Syarat kedua yang membuat testimoni benar-benar terkumpul. Syarat
- * pertama yang membuat sertifikatnya bermakna: tanpa itu, testimoni
- * bisa diisi di hari pertama dan sertifikat diambil sebelum kelasnya
- * jalan, yang membuat sertifikat itu tidak menyatakan apa-apa.
- *
- * TANPA data jadwal sama sekali, hasilnya TIDAK BOLEH. Ini kebalikan
- * dari computeZoomUnlock yang sengaja gagal-terbuka: kartu Zoom yang
- * keliru terkunci merugikan siswa yang sedang menunggu kelas, sedangkan
- * sertifikat yang keliru terbit tidak bisa ditarik kembali.
- */
-// Nilai bawaan posisi nama di atas templat. Dikembarkan dengan
-// site-defaults.js daripada di-require, karena file ini sengaja tidak
-// bergantung pada berkas konten -- gerbang login siswa harus tetap
-// jalan walau konfigurasi situsnya bermasalah.
-const DEFAULT_SERTIFIKAT = {
-  namaX: 50,
-  namaY: 47,
-  namaUkuran: 6,
-  namaWarna: '#000000',
-  namaFont: 'Syne',
-};
-
-// Nilai dari Global Config bisa saja tersimpan sebagai string ("47")
-// atau kosong. Yang tidak terbaca sebagai angka dikembalikan ke nilai
-// bawaannya, bukan diteruskan sebagai NaN yang bikin nama tidak
-// tergambar sama sekali.
-function angkaAtau(nilai, cadangan) {
-  const n = Number(nilai);
-  return Number.isFinite(n) ? n : cadangan;
-}
-
 // Pemetaan field materi -> kunci yang diisi admin di /atur-kelas.
 const PETA_MATERI_CONFIG = {
   zoomJoinUrl: 'kelasZoomUrl',
@@ -727,7 +692,7 @@ function materiDariConfig(overrides) {
 /**
  * Jadwal sesi yang disusun admin di /atur-kelas, diubah ke bentuk yang
  * sama persis dengan hasil extractSchedule() supaya seluruh kode di
- * bawahnya (timer, kunci Zoom, progres, syarat sertifikat) tidak perlu
+ * bawahnya (timer, kunci Zoom, bar progres) tidak perlu
  * tahu jadwalnya datang dari mana.
  *
  * Balik null kalau admin belum menyusun jadwal sama sekali, dan itu
@@ -761,17 +726,40 @@ function jadwalDariConfig(overrides) {
   return sessions;
 }
 
-function hitungSertifikat(sessions, overrides, email) {
-  const progres = hitungProgres(sessions);
-  const adaJadwal = progres !== null;
-  const kelasSelesai = adaJadwal && progres.selesai >= progres.total;
+/**
+ * Boleh atau tidak siswa ini membuka Final Test.
+ *
+ * Dua syarat, dan keduanya harus terpenuhi:
+ *   1. waktunya sudah lewat
+ *   2. dia sudah mengisi testimoni
+ *
+ * Syarat kedua yang membuat testimoni benar-benar terkumpul. Syarat
+ * pertama yang menjaga supaya ujiannya tidak dibuka lebih awal.
+ *
+ * TANPA jadwal yang disetel, hasilnya TIDAK BOLEH. Ini kebalikan dari
+ * computeZoomUnlock yang sengaja gagal-terbuka: kartu Zoom yang keliru
+ * terkunci merugikan siswa yang sedang menunggu kelas, sedangkan ujian
+ * yang keliru terbuka lebih awal tidak bisa ditarik kembali.
+ */
+function hitungFinalTest(overrides, email) {
+  const o = overrides || {};
+  const url = String(o.kelasFinalTestUrl || '').trim();
+  const bukaMs = waktuWibKeEpoch(o.kelasFinalTestBukaPada);
 
-  const daftar = Array.isArray(overrides && overrides.testimoniSudahIsi)
-    ? overrides.testimoniSudahIsi
-    : [];
+  const daftar = Array.isArray(o.testimoniSudahIsi) ? o.testimoniSudahIsi : [];
   const sudahTestimoni = daftar.indexOf(normalisasiEmail(email)) !== -1;
 
-  return { boleh: kelasSelesai && sudahTestimoni, adaJadwal, kelasSelesai, sudahTestimoni };
+  const adaJadwal = bukaMs !== null;
+  const sudahWaktunya = adaJadwal && Date.now() >= bukaMs;
+
+  return {
+    boleh: Boolean(url) && sudahWaktunya && sudahTestimoni,
+    adaLink: Boolean(url),
+    adaJadwal,
+    sudahWaktunya,
+    sudahTestimoni,
+    bukaPada: adaJadwal ? new Date(bukaMs).toISOString() : null,
+  };
 }
 
 function computeZoomUnlock(sessions) {
@@ -1077,8 +1065,9 @@ async function verifyGoogleTokenLocal(idToken, expectedClientId) {
   return {
     valid: true,
     email: String(payload.email || '').toLowerCase(),
-    // Dipakai mencetak nama di sertifikat. Diambil dari token yang sudah
-    // diverifikasi, bukan dari yang dikirim browser.
+    // Dipakai sebagai nama bawaan waktu siswa mengirim testimoni.
+    // Diambil dari token yang sudah diverifikasi, bukan dari yang dikirim
+    // browser.
     nama: String(payload.name || '').trim(),
   };
 }
@@ -1111,8 +1100,9 @@ async function verifyGoogleTokenRemote(idToken, expectedClientId) {
   return {
     valid: true,
     email: String(payload.email || '').toLowerCase(),
-    // Dipakai mencetak nama di sertifikat. Diambil dari token yang sudah
-    // diverifikasi, bukan dari yang dikirim browser.
+    // Dipakai sebagai nama bawaan waktu siswa mengirim testimoni.
+    // Diambil dari token yang sudah diverifikasi, bukan dari yang dikirim
+    // browser.
     nama: String(payload.name || '').trim(),
   };
 }
@@ -1297,6 +1287,7 @@ module.exports = async function handler(req, res) {
     // /atur-kelas belum diisi, keduanya memang masih dibayar; begitu
     // diisi, login jadi lebih ringan daripada sebelum halaman itu ada.
     const progresBatch = hitungProgres(scheduleResult.sessions);
+    const statusFinal = hitungFinalTest(overrides, verified.email);
 
     const materials = {
       ...DEFAULT_MATERIALS,
@@ -1311,22 +1302,11 @@ module.exports = async function handler(req, res) {
       // Sama alasannya: progres perlu tahu total sesi seluruhnya.
       // Dipakai ulang dari perhitungan di atas, bukan dihitung lagi.
       progres: progresBatch,
-      sertifikat: hitungSertifikat(scheduleResult.sessions, overrides, verified.email),
-      // Nama dari token yang sudah diverifikasi, dipakai mencetak
-      // sertifikat. Bukan dari yang dikirim browser.
-      namaLengkap: verified.nama || '',
-      sertifikatMentorNama: String(overrides.sertifikatMentorNama || '').trim(),
-      sertifikatTandaTanganUrl: String(overrides.sertifikatTandaTanganUrl || '').trim(),
-      // Templat buatan pemilik situs. Kalau ada, kelas.js memakainya
-      // menggantikan seluruh desain bawaan dan cuma menulis nama di atasnya.
-      sertifikatTemplate: {
-        url: String(overrides.sertifikatTemplateUrl || '').trim(),
-        namaX: angkaAtau(overrides.sertifikatNamaX, DEFAULT_SERTIFIKAT.namaX),
-        namaY: angkaAtau(overrides.sertifikatNamaY, DEFAULT_SERTIFIKAT.namaY),
-        namaUkuran: angkaAtau(overrides.sertifikatNamaUkuran, DEFAULT_SERTIFIKAT.namaUkuran),
-        namaWarna: String(overrides.sertifikatNamaWarna || DEFAULT_SERTIFIKAT.namaWarna),
-        namaFont: String(overrides.sertifikatNamaFont || DEFAULT_SERTIFIKAT.namaFont),
-      },
+      finalTest: statusFinal,
+      // Link ujiannya CUMA dikirim kalau kedua syaratnya terpenuhi.
+      // Menyembunyikan tombolnya saja tidak menjaga apa pun: isi balasan
+      // server bisa dibaca siapa saja yang mau melihatnya.
+      finalTestUrl: statusFinal.boleh ? String(overrides.kelasFinalTestUrl || '').trim() : '',
     };
 
     return res.status(200).json({ ok: true, materials });
@@ -1343,7 +1323,7 @@ module.exports = async function handler(req, res) {
 module.exports.verifyGoogleToken = verifyGoogleToken;
 module.exports.fetchEnrolledEmails = fetchEnrolledEmails;
 module.exports.normalisasiEmail = normalisasiEmail;
-module.exports.hitungSertifikat = hitungSertifikat;
+module.exports.hitungFinalTest = hitungFinalTest;
 module.exports.hitungProgres = hitungProgres;
 module.exports.materiDariConfig = materiDariConfig;
 module.exports.jadwalDariConfig = jadwalDariConfig;

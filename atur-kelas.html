@@ -144,8 +144,8 @@
         <section class="admin-card">
           <h2>Jadwal Sesi <span class="admin-card-note" id="jadwal-jumlah"></span></h2>
           <p class="admin-hint">
-            Jadwal ini menggerakkan empat hal sekaligus: kartu sesi berikutnya,
-            hitung mundur, bar progres, dan syarat terbukanya sertifikat. Jam
+            Jadwal ini menggerakkan tiga hal sekaligus: kartu sesi berikutnya,
+            hitung mundur, dan bar progres di ruang kelas. Jam
             memakai WIB. Selama daftar ini kosong, jadwal dibaca dari
             spreadsheet seperti dulu.
           </p>
@@ -165,109 +165,38 @@
           <p id="jadwal-pratinjau" class="form-status-pratinjau"></p>
         </section>
 
-        <!-- Templat buatan sendiri. Kalau ada, seluruh desain bawaan
-             dilewati dan sistem cuma menulis nama siswa di atasnya. -->
+        <!-- Final Test. Terkunci sampai DUA syarat terpenuhi: waktunya
+             lewat, dan siswanya sudah mengisi testimoni. Link-nya tidak
+             pernah dikirim ke browser siswa sebelum keduanya terpenuhi. -->
         <section class="admin-card">
-          <h2>Templat Sertifikat <span class="admin-card-note">desain buatanmu</span></h2>
+          <h2>Final Test <span class="admin-card-note">ujian akhir di ruang kelas</span></h2>
           <p class="admin-hint">
-            Unggah desain sertifikat yang sudah jadi, lengkap dengan tanda
-            tangan, nama mentor, tanggal, dan hiasan apa pun. Sistem cuma
-            menuliskan <strong>nama siswa</strong> di atasnya.
-            <strong>Selama ini kosong, dipakai desain bawaan</strong> yang
-            memakai isian di bagian bawah.
-          </p>
-
-          <div class="admin-photo" data-slot="sertifikatTemplate">
-            <span class="admin-photo-label">Gambar templat</span>
-            <img class="admin-photo-preview admin-photo-preview-contain" alt="Pratinjau templat" hidden />
-            <input type="file" accept="image/*" class="admin-photo-input" />
-            <span class="admin-photo-status"></span>
-          </div>
-
-          <div id="tmpl-atur" hidden>
-            <p class="admin-hint">
-              Geser sampai nama contohnya jatuh persis di tempat yang kamu mau.
-              Yang tampil di bawah ini sama persis dengan yang nanti diunduh
-              siswa, cuma diperkecil supaya muat di layar.
-            </p>
-
-            <div class="tmpl-pratinjau-bungkus">
-              <canvas id="tmpl-pratinjau" class="tmpl-pratinjau"></canvas>
-            </div>
-
-            <div class="tmpl-kontrol">
-              <label class="admin-field">
-                <span>Posisi mendatar <em id="tmpl-x-nilai"></em></span>
-                <input type="range" min="0" max="100" step="0.5" data-key="sertifikatNamaX" />
-              </label>
-              <label class="admin-field">
-                <span>Posisi tegak <em id="tmpl-y-nilai"></em></span>
-                <input type="range" min="0" max="100" step="0.5" data-key="sertifikatNamaY" />
-              </label>
-              <label class="admin-field">
-                <span>Ukuran huruf <em id="tmpl-ukuran-nilai"></em></span>
-                <input type="range" min="1" max="20" step="0.2" data-key="sertifikatNamaUkuran" />
-              </label>
-              <label class="admin-field">
-                <span>Warna nama</span>
-                <input type="color" data-key="sertifikatNamaWarna" />
-              </label>
-              <label class="admin-field">
-                <span>Font nama</span>
-                <select data-key="sertifikatNamaFont">
-                  <option value="Syne">Syne (tebal, sama dengan judul situs)</option>
-                  <option value="DM Sans">DM Sans (lebih netral)</option>
-                </select>
-              </label>
-              <label class="admin-field">
-                <span>Nama contoh untuk pratinjau</span>
-                <input type="text" id="tmpl-nama-contoh" value="Budi Santoso Wijaya" />
-                <small class="admin-field-bantuan">
-                  Cuma untuk melihat hasilnya, tidak ikut tersimpan. Coba nama
-                  yang panjang untuk memastikan tetap muat.
-                </small>
-              </label>
-            </div>
-
-            <div class="admin-save-bar">
-              <button type="button" id="tmpl-simpan" class="admin-btn admin-btn-primary">
-                Simpan Posisi Nama
-              </button>
-              <span id="tmpl-status" class="admin-save-status"></span>
-            </div>
-          </div>
-        </section>
-
-        <section class="admin-card">
-          <h2>Sertifikat Kelulusan <span class="admin-card-note">penandatangan</span></h2>
-          <p class="admin-hint">
-            Nama ini <strong>tidak tampil di halaman mana pun</strong>, cuma
-            tercetak di sertifikat. Tapi sertifikat itu sering diposting siswa
-            ke media sosial, jadi anggap saja namanya ikut jadi publik.
-            Kosongkan kalau sertifikatnya cukup memakai logo saja.
+            Kartu terakhir di ruang kelas. Terbuka kalau <strong>waktunya sudah
+            lewat</strong> DAN <strong>siswanya sudah mengisi testimoni</strong>.
+            Form testimoninya sendiri sudah muncul sejak sebelum waktunya tiba,
+            supaya siswa bisa menyiapkannya lebih dulu dan tidak menumpuk di
+            menit terakhir.
           </p>
           <label class="admin-field">
-            <span>Nama mentor</span>
-            <input type="text" data-key="sertifikatMentorNama" maxlength="80" />
+            <span>Link ujian</span>
+            <input type="text" data-key="kelasFinalTestUrl" placeholder="https://…" />
+            <small class="admin-field-bantuan">
+              Link ini tidak pernah dikirim ke browser siswa sebelum kedua
+              syaratnya terpenuhi, jadi tidak bisa didapat lebih awal dengan
+              mengintip isi halaman.
+            </small>
           </label>
-          <div class="admin-photo" data-slot="tandaTangan">
-            <span class="admin-photo-label">Gambar tanda tangan</span>
-            <img class="admin-photo-preview admin-photo-preview-contain" alt="Pratinjau tanda tangan" hidden />
-            <input type="file" accept="image/*" class="admin-photo-input" />
-            <span class="admin-photo-status"></span>
-          </div>
-          <p class="admin-hint">
-            Foto tanda tangan di atas kertas putih sudah cukup. Latarnya ikut
-            diputihkan waktu diproses, dan sertifikatnya juga berlatar putih,
-            jadi hasilnya tetap menyatu.
-          </p>
-          <p class="admin-hint">
-            Nama mentor ikut tersimpan waktu kamu menekan <strong>Simpan</strong>
-            di bagian teks dan harga. Gambar tanda tangan langsung tersimpan
-            begitu selesai diunggah, tanpa tombol terpisah.
-          </p>
+          <label class="admin-field">
+            <span>Terbuka mulai</span>
+            <input type="datetime-local" data-key="kelasFinalTestBukaPada" />
+            <small class="admin-field-bantuan">
+              Jam memakai WIB. <strong>Dikosongkan berarti kartunya tidak
+              pernah terbuka</strong>, bukan langsung terbuka. Ganti tanggalnya
+              tiap batch.
+            </small>
+          </label>
+          <p id="final-pratinjau" class="form-status-pratinjau"></p>
         </section>
-
         <div class="admin-save-bar">
           <button type="button" id="kelas-simpan" class="admin-btn admin-btn-primary">
             Simpan Isi Ruang Kelas

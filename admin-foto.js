@@ -24,17 +24,6 @@ const PHOTO_SLOT_SPECS = {
   // JPEG, bukan WebP -- beberapa platform share link (WhatsApp/Instagram)
   // kadang tidak konsisten menampilkan preview WebP untuk og:image.
   ogBanner: { width: 1200, height: 630, mode: 'cover', type: 'image/jpeg', quality: 0.85 },
-  // Tanda tangan sertifikat. Mendatar dan lebar, jadi rasionya beda
-  // sendiri. 'contain' supaya coretannya tidak terpotong berapa pun
-  // bentuk foto aslinya, dan PNG supaya garis tipis tidak berbayang
-  // seperti pada JPEG.
-  tandaTangan: { width: 600, height: 200, mode: 'contain', type: 'image/png', quality: 1 },
-  // Templat sertifikat. Dibatasi 2000px supaya tetap di bawah batas body
-  // request Vercel, tapi 'contain' cuma MENGECILKAN kalau lebih besar,
-  // tidak pernah membesarkan dan tidak pernah memotong. PNG, bukan JPEG:
-  // sertifikat isinya bidang warna rata dan teks tajam, dan justru di
-  // situ artefak JPEG paling kelihatan sebagai bayangan di tepi huruf.
-  sertifikatTemplate: { width: 2000, height: 2000, mode: 'contain', type: 'image/png', quality: 1 },
 };
 
 // Foto testimoni: kecil dan bulat di halaman (52px, lihat .testi-avatar di
@@ -54,8 +43,6 @@ const SLOT_TO_KEY = {
   photoKomunitas: 'photoKomunitasUrl',
   photoKelasZoom: 'photoKelasZoomUrl',
   ogBanner: 'ogBannerUrl',
-  tandaTangan: 'sertifikatTandaTanganUrl',
-  sertifikatTemplate: 'sertifikatTemplateUrl',
 };
 
 function loadImageFromFile(file) {
@@ -150,10 +137,6 @@ async function handlePhotoUpload(container, file) {
     if (res.ok && data.ok) {
       showPhotoPreview(container, data.url);
       setPhotoStatus(container, 'ok', 'Tersimpan dan langsung tayang.');
-      // Templat sertifikat punya pengatur posisi nama yang menempel
-      // padanya, jadi begitu gambarnya berganti, pratinjaunya harus
-      // ikut digambar ulang dengan gambar yang baru.
-      if (slot === 'sertifikatTemplate') siapkanPratinjauSertifikat(data.url);
     } else if (res.status === 401) {
       handleUnauthorized(data.reason);
     } else {

@@ -256,26 +256,30 @@
             <ul id="kelas-schedule-list" class="kelas-schedule-list"></ul>
           </article>
 
-          <!-- Sertifikat kelulusan. Syaratnya ditentukan SERVER
-               (hitungSertifikat di api/verify-access.js): seluruh sesi
-               sudah lewat DAN siswa ini sudah mengisi testimoni. Tanpa
-               data jadwal, sengaja tidak pernah terbuka. -->
-          <article id="kelas-sertifikat" class="kelas-tile kelas-tile-wide" hidden>
+          <!-- Final Test. Syaratnya ditentukan SERVER (hitungFinalTest di
+               api/verify-access.js): waktunya sudah lewat DAN siswa ini
+               sudah mengisi testimoni. Link ujiannya sendiri tidak pernah
+               dikirim ke browser sebelum keduanya terpenuhi. -->
+          <article id="kelas-final" class="kelas-tile kelas-tile-wide" hidden>
             <div class="kelas-tile-top">
-              <span class="kelas-tile-badge kelas-tile-badge-quiet">SERTIFIKAT</span>
+              <span class="kelas-tile-badge kelas-tile-badge-quiet">FINAL TEST</span>
             </div>
-            <h3>Sertifikat <em>kelulusan</em></h3>
+            <h3>Ujian <em>akhir</em></h3>
 
-            <p id="sertifikat-status" class="kelas-tile-desc"></p>
+            <p id="final-status" class="kelas-tile-desc"></p>
 
-            <!-- Tahap 1: form testimoni. Ditampilkan begitu kelas selesai
-                 tapi testimoninya belum diisi. -->
-            <form id="sertifikat-form" class="sertifikat-form" hidden>
-              <label class="sertifikat-field">
+            <!-- Hitung mundur, cuma tampil kalau waktunya belum tiba. -->
+            <p id="final-timer" class="final-timer" hidden></p>
+
+            <!-- Tahap 1: form testimoni. Ditampilkan selama siswa ini belum
+                 mengisinya, termasuk sebelum waktunya tiba, supaya bisa
+                 disiapkan lebih dulu dan tidak menumpuk di menit terakhir. -->
+            <form id="final-form" class="testi-form" hidden>
+              <label class="testi-field">
                 <span>Fakultas kamu</span>
                 <input type="text" id="testi-fakultas" maxlength="120" placeholder="mis. Fasilkom" />
               </label>
-              <label class="sertifikat-field">
+              <label class="testi-field">
                 <span>Skor EPT UI kamu <em>(boleh dikosongkan)</em></span>
                 <input type="text" id="testi-skor" maxlength="20" placeholder="mis. 573" />
                 <small>
@@ -283,7 +287,7 @@
                   Kosongkan dulu, nanti bisa kamu kabari lewat WhatsApp.
                 </small>
               </label>
-              <label class="sertifikat-field">
+              <label class="testi-field">
                 <span>Ceritamu ikut kelas ini <em>(wajib)</em></span>
                 <textarea id="testi-pesan" rows="5" maxlength="600" required></textarea>
                 <small>
@@ -291,32 +295,37 @@
                   fakultasmu ikut tampil.
                 </small>
               </label>
-              <label class="sertifikat-centang">
+              <label class="testi-centang">
                 <input type="checkbox" id="testi-izin" />
                 <span>
                   Boleh tampilkan ceritaku di halaman EQUAL English, lengkap
                   dengan nama dan fakultasku.
                 </span>
               </label>
-              <p class="sertifikat-catatan-izin">
-                Tidak dicentang juga tidak apa-apa, sertifikatmu tetap terbuka.
+              <p class="testi-catatan-izin">
+                Tidak dicentang juga tidak apa-apa, Final Test-mu tetap terbuka.
                 Ceritamu cuma dibaca tim EQUAL sebagai masukan, dan tidak akan
                 pernah tampil di mana pun.
               </p>
-              <div class="sertifikat-aksi">
+              <div class="testi-aksi">
                 <button type="submit" id="testi-kirim" class="button button-pink">
-                  Kirim &amp; Buka Sertifikat
+                  Kirim Testimoni
                 </button>
-                <span id="testi-status" class="sertifikat-status-kirim"></span>
+                <span id="testi-status" class="testi-status-kirim"></span>
               </div>
             </form>
 
-            <!-- Tahap 2: unduhan. -->
-            <div id="sertifikat-unduh" class="sertifikat-aksi" hidden>
-              <button type="button" id="sertifikat-tombol" class="button button-pink">
-                Unduh Sertifikat (PNG)
-              </button>
-              <span id="sertifikat-unduh-status" class="sertifikat-status-kirim"></span>
+            <!-- Tahap 2: tombol masuk ujian. -->
+            <div id="final-buka" class="testi-aksi" hidden>
+              <a
+                id="final-link"
+                class="button button-pink"
+                href="#"
+                target="_blank"
+                rel="noopener"
+              >
+                Masuk Final Test <span aria-hidden="true">↗</span>
+              </a>
             </div>
           </article>
 

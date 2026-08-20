@@ -44,7 +44,7 @@ module.exports = {
   // /analitik menampilkan penjumlahannya terang-terangan supaya dobel
   // hitung seperti itu langsung kelihatan.
   // Daftar email siswa yang SUDAH mengisi form testimoni. Dipakai
-  // api/verify-access.js untuk menentukan sertifikatnya boleh diunduh
+  // api/verify-access.js untuk menentukan Final Test-nya boleh dibuka
   // atau belum, dan ditulis api/kelas-testimoni.js.
   //
   // Yang disimpan di sini CUMA emailnya, bukan isi testimoninya. Isinya
@@ -74,15 +74,6 @@ module.exports = {
   pkg3Name: 'GROUP',
   pkg3Price: 47000,
   pkg3Available: true,
-
-  // Dipakai HANYA di sertifikat kelulusan, tidak pernah tampil di
-  // halaman publik mana pun. Situs ini sengaja tidak menyebut nama
-  // mentor di mana-mana, jadi mengisinya berarti namanya ikut tersebar
-  // lewat sertifikat yang diposting siswa. Kosong = sertifikat cuma
-  // memakai logo.
-  sertifikatMentorNama: '',
-  // URL gambar tanda tangan di Vercel Blob, diunggah dari /admin.
-  sertifikatTandaTanganUrl: '',
 
   // ============================================================
   // RIWAYAT HARGA
@@ -137,6 +128,21 @@ module.exports = {
   kelasPracticeWritingUrl: '',
   kelasPengumuman: '',
 
+  // ---- FINAL TEST ----
+  //
+  // Kartu terakhir di ruang kelas. Terkunci sampai DUA syarat terpenuhi:
+  //   1. waktunya sudah lewat (kelasFinalTestBukaPada)
+  //   2. siswanya sudah mengisi testimoni
+  //
+  // Link-nya TIDAK pernah dikirim ke browser sebelum keduanya terpenuhi,
+  // sama seperti link Zoom. Menyembunyikan tombol saja tidak menjaga apa
+  // pun: isi balasan server bisa dibaca siapa saja yang mau melihatnya.
+  kelasFinalTestUrl: '',
+  // Waktu WIB, bentuk "2026-09-09T19:00". Kosong berarti belum dijadwalkan
+  // dan kartunya sengaja TIDAK PERNAH terbuka. Lebih baik begitu daripada
+  // terbuka lebih awal tanpa disengaja.
+  kelasFinalTestBukaPada: '',
+
   // Tanggal kuis latihan mulai bisa dibuka, format "2026-09-01".
   // Kosong berarti kuisnya tidak dikunci sama sekali.
   kelasKuisReadingBuka: '',
@@ -153,26 +159,6 @@ module.exports = {
   // Jam bawaan waktu menambah sesi baru di /atur-kelas. Tidak dipakai
   // menghitung apa pun; tiap sesi menyimpan jamnya sendiri.
   kelasJamBawaan: '20:00',
-
-  // ---- SERTIFIKAT DARI TEMPLAT BUATAN SENDIRI ----
-  //
-  // Kalau diisi, seluruh sertifikat memakai gambar ini apa adanya dan
-  // sistem CUMA menuliskan nama siswa di atasnya. Nama mentor, tanda
-  // tangan, tanggal, dan hiasan apa pun sudah tercetak di templat.
-  // Kalau kosong, dipakai desain bawaan yang digambar kelas.js sendiri.
-  sertifikatTemplateUrl: '',
-
-  // Posisi dan bentuk nama di atas templat. Semuanya PERSEN terhadap
-  // ukuran templat, bukan piksel, supaya setelan yang sama tetap benar
-  // kalau nanti templatnya diganti dengan yang resolusinya berbeda.
-  //
-  // X 50 berarti titik tengah nama ada di tengah lebar templat.
-  sertifikatNamaX: 50,
-  sertifikatNamaY: 47,
-  // Tinggi huruf, persen terhadap LEBAR templat.
-  sertifikatNamaUkuran: 6,
-  sertifikatNamaWarna: '#000000',
-  sertifikatNamaFont: 'Syne',
 
   mentorTitle: 'Satu mentor untuk saat ini.',
   mentorDesc:
