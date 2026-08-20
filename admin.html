@@ -209,11 +209,7 @@
           </div>
         </section>
 
-        <nav class="admin-nav">
-          <a href="/pendaftar">Lihat Pendaftar Baru →</a>
-          <a href="/analitik">Analitik</a>
-          <a href="/atur-form">Atur Formulir Pendaftaran →</a>
-        </nav>
+        <nav class="admin-nav" data-nav-admin></nav>
 
         <section class="admin-card">
           <h2>Testimoni <span class="admin-card-note">beranda</span></h2>
@@ -266,109 +262,6 @@
 
         <!-- Dipakai HANYA di sertifikat, tidak pernah tampil di halaman
              publik mana pun. -->
-        <!-- Templat buatan sendiri. Kalau ada, seluruh desain bawaan
-             dilewati dan sistem cuma menulis nama siswa di atasnya. -->
-        <section class="admin-card">
-          <h2>Templat Sertifikat <span class="admin-card-note">desain buatanmu</span></h2>
-          <p class="admin-hint">
-            Unggah desain sertifikat yang sudah jadi, lengkap dengan tanda
-            tangan, nama mentor, tanggal, dan hiasan apa pun. Sistem cuma
-            menuliskan <strong>nama siswa</strong> di atasnya.
-            <strong>Selama ini kosong, dipakai desain bawaan</strong> yang
-            memakai isian di bagian bawah.
-          </p>
-
-          <div class="admin-photo" data-slot="sertifikatTemplate">
-            <span class="admin-photo-label">Gambar templat</span>
-            <img class="admin-photo-preview admin-photo-preview-contain" alt="Pratinjau templat" hidden />
-            <input type="file" accept="image/*" class="admin-photo-input" />
-            <span class="admin-photo-status"></span>
-          </div>
-
-          <div id="tmpl-atur" hidden>
-            <p class="admin-hint">
-              Geser sampai nama contohnya jatuh persis di tempat yang kamu mau.
-              Yang tampil di bawah ini sama persis dengan yang nanti diunduh
-              siswa, cuma diperkecil supaya muat di layar.
-            </p>
-
-            <div class="tmpl-pratinjau-bungkus">
-              <canvas id="tmpl-pratinjau" class="tmpl-pratinjau"></canvas>
-            </div>
-
-            <div class="tmpl-kontrol">
-              <label class="admin-field">
-                <span>Posisi mendatar <em id="tmpl-x-nilai"></em></span>
-                <input type="range" min="0" max="100" step="0.5" data-key="sertifikatNamaX" />
-              </label>
-              <label class="admin-field">
-                <span>Posisi tegak <em id="tmpl-y-nilai"></em></span>
-                <input type="range" min="0" max="100" step="0.5" data-key="sertifikatNamaY" />
-              </label>
-              <label class="admin-field">
-                <span>Ukuran huruf <em id="tmpl-ukuran-nilai"></em></span>
-                <input type="range" min="1" max="20" step="0.2" data-key="sertifikatNamaUkuran" />
-              </label>
-              <label class="admin-field">
-                <span>Warna nama</span>
-                <input type="color" data-key="sertifikatNamaWarna" />
-              </label>
-              <label class="admin-field">
-                <span>Font nama</span>
-                <select data-key="sertifikatNamaFont">
-                  <option value="Syne">Syne (tebal, sama dengan judul situs)</option>
-                  <option value="DM Sans">DM Sans (lebih netral)</option>
-                </select>
-              </label>
-              <label class="admin-field">
-                <span>Nama contoh untuk pratinjau</span>
-                <input type="text" id="tmpl-nama-contoh" value="Budi Santoso Wijaya" />
-                <small class="admin-field-bantuan">
-                  Cuma untuk melihat hasilnya, tidak ikut tersimpan. Coba nama
-                  yang panjang untuk memastikan tetap muat.
-                </small>
-              </label>
-            </div>
-
-            <div class="admin-save-bar">
-              <button type="button" id="tmpl-simpan" class="admin-btn admin-btn-primary">
-                Simpan Posisi Nama
-              </button>
-              <span id="tmpl-status" class="admin-save-status"></span>
-            </div>
-          </div>
-        </section>
-
-        <section class="admin-card">
-          <h2>Sertifikat Kelulusan <span class="admin-card-note">penandatangan</span></h2>
-          <p class="admin-hint">
-            Nama ini <strong>tidak tampil di halaman mana pun</strong>, cuma
-            tercetak di sertifikat. Tapi sertifikat itu sering diposting siswa
-            ke media sosial, jadi anggap saja namanya ikut jadi publik.
-            Kosongkan kalau sertifikatnya cukup memakai logo saja.
-          </p>
-          <label class="admin-field">
-            <span>Nama mentor</span>
-            <input type="text" data-key="sertifikatMentorNama" maxlength="80" />
-          </label>
-          <div class="admin-photo" data-slot="tandaTangan">
-            <span class="admin-photo-label">Gambar tanda tangan</span>
-            <img class="admin-photo-preview admin-photo-preview-contain" alt="Pratinjau tanda tangan" hidden />
-            <input type="file" accept="image/*" class="admin-photo-input" />
-            <span class="admin-photo-status"></span>
-          </div>
-          <p class="admin-hint">
-            Foto tanda tangan di atas kertas putih sudah cukup. Latarnya ikut
-            diputihkan waktu diproses, dan sertifikatnya juga berlatar putih,
-            jadi hasilnya tetap menyatu.
-          </p>
-          <p class="admin-hint">
-            Nama mentor ikut tersimpan waktu kamu menekan <strong>Simpan</strong>
-            di bagian teks dan harga. Gambar tanda tangan langsung tersimpan
-            begitu selesai diunggah, tanpa tombol terpisah.
-          </p>
-        </section>
-
         <!-- Alat bantu kalau menyimpan gagal. Sengaja ditaruh paling bawah
              dan tidak mencolok -- ini bukan fitur sehari-hari, cuma dipakai
              waktu ada yang error. -->
@@ -384,10 +277,13 @@
           </button>
           <pre id="admin-diagnose-output" class="admin-diagnose-output" hidden></pre>
         </section>
+        <nav class="admin-nav admin-nav-bawah" data-nav-admin></nav>
       </main>
     </div>
 
     <script src="/admin-auth.js"></script>
+    <script src="/admin-nav.js"></script>
+    <script src="/admin-foto.js"></script>
     <script src="/admin.js"></script>
   </body>
 </html>

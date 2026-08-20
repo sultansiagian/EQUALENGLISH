@@ -73,11 +73,7 @@
       </section>
 
       <main id="admin-panel-dashboard" class="admin-panel" hidden>
-        <nav class="admin-nav">
-          <a href="/admin">← Konten beranda</a>
-          <a href="/analitik">Analitik</a>
-          <a href="/atur-form">Atur Formulir Pendaftaran →</a>
-        </nav>
+        <nav class="admin-nav" data-nav-admin></nav>
 
         <section class="admin-card">
           <div class="admin-pendaftar-topbar">
@@ -104,10 +100,12 @@
 
           <div id="admin-pendaftar-list" class="admin-pendaftar-list"></div>
         </section>
+        <nav class="admin-nav admin-nav-bawah" data-nav-admin></nav>
       </main>
     </div>
 
     <script src="/admin-auth.js"></script>
+    <script src="/admin-nav.js"></script>
     <script src="/pendaftar.js"></script>
   </body>
 </html>

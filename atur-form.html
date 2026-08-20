@@ -69,12 +69,7 @@
       </section>
 
       <main id="admin-panel-dashboard" class="admin-panel" hidden>
-        <nav class="admin-nav">
-          <a href="/admin">← Konten beranda</a>
-          <a href="/analitik">Analitik</a>
-          <a href="/pendaftar">Pendaftar baru →</a>
-          <a href="/daftar" target="_blank" rel="noopener">Lihat formulirnya ↗</a>
-        </nav>
+        <nav class="admin-nav" data-nav-admin></nav>
 
         <section class="admin-card">
           <h2>Judul Halaman <span class="admin-card-note">/daftar</span></h2>
@@ -294,10 +289,12 @@
           </button>
           <span id="form-status" class="admin-save-status"></span>
         </div>
+        <nav class="admin-nav admin-nav-bawah" data-nav-admin></nav>
       </main>
     </div>
 
     <script src="/admin-auth.js"></script>
+    <script src="/admin-nav.js"></script>
     <script src="/atur-form.js"></script>
   </body>
 </html>

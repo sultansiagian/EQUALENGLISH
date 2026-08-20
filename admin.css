@@ -226,6 +226,7 @@ body {
 .admin-field input[type='email'],
 .admin-field input[type='date'],
 .admin-field input[type='datetime-local'],
+.admin-field input[type='time'],
 .admin-field select,
 .admin-field textarea {
   width: 100%;
@@ -1566,5 +1567,114 @@ body::before {
 @media (max-width: 720px) {
   .tmpl-kontrol {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* =====================================================================
+   NAVIGASI ANTAR HALAMAN ADMIN
+   =====================================================================
+   Isinya digambar admin-nav.js supaya satu daftar berlaku di semua
+   halaman. Ditaruh di atas DAN diulang di bawah, jadi tidak perlu
+   menggulir balik ke atas cuma untuk pindah halaman. */
+
+.admin-nav-bawah {
+  margin: 32px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+/* Halaman yang sedang dibuka. Digambar sebagai <span>, bukan link, jadi
+   perlu disamakan bentuknya di sini. */
+.admin-nav-aktif {
+  font-weight: 700;
+  color: var(--black);
+  border-bottom: 2px solid var(--pink);
+  cursor: default;
+}
+
+.admin-nav-luar {
+  margin-left: auto;
+  color: var(--ink-muted);
+}
+
+.admin-intro {
+  margin: 0 0 22px;
+  line-height: 1.6;
+}
+
+/* =====================================================================
+   JADWAL SESI (/atur-kelas)
+   ===================================================================== */
+
+.jadwal-list {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.jadwal-item {
+  display: grid;
+  grid-template-columns: auto 150px 110px minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  padding: 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+}
+
+.jadwal-nomor {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  /* Disejajarkan dengan isian di sebelahnya, bukan dengan labelnya. */
+  padding-bottom: 12px;
+}
+
+.jadwal-item .admin-field {
+  margin: 0;
+}
+
+.jadwal-hapus {
+  font-family: var(--body);
+  font-size: 0.8rem;
+  color: var(--red);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.jadwal-hapus:hover {
+  border-color: var(--red);
+}
+
+.jadwal-tambah {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 16px;
+}
+
+.jadwal-jam-bawaan {
+  max-width: 180px;
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .jadwal-item {
+    /* Lima kolom tidak muat di HP. Nomor dan tombol hapus berbagi satu
+       baris di atas, sisanya menumpuk penuh. */
+    grid-template-columns: auto 1fr;
+  }
+  .jadwal-item .admin-field,
+  .jadwal-topik {
+    grid-column: 1 / -1;
+  }
+  .jadwal-nomor {
+    padding-bottom: 0;
+  }
+  .jadwal-hapus {
+    justify-self: end;
   }
 }

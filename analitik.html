@@ -69,11 +69,7 @@
       </section>
 
       <main id="admin-panel-dashboard" class="admin-panel" hidden>
-        <nav class="admin-nav">
-          <a href="/admin">← Konten beranda</a>
-          <a href="/atur-form">Atur formulir</a>
-          <a href="/pendaftar">Pendaftar baru →</a>
-        </nav>
+        <nav class="admin-nav" data-nav-admin></nav>
 
         <p id="stat-memuat" class="admin-status">
           <span class="admin-spinner" aria-hidden="true"></span> Menghitung dari spreadsheet…
@@ -200,10 +196,12 @@
             <ul id="stat-catatan" class="stat-catatan"></ul>
           </section>
         </div>
+        <nav class="admin-nav admin-nav-bawah" data-nav-admin></nav>
       </main>
     </div>
 
     <script src="/admin-auth.js"></script>
+    <script src="/admin-nav.js"></script>
     <script src="/analitik.js"></script>
   </body>
 </html>
