@@ -317,6 +317,24 @@ function renderHtml(raw, overrides) {
     html = replaceCounter(html, 'mentor-ept-score', overrides.mentorEptScore);
   }
 
+  // Angka "sudah dibantu N siswa" = angka dasar + hasil hitungan roster.
+  // Keduanya dibaca dari Global Config, tidak ada pengambilan data
+  // tambahan di jalur render ini (lihat catatan di site-defaults.js).
+  // Selalu dipasang, bukan cuma kalau ada override, supaya nilai
+  // default pun tetap melewati jalur yang sama.
+  const siswaDasar = Number(
+    overrides.heroSiswaDasar !== undefined ? overrides.heroSiswaDasar : DEFAULTS.heroSiswaDasar
+  );
+  const siswaOtomatis = Number(
+    overrides.heroSiswaOtomatis !== undefined
+      ? overrides.heroSiswaOtomatis
+      : DEFAULTS.heroSiswaOtomatis
+  );
+  const totalSiswa =
+    (Number.isFinite(siswaDasar) ? siswaDasar : 0) +
+    (Number.isFinite(siswaOtomatis) ? siswaOtomatis : 0);
+  html = replaceCounter(html, 'hero-siswa', totalSiswa);
+
   html = applyPackages(html, overrides);
   html = applyImages(html, overrides);
   html = replaceBetweenMarkers(

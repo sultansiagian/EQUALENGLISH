@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Analitik · EQUAL English</title>
+    <link rel="icon" type="image/png" href="/EDITS/favicon.png" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Syne:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/admin.css" />
+  </head>
+  <body>
+    <div class="admin-shell">
+      <header class="admin-topbar">
+        <span class="admin-topbar-brand">EQUAL English <em>Analitik</em></span>
+        <span id="admin-user" class="admin-topbar-user" hidden></span>
+      </header>
+
+      <!-- Empat panel state di bawah bentuknya harus sama dengan admin.html,
+           karena admin-auth.js yang mengaturnya lewat id yang sama. -->
+      <section id="admin-panel-signin" class="admin-panel admin-panel-center">
+        <h1>Masuk dulu</h1>
+        <p class="admin-hint">
+          Halaman ini menampilkan jumlah pendaftar dan pendapatan per batch.
+          Pakai akun Google yang sudah terdaftar sebagai admin.
+        </p>
+        <p id="admin-signin-error" class="admin-signin-error" role="alert" hidden></p>
+        <div class="admin-signin-box">
+          <div
+            id="g_id_onload"
+            data-client_id="367439644430-4t8r204v4h6ufouinpd2ctdftgndbehf.apps.googleusercontent.com"
+            data-callback="handleAdminCredential"
+            data-auto_prompt="false"
+          ></div>
+          <div class="g_id_signin" data-type="standard" data-shape="pill" data-size="large"></div>
+        </div>
+      </section>
+
+      <section id="admin-panel-loading" class="admin-panel admin-panel-center" hidden>
+        <p class="admin-status"><span class="admin-spinner" aria-hidden="true"></span> Memeriksa akses…</p>
+      </section>
+
+      <section id="admin-panel-denied" class="admin-panel admin-panel-center" hidden>
+        <h1>Bukan akun admin.</h1>
+        <p class="admin-hint">
+          Email <strong id="admin-denied-email"></strong> belum terdaftar di
+          <code>ADMIN_EMAILS</code>.
+        </p>
+        <button type="button" class="admin-btn admin-btn-ghost" onclick="trySwitchAdminAccount()">
+          Coba akun lain
+        </button>
+      </section>
+
+      <section id="admin-panel-error" class="admin-panel admin-panel-center" hidden>
+        <h1>Gagal memuat.</h1>
+        <p class="admin-hint" id="admin-error-detail">
+          Ada masalah menghubungi server. Coba muat ulang halaman ini.
+        </p>
+        <button type="button" class="admin-btn admin-btn-ghost" onclick="location.reload()">
+          Muat ulang
+        </button>
+      </section>
+
+      <main id="admin-panel-dashboard" class="admin-panel" hidden>
+        <nav class="admin-nav">
+          <a href="/admin">← Konten beranda</a>
+          <a href="/atur-form">Atur formulir</a>
+          <a href="/pendaftar">Pendaftar baru →</a>
+        </nav>
+
+        <p id="stat-memuat" class="admin-status">
+          <span class="admin-spinner" aria-hidden="true"></span> Menghitung dari spreadsheet…
+        </p>
+
+        <p id="stat-gagal" class="admin-hint stat-gagal" role="alert" hidden></p>
+
+        <div id="stat-isi" hidden>
+          <section class="admin-card">
+            <h2>Batch Ini <span class="admin-card-note" id="stat-periode"></span></h2>
+            <p class="admin-hint" id="stat-periode-catatan"></p>
+
+            <div class="stat-angka">
+              <div class="stat-angka-item">
+                <span class="stat-angka-label">Pendaftaran</span>
+                <strong id="stat-pendaftaran">0</strong>
+                <small>baris di spreadsheet</small>
+              </div>
+              <div class="stat-angka-item">
+                <span class="stat-angka-label">Siswa</span>
+                <strong id="stat-siswa">0</strong>
+                <small>Pair dihitung 2, Group 3</small>
+              </div>
+              <div class="stat-angka-item stat-angka-item-utama">
+                <span class="stat-angka-label">Pendapatan</span>
+                <strong id="stat-pendapatan">Rp0</strong>
+                <small>harga per orang dikali jumlah orang</small>
+              </div>
+            </div>
+          </section>
+
+          <section class="admin-card">
+            <h2>Komposisi Paket</h2>
+            <div class="stat-chart-grid">
+              <figure class="stat-donut-wrap">
+                <figcaption>Siswa per paket</figcaption>
+                <!-- Donat digambar sendiri pakai stroke-dasharray, bukan
+                     library chart. Proyek ini sengaja tanpa dependency, dan
+                     satu donat tiga irisan tidak sebanding dengan menambah
+                     paket pihak ketiga hanya untuk halaman ini. -->
+                <svg
+                  id="stat-donut"
+                  class="stat-donut"
+                  viewBox="0 0 42 42"
+                  role="img"
+                  aria-labelledby="stat-donut-desc"
+                ></svg>
+                <p id="stat-donut-desc" class="stat-visually-hidden"></p>
+                <p id="stat-donut-kosong" class="admin-hint" hidden>
+                  Belum ada pendaftar di periode ini.
+                </p>
+                <ul id="stat-legenda" class="stat-legenda"></ul>
+              </figure>
+
+              <figure class="stat-bar-wrap">
+                <figcaption>Pendapatan per paket</figcaption>
+                <div id="stat-bars" class="stat-bars"></div>
+              </figure>
+            </div>
+
+            <div class="stat-tabel-bungkus">
+              <table class="stat-tabel">
+                <caption class="stat-visually-hidden">
+                  Rincian pendaftaran, jumlah siswa, dan pendapatan per paket
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Paket</th>
+                    <th scope="col">Harga/orang</th>
+                    <th scope="col">Pendaftaran</th>
+                    <th scope="col">Siswa</th>
+                    <th scope="col">Pendapatan</th>
+                  </tr>
+                </thead>
+                <tbody id="stat-tabel-isi"></tbody>
+                <tfoot id="stat-tabel-total"></tfoot>
+              </table>
+            </div>
+          </section>
+
+          <section class="admin-card">
+            <h2>Angka di Beranda <span class="admin-card-note">sudah dibantu N siswa</span></h2>
+            <p class="admin-hint">
+              Yang tampil di beranda adalah angka dasar ditambah jumlah siswa
+              yang terbaca dari spreadsheet. Angka dasar ada untuk alumni dari
+              sebelum situs ini dipakai, yang belum tentu tercatat di sana.
+              <strong>Kalau spreadsheet sudah memuat semua alumni, isi 0</strong>,
+              karena kalau tidak mereka terhitung dua kali.
+            </p>
+
+            <p class="stat-hero-hitung">
+              <span id="stat-hero-dasar">0</span>
+              <span class="stat-hero-op">+</span>
+              <span id="stat-hero-roster">0</span>
+              <span class="stat-hero-op">=</span>
+              <strong id="stat-hero-total">0</strong>
+              <span class="stat-hero-ket">tampil di beranda</span>
+            </p>
+
+            <label class="admin-field stat-hero-isian">
+              <span>Angka dasar</span>
+              <input type="number" min="0" step="1" data-key="heroSiswaDasar" />
+              <small class="admin-field-bantuan">
+                Jumlah siswa sepanjang waktu dari spreadsheet dihitung otomatis,
+                tidak perlu kamu isi.
+              </small>
+            </label>
+
+            <div class="admin-save-bar">
+              <button type="button" id="stat-simpan" class="admin-btn admin-btn-primary">
+                Simpan Angka Dasar
+              </button>
+              <span id="stat-simpan-status" class="admin-save-status"></span>
+            </div>
+          </section>
+
+          <section class="admin-card admin-card-muted">
+            <h2>Catatan Data</h2>
+            <p class="admin-hint">
+              Baris yang tidak bisa dihitung ditampilkan di sini, bukan dibuang
+              diam-diam. Kalau angkanya di atas nol, ada yang perlu dirapikan di
+              spreadsheet.
+            </p>
+            <ul id="stat-catatan" class="stat-catatan"></ul>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script src="/admin-auth.js"></script>
+    <script src="/analitik.js"></script>
+  </body>
+</html>

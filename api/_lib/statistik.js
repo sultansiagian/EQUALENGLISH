@@ -142,4 +142,39 @@ function hitungStatistik(csvText, overrides, jendela) {
   return hasil;
 }
 
-module.exports = { hitungStatistik, tebakPaket, PAKET };
+/**
+ * Jumlahkan hasil dari beberapa sheet jadi satu.
+ *
+ * ROSTER_CSV_URLS boleh berisi lebih dari satu sumber (sheet respons
+ * Google Form DAN sheet manual berisi orang yang sudah bayar tapi belum
+ * sempat mengisi form). Keduanya harus ikut terhitung, dan formatnya
+ * ditebak per sheet karena tiap sheet bisa punya locale tanggal sendiri.
+ */
+function gabungStatistik(daftar) {
+  const hasil = hitungStatistik('', {}, {});
+  if (!daftar || daftar.length === 0) return hasil;
+
+  // Harga dan nama paket diambil dari hasil pertama: nilainya sama untuk
+  // semua sheet karena datangnya dari Global Config, bukan dari sheet.
+  hasil.perPaket = daftar[0].perPaket.map((p) => Object.assign({}, p, {
+    pendaftaran: 0, orang: 0, pendapatan: 0,
+  }));
+
+  for (const s of daftar) {
+    hasil.takDikenal += s.takDikenal;
+    hasil.tanpaTanggal += s.tanpaTanggal;
+    hasil.totalPendaftaran += s.totalPendaftaran;
+    hasil.totalOrang += s.totalOrang;
+    hasil.totalPendapatan += s.totalPendapatan;
+    hasil.barisDibaca += s.barisDibaca;
+    s.perPaket.forEach((p, i) => {
+      hasil.perPaket[i].pendaftaran += p.pendaftaran;
+      hasil.perPaket[i].orang += p.orang;
+      hasil.perPaket[i].pendapatan += p.pendapatan;
+    });
+  }
+
+  return hasil;
+}
+
+module.exports = { hitungStatistik, gabungStatistik, tebakPaket, PAKET };

@@ -1107,3 +1107,294 @@ body::before {
 .admin-testi-file {
   width: 100%;
 }
+
+/* =====================================================================
+   HALAMAN ANALITIK (/analitik)
+   =====================================================================
+   Chart digambar sendiri dengan SVG dan div, tanpa library. Proyek ini
+   sengaja tanpa dependency di sisi browser, dan satu donat tiga irisan
+   plus tiga bar tidak sebanding dengan menarik paket chart pihak ketiga
+   yang ukurannya berkali lipat isi halaman ini sendiri. */
+
+.stat-gagal {
+  color: var(--red);
+  line-height: 1.5;
+}
+
+/* ---- Tiga angka besar ---- */
+.stat-angka {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.stat-angka-item {
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+/* Pendapatan diberi latar pink karena itu angka yang paling dicari waktu
+   membuka halaman ini; dua angka lain adalah penjelasnya. */
+.stat-angka-item-utama {
+  background: var(--pink-light);
+  border-color: var(--pink);
+}
+
+.stat-angka-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+}
+
+.stat-angka-item strong {
+  display: block;
+  font-family: var(--display);
+  font-size: 1.9rem;
+  line-height: 1.15;
+  margin: 6px 0 2px;
+  /* Angka rupiah bisa panjang ("Rp1.113.000") dan tidak boleh memaksa
+     kartunya melebar sampai grid-nya jebol. */
+  overflow-wrap: anywhere;
+}
+
+.stat-angka-item small {
+  color: var(--ink-muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+/* ---- Donat + bar berdampingan ---- */
+.stat-chart-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+  margin-top: 20px;
+}
+
+.stat-donut-wrap,
+.stat-bar-wrap {
+  margin: 0;
+  min-width: 0;
+}
+
+.stat-donut-wrap figcaption,
+.stat-bar-wrap figcaption {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+  margin-bottom: 12px;
+}
+
+.stat-donut {
+  display: block;
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+}
+
+.stat-donut-angka {
+  font-family: var(--display);
+  font-size: 8px;
+  font-weight: 700;
+  fill: var(--black);
+}
+
+.stat-legenda {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+  font-size: 0.82rem;
+}
+
+.stat-legenda li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-legenda-titik {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  /* Irisan paling terang (pink muda) nyaris hilang di atas kartu putih
+     kalau tanpa garis tepi. */
+  border: 1px solid var(--line);
+}
+
+/* ---- Bar pendapatan ---- */
+.stat-bars {
+  display: grid;
+  gap: 12px;
+}
+
+.stat-bar-baris {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.84rem;
+}
+
+.stat-bar-label {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.stat-bar-rel {
+  height: 22px;
+  border-radius: 6px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.stat-bar-isi {
+  display: block;
+  height: 100%;
+  border-radius: 5px 0 0 5px;
+  transition: width 500ms var(--ease-out);
+}
+
+.stat-bar-nilai {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+/* ---- Tabel rincian ---- */
+.stat-tabel-bungkus {
+  /* Lima kolom tidak muat di layar HP. Yang menggulir kotaknya, bukan
+     seluruh halaman. */
+  overflow-x: auto;
+  margin-top: 24px;
+}
+
+.stat-tabel {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  min-width: 460px;
+}
+
+.stat-tabel th,
+.stat-tabel td {
+  text-align: right;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.stat-tabel th[scope='row'],
+.stat-tabel thead th:first-child {
+  text-align: left;
+}
+
+.stat-tabel thead th {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+
+.stat-tabel tfoot th,
+.stat-tabel tfoot td {
+  font-weight: 700;
+  border-bottom: 0;
+  border-top: 2px solid var(--black);
+}
+
+/* ---- Penjumlahan angka beranda ---- */
+.stat-hero-hitung {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  margin: 18px 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--paper);
+  font-family: var(--mono);
+  font-size: 1.05rem;
+}
+
+.stat-hero-hitung strong {
+  font-family: var(--display);
+  font-size: 1.5rem;
+}
+
+.stat-hero-op {
+  color: var(--ink-muted);
+}
+
+.stat-hero-ket {
+  font-family: var(--body);
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
+.stat-hero-isian {
+  max-width: 260px;
+}
+
+/* ---- Catatan data ---- */
+.stat-catatan {
+  margin: 14px 0 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+/* Teks khusus pembaca layar: dipakai untuk uraian isi donat dan caption
+   tabel, yang tidak perlu tampil dua kali secara visual. */
+.stat-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 720px) {
+  .stat-angka {
+    grid-template-columns: 1fr;
+  }
+  .stat-chart-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .stat-donut {
+    margin: 0 auto;
+  }
+  .stat-bar-baris {
+    grid-template-columns: 80px minmax(0, 1fr);
+  }
+  .stat-bar-nilai {
+    grid-column: 2;
+    text-align: right;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat-bar-isi {
+    transition: none;
+  }
+}

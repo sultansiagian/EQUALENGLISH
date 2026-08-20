@@ -32,6 +32,29 @@ module.exports = {
   bootcampPoint3: 'Akses rekaman sesi Zoom tanpa batas',
   bootcampPoint4: 'Latihannya lewat fun quiz, sehingga tidak terasa seperti mengerjakan drill soal',
 
+  // Angka "sudah dibantu N siswa" di hero beranda.
+  //
+  // Ini angka DASAR, bukan angka jadi: yang tampil di beranda adalah
+  // nilai ini DITAMBAH jumlah siswa yang terbaca dari roster. Dipisah
+  // begitu karena alumni dari sebelum situs ini ada tidak semuanya
+  // tercatat di spreadsheet, dan angka promosi tidak boleh mendadak
+  // turun cuma karena mereka tidak terhitung.
+  //
+  // Kalau ternyata roster sudah memuat semua alumni, isi 0. Halaman
+  // /analitik menampilkan penjumlahannya terang-terangan supaya dobel
+  // hitung seperti itu langsung kelihatan.
+  heroSiswaDasar: 130,
+  // Jumlah siswa hasil hitungan dari roster, DISIMPAN di sini oleh
+  // api/admin-statistik.js tiap kali halaman /analitik dibuka dan
+  // angkanya berubah. Bukan diisi tangan.
+  //
+  // Kenapa disimpan, bukan dihitung ulang waktu beranda dirender:
+  // beranda dirender ulang untuk SETIAP pengunjung, dan menambahkan
+  // pengambilan CSV ke Google di jalur itu berarti setiap pengunjung
+  // ikut menunggu, plus beranda jadi ikut mati kalau Google sedang
+  // bermasalah. Angka promosi tidak sepadan dengan risiko itu.
+  heroSiswaOtomatis: 0,
+
   pkg1Name: 'INDIVIDUAL',
   pkg1Price: 59000,
   pkg1Available: true,
@@ -41,6 +64,15 @@ module.exports = {
   pkg3Name: 'GROUP',
   pkg3Price: 47000,
   pkg3Available: true,
+
+  // Dipakai HANYA di sertifikat kelulusan, tidak pernah tampil di
+  // halaman publik mana pun. Situs ini sengaja tidak menyebut nama
+  // mentor di mana-mana, jadi mengisinya berarti namanya ikut tersebar
+  // lewat sertifikat yang diposting siswa. Kosong = sertifikat cuma
+  // memakai logo.
+  sertifikatMentorNama: '',
+  // URL gambar tanda tangan di Vercel Blob, diunggah dari /admin.
+  sertifikatTandaTanganUrl: '',
 
   mentorTitle: 'Satu mentor untuk saat ini.',
   mentorDesc:
