@@ -4,6 +4,7 @@ const { readOverrides } = require('./_lib/global-config-store');
 const { bacaBaris, KOLOM_BERLAKU_SAMPAI } = require('./_lib/form-schema');
 const DEFAULTS = require('./_lib/site-defaults');
 const { kirimAksesDibuka } = require('./_lib/kirim-email');
+const { kerjakanDiLatar } = require('./_lib/kerja-latar');
 
 /**
  * Daftar pendaftar yang menunggu persetujuan, plus tombol Setujui/Tolak.
@@ -90,15 +91,21 @@ module.exports = async function handler(req, res) {
       //
       // Tidak ditunggu hasilnya: kegagalan kirim tidak boleh membuat
       // persetujuan yang sudah berhasil terlihat gagal di layar admin.
+      // Dititipkan lewat kerjakanDiLatar supaya tetap benar-benar berangkat
+      // walau balasannya sudah dikirim duluan (lihat _lib/kerja-latar.js).
+      // Paket Pair dan Group mengirim sampai tiga email berurutan, jadi di
+      // sinilah pola lepas-begitu-saja paling gampang kehilangan email.
       if (aksi === 'approve') {
         const p = req.body && req.body.pendaftar ? req.body.pendaftar : {};
-        kirimAksesDibuka(
-          overridesSetuju || {},
-          [p.emailDiri, p.p2Email, p.p3Email],
-          p.nama
-        ).catch(function (err) {
-          console.error('admin-pendaftar: email akses gagal dikirim:', err.message);
-        });
+        await kerjakanDiLatar(
+          () =>
+            kirimAksesDibuka(
+              overridesSetuju || {},
+              [p.emailDiri, p.p2Email, p.p3Email],
+              p.nama
+            ),
+          'email akses dibuka'
+        );
       }
       // Dicatat karena ini keputusan yang memberi/menolak akses berbayar --
       // berguna kalau nanti perlu ditelusuri siapa menyetujui apa.

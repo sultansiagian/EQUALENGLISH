@@ -23,6 +23,10 @@ const { panggilAppsScript } = require('./apps-script');
 const MAKS_SUBJEK = 200;
 const MAKS_ISI = 5000;
 
+// Di bawah angka ini, sisa kuota Gmail dicatat sebagai error supaya
+// terlihat waktu menengok log, bukan cuma sebagai catatan biasa.
+const AMBANG_KUOTA_TIPIS = 10;
+
 function ambil(overrides, kunci) {
   const o = overrides || {};
   return o[kunci] !== undefined ? o[kunci] : DEFAULTS[kunci];
@@ -56,12 +60,25 @@ async function kirim(overrides, jenis, tujuan, nilai) {
   if (!emailSah(tujuan)) return { ok: false, alasan: 'alamat_tidak_sah' };
 
   try {
-    await panggilAppsScript('email', {
+    const hasil = await panggilAppsScript('email', {
       ke: String(tujuan).trim(),
       subjek: isiPenanda(subjek, nilai).slice(0, MAKS_SUBJEK),
       isi: isiPenanda(isi, nilai).slice(0, MAKS_ISI),
     });
-    return { ok: true };
+
+    // Apps Script mengembalikan sisa kuota Gmail hari itu. Diperhatikan
+    // karena ini satu-satunya peringatan dini yang tersedia: begitu kuota
+    // habis, semua email berhenti terkirim dan kegagalannya tidak muncul
+    // di layar siapa pun.
+    const sisa = hasil && typeof hasil.sisaKuota === 'number' ? hasil.sisaKuota : null;
+    if (sisa !== null && sisa <= AMBANG_KUOTA_TIPIS) {
+      console.error(
+        'kirim-email: sisa kuota Gmail hari ini tinggal ' + sisa + ' email. Setelah ' +
+          'habis, email otomatis berhenti terkirim sampai besok.'
+      );
+    }
+
+    return { ok: true, sisaKuota: sisa };
   } catch (err) {
     console.error('kirim-email (' + jenis + ') gagal ke ' + tujuan + ': ' + err.message);
     return { ok: false, alasan: err.message };
@@ -97,4 +114,36 @@ async function kirimAksesDibuka(overrides, daftarTujuan, nama) {
   return { terkirim: hasil.filter((h) => h.ok).length, total: unik.length };
 }
 
-module.exports = { kirimTandaTerima, kirimAksesDibuka, isiPenanda };
+/**
+ * Kirim satu email percobaan lewat jalur yang PERSIS SAMA dengan email
+ * sungguhan: template yang tersimpan, Apps Script yang sama, akun Gmail
+ * yang sama. Kesamaan itulah yang membuatnya berguna -- kalau yang ini
+ * sampai, yang sungguhan juga sampai.
+ *
+ * Dipakai tombol uji di /atur-form. Tanpa ini, satu-satunya cara tahu
+ * pengiriman email masih hidup adalah menunggu ada pendaftar asli, lalu
+ * baru bertanya-tanya kenapa orangnya tidak menerima apa-apa.
+ */
+async function kirimUji(overrides, jenis, tujuan) {
+  if (jenis !== 'emailTerima' && jenis !== 'emailSetuju') {
+    return { ok: false, alasan: 'jenis_tidak_dikenal' };
+  }
+
+  const subjek = String(ambil(overrides, jenis + 'Subjek') || '').trim();
+  const isi = String(ambil(overrides, jenis + 'Isi') || '').trim();
+  if (!subjek || !isi) return { ok: false, alasan: 'teks_kosong' };
+
+  // Centang aktif/mati sengaja diabaikan: yang sedang diuji adalah
+  // jalurnya, dan admin baru saja menekan tombolnya sendiri. Judulnya
+  // ditandai supaya tidak tertukar dengan email sungguhan di kotak masuk.
+  const salinan = Object.assign({}, overrides || {});
+  salinan[jenis + 'Aktif'] = true;
+  salinan[jenis + 'Subjek'] = '[UJI] ' + subjek;
+
+  return kirim(salinan, jenis, tujuan, {
+    nama: 'Contoh Pendaftar',
+    link: ambil(overrides, 'linkRuangKelas'),
+  });
+}
+
+module.exports = { kirimTandaTerima, kirimAksesDibuka, kirimUji, isiPenanda };

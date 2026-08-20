@@ -278,6 +278,58 @@ function tambahField() {
   }
 }
 
+// ============================================================
+// KIRIM EMAIL UJI
+// ============================================================
+
+function setStatusUji(state, teks) {
+  var el = document.getElementById('email-uji-status');
+  el.textContent = teks;
+  if (state) el.dataset.state = state;
+  else el.removeAttribute('data-state');
+}
+
+async function kirimEmailUji(jenis) {
+  var tombol = document.querySelectorAll('[data-uji]');
+  tombol.forEach(function (b) { b.disabled = true; });
+  setStatusUji(null, 'Mengirim…');
+
+  try {
+    var res = await fetch('/api/admin-email-uji', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify({
+        jenis: jenis,
+        ke: document.getElementById('email-uji-ke').value.trim(),
+      }),
+    });
+    var data = await res.json();
+
+    if (res.status === 401) return handleUnauthorized(data.reason);
+
+    if (res.ok && data.ok) {
+      // Sisa kuota ikut ditampilkan karena inilah satu-satunya tempat
+      // angka itu pernah terlihat. Kalau kuota habis, email otomatis
+      // berhenti terkirim tanpa gejala apa pun di tempat lain.
+      var sisa =
+        typeof data.sisaKuota === 'number'
+          ? ' Sisa kuota Gmail hari ini ' + data.sisaKuota + ' email.'
+          : '';
+      setStatusUji(
+        'ok',
+        'Terkirim ke ' + data.ke + '.' + sisa +
+          ' Belum sampai dalam 1-2 menit? Cek folder Spam dan tab Promosi.'
+      );
+    } else {
+      setStatusUji('error', data.pesan || data.reason || 'Gagal mengirim (' + res.status + ').');
+    }
+  } catch (err) {
+    setStatusUji('error', 'Gagal mengirim: ' + err.message);
+  } finally {
+    tombol.forEach(function (b) { b.disabled = false; });
+  }
+}
+
 function setStatus(state, teks) {
   var el = document.getElementById('form-status');
   el.textContent = teks;
@@ -363,4 +415,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   document.querySelector('[data-key="aksesBerakhirPada"]').addEventListener('input', perbaruiAkses);
   document.getElementById('form-save').addEventListener('click', simpan);
+  document.querySelectorAll('[data-uji]').forEach(function (b) {
+    b.addEventListener('click', function () { kirimEmailUji(b.dataset.uji); });
+  });
 });

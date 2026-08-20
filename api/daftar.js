@@ -4,6 +4,7 @@ const { panggilAppsScript } = require('./_lib/apps-script');
 const { fieldAktif, validasiJawaban, susunBaris } = require('./_lib/form-schema');
 const { statusForm } = require('./_lib/form-status');
 const { kirimTandaTerima } = require('./_lib/kirim-email');
+const { kerjakanDiLatar } = require('./_lib/kerja-latar');
 
 /**
  * Endpoint form pendaftaran di /daftar. INI SATU-SATUNYA endpoint di
@@ -129,13 +130,19 @@ module.exports = async function handler(req, res) {
 
     const hasil = await panggilAppsScript('submit', { baris });
 
-    // Tanda terima dikirim SETELAH barisnya tersimpan, dan sengaja TIDAK
-    // ditunggu hasilnya sebelum membalas berhasil ke pendaftar. Email yang
-    // gagal terkirim tidak boleh membuat pendaftaran yang sudah tersimpan
-    // terlihat gagal di layar orangnya.
-    kirimTandaTerima(overrides, jawaban.emailDiri, jawaban.nama).catch(function (err) {
-      console.error('daftar: tanda terima gagal dikirim:', err.message);
-    });
+    // Tanda terima dikirim SETELAH barisnya tersimpan, dan hasilnya sengaja
+    // TIDAK ditunggu sebelum membalas berhasil ke pendaftar. Email yang gagal
+    // terkirim tidak boleh membuat pendaftaran yang sudah tersimpan terlihat
+    // gagal di layar orangnya.
+    //
+    // Tapi dititipkan lewat kerjakanDiLatar, bukan dilepas begitu saja:
+    // fungsi Vercel dibekukan begitu balasan terkirim, dan panggilan yang
+    // masih di tengah jalan saat itu bisa hilang tanpa jejak. Penjelasan
+    // lengkapnya di _lib/kerja-latar.js.
+    await kerjakanDiLatar(
+      () => kirimTandaTerima(overrides, jawaban.emailDiri, jawaban.nama),
+      'tanda terima /daftar'
+    );
 
     return res.status(200).json({ ok: true, id: hasil.id });
   } catch (err) {

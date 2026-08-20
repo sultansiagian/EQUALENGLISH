@@ -237,6 +237,42 @@
               baris itu, bukan cuma yang mendaftar.
             </p>
           </div>
+
+          <!-- Email otomatis sengaja gagal diam-diam supaya kegagalan kirim
+               tidak ikut membatalkan pendaftaran. Karena itu kalau
+               pengirimannya mati total, tidak ada gejala apa pun di layar.
+               Blok ini satu-satunya cara mengetahuinya tanpa menunggu ada
+               pendaftar asli yang jadi korbannya. -->
+          <div class="admin-pkg admin-email-uji">
+            <h3>Kirim email uji</h3>
+            <p class="admin-hint">
+              Menempuh jalur yang sama persis dengan email sungguhan, memakai
+              teks yang <strong>sudah tersimpan</strong>, jadi tekan Simpan
+              dulu kalau baru diubah. Centang di atas diabaikan, dan judulnya
+              diberi tanda <code>[UJI]</code>.
+            </p>
+            <label class="admin-field">
+              <span>Kirim ke</span>
+              <input
+                type="email"
+                id="email-uji-ke"
+                placeholder="kosongkan = alamat admin kamu sendiri"
+              />
+              <small class="admin-field-bantuan">
+                Coba juga ke alamat non-Gmail (Outlook, Yahoo, email kampus)
+                kalau mau tahu emailnya masuk kotak masuk atau folder spam.
+              </small>
+            </label>
+            <div class="admin-email-uji-aksi">
+              <button type="button" class="admin-btn admin-btn-ghost" data-uji="emailTerima">
+                Uji tanda terima
+              </button>
+              <button type="button" class="admin-btn admin-btn-ghost" data-uji="emailSetuju">
+                Uji pemberitahuan akses
+              </button>
+            </div>
+            <p id="email-uji-status" class="admin-save-status admin-email-uji-status"></p>
+          </div>
         </section>
 
         <section class="admin-card">

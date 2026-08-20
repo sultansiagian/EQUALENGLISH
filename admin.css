@@ -214,8 +214,17 @@ body {
   margin-bottom: 6px;
 }
 
+/* Semua tipe input yang dipakai halaman admin didaftarkan di sini.
+   Selektornya menyebut tipe satu per satu (bukan cuma `input`) supaya
+   checkbox dan radio tidak ikut kena. Konsekuensinya gampang lupa:
+   menambah isian bertipe baru TANPA menambahkannya ke daftar ini bikin
+   isian itu tampil polos tanpa border dan menyempit sendiri. Pernah
+   kejadian pada input[type='date'] di Masa Berlaku Akses. */
 .admin-field input[type='text'],
 .admin-field input[type='number'],
+.admin-field input[type='email'],
+.admin-field input[type='date'],
+.admin-field input[type='datetime-local'],
 .admin-field textarea {
   width: 100%;
   font-family: var(--body);
@@ -312,6 +321,29 @@ body {
 
 .admin-save-status[data-state='error'] {
   color: var(--red);
+}
+
+/* Kotak "kirim email uji" di /atur-form. Diberi jarak lebih supaya
+   terbaca sebagai alat pemeriksa, bukan sebagai pengaturan ketiga yang
+   ikut tersimpan waktu menekan Simpan. */
+.admin-email-uji {
+  margin-top: 24px;
+}
+
+.admin-email-uji-aksi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.admin-email-uji-status {
+  /* Pesan kegagalannya sengaja panjang (berisi langkah yang harus
+     dikerjakan), jadi harus boleh membungkus beberapa baris. */
+  display: block;
+  margin: 12px 0 0;
+  line-height: 1.5;
+  white-space: normal;
 }
 
 .admin-photo-grid {
@@ -929,17 +961,6 @@ body {
   color: var(--ink-muted);
   font-size: 0.78rem;
   line-height: 1.4;
-}
-
-.admin-field input[type='datetime-local'] {
-  width: 100%;
-  font-family: var(--body);
-  font-size: 0.95rem;
-  padding: 10px 12px;
-  border: 1.5px solid var(--line);
-  border-radius: 10px;
-  background: var(--paper);
-  color: var(--black);
 }
 
 /* Pratinjau akibat pilihan mode, supaya admin tahu hasilnya SEBELUM

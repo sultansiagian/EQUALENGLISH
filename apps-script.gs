@@ -24,10 +24,15 @@
  *        APPS_SCRIPT_URL     = URL dari langkah 5
  *        APPS_SCRIPT_SECRET  = SECRET dari langkah 3
  *   7. Redeploy project-nya
+ *   8. Buka /atur-form di situs, tekan "Uji tanda terima" di bagian Email
+ *      ke Pendaftar. Kalau emailnya sampai, pemasangannya sudah benar.
  *
  * KALAU FILE INI DIUBAH: setelah menempel versi barunya, harus
  * Deploy > Manage deployments > edit > Version: New version. Kalau cuma
- * disimpan tanpa deploy ulang, yang jalan tetap versi lama.
+ * disimpan tanpa deploy ulang, yang jalan tetap versi lama. Ini kekeliruan
+ * yang paling sering terjadi dan paling sulit disadari, karena situsnya
+ * tetap jalan normal -- yang berhenti cuma fungsi yang baru ditambahkan.
+ * Tombol "Uji tanda terima" di /atur-form dibuat untuk menangkap ini.
  *
  * ------------------------------------------------------------
  * KENAPA SKRIP INI SENGAJA "BODOH"

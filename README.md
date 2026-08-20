@@ -32,6 +32,9 @@ Untuk menguji hasil penyisipannya, panggil `renderHtml()` dari
 | `api/render-home.js` | Menyisipkan konten yang diedit dari `/admin` ke `home-template.html` sebelum dikirim ke pengunjung. Melayani `/`. |
 | `api/admin-content.js`, `api/admin-upload.js` | Endpoint server panel admin (baca/simpan teks & harga, upload foto) |
 | `api/verify-access.js` | Gerbang login siswa ke `kelas.html`, terpisah total dari panel admin |
+| `api/_lib/kirim-email.js` | Email otomatis ke pendaftar, lewat Apps Script. Semua kegagalannya sengaja ditelan supaya tidak ikut membatalkan pendaftaran. |
+| `api/admin-email-uji.js` | Tombol "kirim email uji" di `/atur-form`. Ada justru karena email di atas gagal diam-diam: ini satu-satunya cara tahu pengirimannya masih hidup. |
+| `api/_lib/kerja-latar.js` | Menitipkan pekerjaan yang selesai setelah balasan dikirim (mis. email) ke `waitUntil`, supaya tidak ikut hilang waktu fungsi Vercel dibekukan. |
 
 ## Panel admin (`/admin`)
 
