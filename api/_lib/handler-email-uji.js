@@ -1,6 +1,6 @@
-const { requireAdmin } = require('./_lib/admin-guard');
-const { readOverrides } = require('./_lib/global-config-store');
-const { kirimUji } = require('./_lib/kirim-email');
+const { requireAdmin } = require('./admin-guard');
+const { readOverrides } = require('./global-config-store');
+const { kirimUji } = require('./kirim-email');
 
 /**
  * Tombol "kirim email uji" di /atur-form.

@@ -33,12 +33,12 @@ Untuk menguji hasil penyisipannya, panggil `renderHtml()` dari
 | `api/admin-content.js`, `api/admin-upload.js` | Endpoint server panel admin (baca/simpan teks & harga, upload foto) |
 | `api/verify-access.js` | Gerbang login siswa ke `kelas.html`, terpisah total dari panel admin |
 | `api/_lib/kirim-email.js` | Email otomatis ke pendaftar, lewat Apps Script. Semua kegagalannya sengaja ditelan supaya tidak ikut membatalkan pendaftaran. |
-| `api/admin-email-uji.js` | Tombol "kirim email uji" di `/atur-form`. Ada justru karena email di atas gagal diam-diam: ini satu-satunya cara tahu pengirimannya masih hidup. |
+| `api/admin-data.js` | SATU rute untuk beberapa endpoint admin (statistik, moderasi testimoni, kirim email uji). Digabung karena Vercel Hobby membatasi 12 Serverless Function per deployment, dan melampauinya membuat SELURUH build gagal tanpa gejala di situs. Handler-nya ada di `api/_lib/handler-*.js`. |
 | `api/_lib/kerja-latar.js` | Menitipkan pekerjaan yang selesai setelah balasan dikirim (mis. email) ke `waitUntil`, supaya tidak ikut hilang waktu fungsi Vercel dibekukan. |
 | `analitik.html` / `analitik.js` | Halaman `/analitik`: jumlah pendaftar, komposisi paket, dan pendapatan per batch. Chart digambar sendiri dengan SVG, tanpa library. |
-| `api/admin-statistik.js`, `api/_lib/statistik.js` | Perhitungan angkanya. Membaca sheet yang sama dengan gerbang login siswa, jadi tidak mungkin ada dua angka berbeda untuk hal yang sama. |
+| `api/_lib/statistik.js` | Perhitungan angka analitik. Membaca sheet yang sama dengan gerbang login siswa, jadi tidak mungkin ada dua angka berbeda untuk hal yang sama. |
 | `api/_lib/csv.js` | Parser CSV bersama, plus penebak format tanggal kolom Timestamp (sheet bisa berisi `bulan/tanggal` dan `tanggal/bulan` sekaligus). |
-| `api/kelas-testimoni.js`, `api/admin-testimoni.js` | Siswa mengirim testimoni dari `/kelas` untuk membuka sertifikat; admin memilih mana yang tayang di beranda. Isi testimoni disimpan di spreadsheet, bukan di Global Config yang dibatasi 1 MB. |
+| `api/kelas-testimoni.js` | Siswa mengirim testimoni dari `/kelas` untuk membuka sertifikat. Cuma tayang di beranda kalau siswanya mencentang izin DAN admin menayangkannya. Isinya disimpan di spreadsheet, bukan di Global Config yang dibatasi 1 MB. |
 
 ## Panel admin (`/admin`)
 

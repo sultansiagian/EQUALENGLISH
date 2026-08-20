@@ -1,6 +1,6 @@
-const { requireAdmin } = require('./_lib/admin-guard');
-const { panggilAppsScript } = require('./_lib/apps-script');
-const { readOverrides, writeOverrides } = require('./_lib/global-config-store');
+const { requireAdmin } = require('./admin-guard');
+const { panggilAppsScript } = require('./apps-script');
+const { readOverrides, writeOverrides } = require('./global-config-store');
 
 /**
  * Moderasi testimoni yang dikirim siswa dari /kelas.

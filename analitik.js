@@ -52,7 +52,7 @@ function el(id) {
 
 async function muatStatistik() {
   try {
-    var res = await fetch('/api/admin-statistik', { headers: authHeaders() });
+    var res = await fetch('/api/admin-data?bagian=statistik', { headers: authHeaders() });
     var data = await res.json();
     if (res.status === 401) return handleUnauthorized(data.reason);
 

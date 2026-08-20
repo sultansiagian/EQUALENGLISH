@@ -295,10 +295,11 @@ async function kirimEmailUji(jenis) {
   setStatusUji(null, 'Mengirim…');
 
   try {
-    var res = await fetch('/api/admin-email-uji', {
+    var res = await fetch('/api/admin-data', {
       method: 'POST',
       headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
       body: JSON.stringify({
+        bagian: 'email-uji',
         jenis: jenis,
         ke: document.getElementById('email-uji-ke').value.trim(),
       }),

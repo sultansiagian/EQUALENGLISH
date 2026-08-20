@@ -1,8 +1,8 @@
-const { requireAdmin } = require('./_lib/admin-guard');
-const { readOverrides, writeOverrides } = require('./_lib/global-config-store');
-const { hitungStatistik, gabungStatistik } = require('./_lib/statistik');
-const { waktuWibKeEpoch, formatWib } = require('./_lib/form-status');
-const DEFAULTS = require('./_lib/site-defaults');
+const { requireAdmin } = require('./admin-guard');
+const { readOverrides, writeOverrides } = require('./global-config-store');
+const { hitungStatistik, gabungStatistik } = require('./statistik');
+const { waktuWibKeEpoch, formatWib } = require('./form-status');
+const DEFAULTS = require('./site-defaults');
 
 /**
  * Angka untuk halaman /analitik.
