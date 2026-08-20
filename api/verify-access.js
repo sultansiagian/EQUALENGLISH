@@ -3,6 +3,11 @@
 // lokal, lihat verifyGoogleTokenLocal() di bawah.
 const crypto = require('crypto');
 
+// Parser CSV dipisah ke _lib/csv.js karena halaman analitik membaca
+// sheet yang sama persis. Perilakunya sudah dibuktikan identik dengan
+// versi yang dulu ada di file ini.
+const { csvToRows } = require('./_lib/csv');
+
 /**
  * Endpoint terlindungi untuk halaman kelas EQUAL English.
  *
@@ -212,51 +217,6 @@ async function fetchTextWithRetry(url, attempts = 2) {
     }
   }
   throw lastErr;
-}
-
-function csvToRows(csvText) {
-  // Parser CSV sederhana yang menangani nilai berkoma di dalam tanda
-  // kutip (format standar yang dipakai Google Sheets saat publish).
-  const rows = [];
-  let row = [];
-  let field = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < csvText.length; i++) {
-    const char = csvText[i];
-    const next = csvText[i + 1];
-
-    if (inQuotes) {
-      if (char === '"' && next === '"') {
-        field += '"';
-        i++;
-      } else if (char === '"') {
-        inQuotes = false;
-      } else {
-        field += char;
-      }
-    } else if (char === '"') {
-      inQuotes = true;
-    } else if (char === ',') {
-      row.push(field);
-      field = '';
-    } else if (char === '\n' || char === '\r') {
-      if (field !== '' || row.length > 0) {
-        row.push(field);
-        rows.push(row);
-        row = [];
-        field = '';
-      }
-      if (char === '\r' && next === '\n') i++;
-    } else {
-      field += char;
-    }
-  }
-  if (field !== '' || row.length > 0) {
-    row.push(field);
-    rows.push(row);
-  }
-  return rows;
 }
 
 // Cocok untuk "nama@domain.tld" secara umum: tidak boleh ada spasi atau
@@ -605,6 +565,35 @@ const ZOOM_SESSION_DURATION_MS = 60 * 60 * 1000;
 // upcomingSessions, siswa yang login PAS sesi lagi jalan bisa salah
 // dikunci, karena begitu jam mulai sebuah sesi lewat, sesi itu langsung
 // hilang dari daftar "akan datang".
+/**
+ * Berapa sesi dari batch ini yang sudah selesai, dari total seluruhnya.
+ *
+ * Dihitung dari SEMUA sesi, bukan upcomingSessions, karena yang dikirim
+ * ke browser sengaja cuma sesi yang belum lewat -- browser sendiri tidak
+ * punya cara tahu batch ini seluruhnya ada berapa sesi.
+ *
+ * Sebuah sesi dihitung selesai setelah jam mulainya lewat DITAMBAH durasi
+ * satu sesi, bukan begitu jam mulainya lewat. Kalau tidak, siswa yang
+ * membuka halaman ini di tengah kelas akan melihat sesi yang sedang dia
+ * ikuti sudah dihitung selesai.
+ */
+function hitungProgres(sessions) {
+  if (!sessions || sessions.length === 0) return null;
+
+  const now = Date.now();
+  let selesai = 0;
+
+  for (const session of sessions) {
+    const mulai = new Date(session.isoDatetime).getTime();
+    // Sesi dengan tanggal yang gagal diparsing tidak dihitung selesai
+    // maupun tersisa; mengabaikannya lebih jujur daripada menebak.
+    if (!Number.isFinite(mulai)) continue;
+    if (mulai + ZOOM_SESSION_DURATION_MS <= now) selesai++;
+  }
+
+  return { selesai, total: sessions.length };
+}
+
 function computeZoomUnlock(sessions) {
   const now = Date.now();
 
@@ -1051,6 +1040,8 @@ module.exports = async function handler(req, res) {
       // Dihitung dari SEMUA sesi (scheduleResult.sessions), bukan
       // upcomingSessions -- lihat computeZoomUnlock().
       zoomUnlocked: computeZoomUnlock(scheduleResult.sessions),
+      // Sama alasannya: progres perlu tahu total sesi seluruhnya.
+      progres: hitungProgres(scheduleResult.sessions),
     };
 
     return res.status(200).json({ ok: true, materials });

@@ -809,6 +809,60 @@
    utama EQUAL. Sesi pertama (is-next) ditonjolkan dengan badge dan
    warna beda -- itu juga sesi yang jadi acuan timer di kartu Zoom. ---- */
 
+/* Progres batch di kartu jadwal. Angkanya dari server, karena daftar
+   sesi di bawahnya cuma memuat yang belum lewat (lihat renderProgres
+   di kelas.js). Ditaruh di atas daftar supaya yang pertama terbaca
+   adalah "sudah sampai mana", baru kemudian "berikutnya kapan". */
+.kelas-progres {
+  /* .kelas-tile memakai align-items:flex-start, jadi anak yang mau
+     selebar kartu harus menyatakannya sendiri. */
+  width: 100%;
+  margin: 0 0 1.1rem;
+}
+
+.kelas-progres-baris {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.kelas-progres-teks {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.kelas-progres-persen {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+}
+
+.kelas-progres-rel {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.kelas-progres-isi {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: var(--pink);
+  transition: width 600ms var(--ease-out);
+}
+
+/* Bar yang tumbuh dari nol itu hiasan, bukan informasi -- angkanya
+   sudah tertulis di sebelahnya. Jadi boleh dimatikan sepenuhnya. */
+@media (prefers-reduced-motion: reduce) {
+  .kelas-progres-isi {
+    transition: none;
+  }
+}
+
 .kelas-schedule-list {
   display: flex;
   width: 100%;

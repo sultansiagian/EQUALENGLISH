@@ -231,6 +231,24 @@
               <span class="kelas-tile-badge kelas-tile-badge-quiet">JADWAL</span>
             </div>
             <h3>Sesi yang akan <em>datang</em></h3>
+            <!-- Progres batch. Angkanya dihitung server dari SELURUH sesi
+                 di sheet jadwal, bukan dari daftar di bawah, karena daftar
+                 itu sengaja cuma memuat sesi yang belum lewat. -->
+            <div id="kelas-progres" class="kelas-progres" hidden>
+              <div class="kelas-progres-baris">
+                <span id="kelas-progres-teks" class="kelas-progres-teks"></span>
+                <span id="kelas-progres-persen" class="kelas-progres-persen"></span>
+              </div>
+              <div
+                id="kelas-progres-bar"
+                class="kelas-progres-rel"
+                role="progressbar"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                <div id="kelas-progres-isi" class="kelas-progres-isi"></div>
+              </div>
+            </div>
             <p id="kelas-schedule-empty" class="kelas-tile-desc" hidden>
               Belum ada jadwal terbaru di sini. Cek pengumuman atau tanya
               lewat grup WhatsApp kalau kamu butuh kepastian jadwal.

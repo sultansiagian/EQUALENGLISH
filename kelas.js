@@ -90,6 +90,7 @@ function renderMaterials(materials) {
   announcement.textContent = materials.announcement || '';
 
   renderSchedule(materials.schedule || []);
+  renderProgres(materials.progres);
 
   // Default terbuka kalau server belum kirim zoomUnlocked (mis. materials
   // lama yang di-cache) -- gagal terbuka, sama seperti practiceUnlocked.
@@ -231,6 +232,46 @@ const kelasScheduleTimeFmt = new Intl.DateTimeFormat('id-ID', {
 function formatSessionDate(isoDatetime) {
   const date = new Date(isoDatetime);
   return kelasScheduleDateFmt.format(date) + ', ' + kelasScheduleTimeFmt.format(date) + ' WIB';
+}
+
+/**
+ * Bar progres batch di kartu jadwal.
+ *
+ * Angkanya datang dari server (hitungProgres di api/verify-access.js),
+ * bukan dihitung dari materials.schedule di sini: daftar itu sengaja
+ * cuma memuat sesi yang belum lewat, jadi kalau dihitung dari situ,
+ * progresnya akan selalu terbaca 0 dari sisa sesi.
+ */
+function renderProgres(progres) {
+  const kotak = document.getElementById('kelas-progres');
+  if (!kotak) return;
+
+  // Tanpa data jadwal sama sekali (SCHEDULE_CSV_URL kosong atau sheetnya
+  // gagal diparsing), bar ini tidak punya arti apa pun. Disembunyikan,
+  // bukan ditampilkan sebagai "0 dari 0" yang terlihat seperti rusak.
+  if (!progres || !progres.total) {
+    kotak.hidden = true;
+    return;
+  }
+
+  const selesai = progres.selesai;
+  const total = progres.total;
+  const persen = Math.round((selesai / total) * 100);
+
+  document.getElementById('kelas-progres-teks').textContent =
+    selesai >= total
+      ? 'Semua ' + total + ' sesi sudah selesai'
+      : 'Sesi ' + selesai + ' dari ' + total + ' selesai';
+  document.getElementById('kelas-progres-persen').textContent = persen + '%';
+  document.getElementById('kelas-progres-isi').style.width = persen + '%';
+
+  // aria-valuetext diisi kalimat, bukan cuma angka persen: "40 persen"
+  // tidak memberi tahu pembaca layar ini progres apa.
+  const bar = document.getElementById('kelas-progres-bar');
+  bar.setAttribute('aria-valuenow', String(persen));
+  bar.setAttribute('aria-valuetext', selesai + ' dari ' + total + ' sesi selesai');
+
+  kotak.hidden = false;
 }
 
 function renderSchedule(sessions) {
