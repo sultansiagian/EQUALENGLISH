@@ -1,6 +1,6 @@
 const DEFAULTS = require('./_lib/site-defaults');
 const { readOverrides } = require('./_lib/global-config-store');
-const { fieldAktif, PILIHAN_PAKET } = require('./_lib/form-schema');
+const { fieldAktif, pilihanPaket } = require('./_lib/form-schema');
 const { statusForm } = require('./_lib/form-status');
 
 /**
@@ -46,7 +46,11 @@ module.exports = async function handler(req, res) {
       judul: overrides.daftarTitle !== undefined ? overrides.daftarTitle : DEFAULTS.daftarTitle,
       deskripsi: overrides.daftarDesc !== undefined ? overrides.daftarDesc : DEFAULTS.daftarDesc,
       fields: fields,
-      pilihanPaket: PILIHAN_PAKET,
+      // Cuma paket yang sedang TERSEDIA yang dikirim. Setelan
+      // tersedia/tidaknya sama dengan yang dipakai kartu harga di
+      // beranda, jadi mematikan paket di satu tempat mematikannya di
+      // kedua tempat.
+      pilihanPaket: pilihanPaket(overrides),
     });
   } catch (err) {
     console.error('daftar-schema error:', err.message);

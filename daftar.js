@@ -65,16 +65,16 @@ function gambarField(f) {
       '<div class="daftar-plans">' +
       skema.pilihanPaket
         .map(function (p) {
-          // Label kartunya dipendekkan (Individual/Pair/Group) sementara
-          // nilai yang dikirim tetap teks panjang yang sama persis dengan
-          // baris-baris lama di spreadsheet.
-          var pendek = p.split(' (')[0];
-          var jumlah = (p.match(/\((.*)\)/) || [])[1] || '';
+          // Nilai yang dikirim adalah ID slotnya ("pair"), bukan teks yang
+          // terbaca. Nama paket bisa diganti admin kapan saja, sedangkan
+          // id-nya tetap, jadi arti pilihannya tidak ikut berubah waktu
+          // namanya diganti. Server yang menerjemahkan id itu jadi teks
+          // baku yang ditulis ke spreadsheet.
           return (
             '<label class="daftar-plan">' +
-            '<input type="radio" name="paket" value="' + escapeHtml(p) + '" />' +
-            '<span class="daftar-plan-box"><strong>' + escapeHtml(pendek) + '</strong>' +
-            '<small>' + escapeHtml(jumlah) + '</small></span>' +
+            '<input type="radio" name="paket" value="' + escapeHtml(p.id) + '" />' +
+            '<span class="daftar-plan-box"><strong>' + escapeHtml(p.nama) + '</strong>' +
+            '<small>' + escapeHtml(p.jumlah) + '</small></span>' +
             '</label>'
           );
         })

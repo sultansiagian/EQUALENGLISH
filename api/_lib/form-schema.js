@@ -144,11 +144,74 @@ const FIELD_BAWAAN = [
 // persis dengan yang sudah tercatat di baris-baris lama spreadsheet.
 // Kalau admin bisa mengarangnya sendiri, data lama dan baru jadi tidak
 // bisa dibandingkan, dan logika "muncul isian peserta 2/3" ikut rusak.
+// Nilai yang DITULIS ke spreadsheet. Tetap dipaku di sini, bukan diambil
+// dari nama paket yang bisa diganti admin, supaya baris baru dan baris
+// lama tetap bisa dibandingkan. Nama yang admin atur cuma mengubah apa
+// yang DIBACA pendaftar di layar.
 const PILIHAN_PAKET = [
   'Individual (1 student)',
   'Pair (2 students)',
   'Group (3 students)',
 ];
+
+/**
+ * ============================================================
+ * TIGA SLOT PAKET, ISINYA BISA DIATUR, JUMLAHNYA TIDAK
+ * ============================================================
+ * Nama dan tersedia/tidaknya tiap paket diatur admin lewat kunci yang
+ * SAMA dengan yang dipakai kartu harga di beranda (pkg1Name,
+ * pkg1Available, dan seterusnya). Jadi mematikan satu paket di beranda
+ * otomatis menghilangkannya juga dari formulir pendaftaran, tidak ada
+ * dua tempat yang harus diingat.
+ *
+ * Yang TIDAK bisa diubah: jumlah slotnya, dan berapa orang per slot.
+ * Angka itu bukan sekadar label -- 2 dan 3 menentukan isian peserta
+ * mana yang muncul di formulir, kolom mana yang diisi di spreadsheet,
+ * dan berapa kali harga dikalikan waktu menghitung pendapatan.
+ */
+// Aman dari import melingkar: site-defaults.js tidak me-require apa pun.
+const DEFAULTS_PAKET = require('./site-defaults');
+
+const PAKET_SLOT = [
+  { id: 'individual', orang: 1, kunciNama: 'pkg1Name', kunciAktif: 'pkg1Available' },
+  { id: 'pair', orang: 2, kunciNama: 'pkg2Name', kunciAktif: 'pkg2Available' },
+  { id: 'group', orang: 3, kunciNama: 'pkg3Name', kunciAktif: 'pkg3Available' },
+];
+
+/**
+ * Paket yang boleh dipilih pendaftar, sudah disaring yang dimatikan.
+ * Bentuknya { id, nama, jumlah } -- id itu yang dikirim browser dan
+ * disimpan server, nama cuma untuk dibaca manusia.
+ */
+function pilihanPaket(overrides) {
+  const o = overrides || {};
+  return PAKET_SLOT.filter((s) => o[s.kunciAktif] !== false).map((s, i) => ({
+    id: s.id,
+    nama:
+      String(
+        o[s.kunciNama] !== undefined ? o[s.kunciNama] : DEFAULTS_PAKET[s.kunciNama]
+      ).trim() || s.id,
+    jumlah: s.orang === 1 ? '1 orang' : s.orang + ' orang',
+  }));
+}
+
+/**
+ * Cocokkan nilai paket apa pun ke salah satu slot.
+ *
+ * Menerima tiga bentuk sekaligus, karena ketiganya benar-benar ada di
+ * data: id yang dikirim formulir sekarang ("pair"), teks panjang yang
+ * tersimpan di baris-baris lama ("Pair (2 students)"), dan nama karangan
+ * admin yang mungkin dipakai sementara ("PAIR"). Semuanya dikenali lewat
+ * kata intinya, bukan disamakan persis.
+ */
+function slotPaket(nilai) {
+  const t = String(nilai || '').trim().toLowerCase();
+  if (!t) return null;
+  if (t.includes('individual') || t.includes('solo')) return PAKET_SLOT[0];
+  if (t.includes('pair')) return PAKET_SLOT[1];
+  if (t.includes('group')) return PAKET_SLOT[2];
+  return null;
+}
 
 const MAKS_FIELD = 40;
 
@@ -262,19 +325,22 @@ function emailSah(nilai) {
  * susunan yang sedang aktif -- jadi kalau admin mematikan pertanyaan
  * "ID Line", server ikut berhenti mewajibkannya tanpa perlu diubah.
  */
-function validasiJawaban(fields, jawaban) {
+function validasiJawaban(fields, jawaban, overrides) {
   const aktif = fieldAktif(fields);
   const kurang = [];
-  const paket = teks(jawaban.paket, 60);
+  const slot = slotPaket(jawaban.paket);
 
   aktif.forEach((f) => {
     if (f.tipe === 'peserta') {
       // Isian peserta 2/3 cuma wajib sesuai paket yang dipilih.
-      if (paket === PILIHAN_PAKET[1] || paket === PILIHAN_PAKET[2]) {
+      // Dinilai dari JUMLAH ORANG slotnya, bukan dari teks paketnya,
+      // supaya nama paket yang diganti admin tidak mematikan aturan ini.
+      const jumlahOrang = slot ? slot.orang : 0;
+      if (jumlahOrang >= 2) {
         if (!teks(jawaban.p2Nama, 120)) kurang.push('nama peserta 2');
         if (!emailSah(jawaban.p2Email)) kurang.push('email peserta 2');
       }
-      if (paket === PILIHAN_PAKET[2]) {
+      if (jumlahOrang >= 3) {
         if (!teks(jawaban.p3Nama, 120)) kurang.push('nama peserta 3');
         if (!emailSah(jawaban.p3Email)) kurang.push('email peserta 3');
       }
@@ -282,7 +348,11 @@ function validasiJawaban(fields, jawaban) {
     }
 
     if (f.tipe === 'paket') {
-      if (!PILIHAN_PAKET.includes(paket)) kurang.push(f.label.toLowerCase());
+      // Paket yang sedang DIMATIKAN admin ditolak juga, bukan cuma tidak
+      // ditampilkan. Halaman bisa dibuka lama lalu dikirim setelah paketnya
+      // ditutup, atau dikirim langsung ke endpoint tanpa membuka halaman.
+      const boleh = pilihanPaket(overrides).some((p) => slot && p.id === slot.id);
+      if (!boleh) kurang.push(f.label.toLowerCase());
       return;
     }
 
@@ -339,6 +409,17 @@ function susunBaris(fields, jawaban, linkUpload, stempelWaktu) {
       return;
     }
 
+    if (f.tipe === 'paket') {
+      // Yang ditulis ke sheet adalah teks bakunya, BUKAN id yang dikirim
+      // browser dan bukan nama karangan admin. Kolom ini dibaca banyak
+      // tempat (statistik, pengecekan peserta, baris lama dari Google
+      // Form), jadi isinya harus tetap satu bentuk sepanjang waktu walau
+      // nama paketnya diganti-ganti di /admin.
+      const s = slotPaket(jawaban[f.id]);
+      baris[f.kolom] = s ? PILIHAN_PAKET[PAKET_SLOT.indexOf(s)] : '';
+      return;
+    }
+
     baris[f.kolom] = teks(jawaban[f.id], 600);
   });
 
@@ -348,8 +429,8 @@ function susunBaris(fields, jawaban, linkUpload, stempelWaktu) {
   // tengah yang bikin sheet terlihat rusak.
   baris[KOLOM.namaDiri] = teks(jawaban.nama, 120);
   baris[KOLOM.teleponDiri] = teks(jawaban.telepon, 40);
-  const paket = teks(jawaban.paket, 60);
-  if (paket !== PILIHAN_PAKET[0]) {
+  const slotTerpilih = slotPaket(jawaban.paket);
+  if (slotTerpilih && slotTerpilih.orang > 1) {
     baris[KOLOM.p1Nama] = teks(jawaban.nama, 120);
     baris[KOLOM.p1Telepon] = teks(jawaban.telepon, 40);
     baris[KOLOM.p1Email] = teks(jawaban.emailDiri, 120);
@@ -422,6 +503,9 @@ function bacaBaris(fields, baris) {
 
 module.exports = {
   FIELD_BAWAAN,
+  PAKET_SLOT,
+  pilihanPaket,
+  slotPaket,
   bacaBaris,
   PILIHAN_PAKET,
   KOLOM,

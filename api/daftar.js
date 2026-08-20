@@ -87,7 +87,9 @@ module.exports = async function handler(req, res) {
   // dipakai menggambar form. Validasi di browser gampang dilewati
   // (matikan JS, kirim request langsung), jadi tidak pernah boleh jadi
   // satu-satunya penjaga.
-  const kurang = validasiJawaban(overrides.formFields, jawaban);
+  // overrides ikut dikirim supaya validasi tahu paket mana yang sedang
+  // tersedia, bukan cuma paket mana yang dikenal.
+  const kurang = validasiJawaban(overrides.formFields, jawaban, overrides);
   if (kurang.length > 0) {
     return res.status(400).json({
       ok: false,
