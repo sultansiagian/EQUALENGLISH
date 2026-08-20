@@ -207,10 +207,23 @@
   margin: 0;
 }
 
+/* Kotak terang, sama seperti .daftar-group di atasnya. Ini keharusan,
+   bukan pilihan gaya: sejak halaman ini berlatar foto gelap, apa pun
+   yang tidak punya kotak terang sendiri mewarisi color:var(--black)
+   dari .daftar-body dan berubah jadi teks hitam di atas latar yang
+   hampir hitam. Kotak ini sempat persis begitu -- label, teks bantuan,
+   dan tombol "Choose File" bawaan browser sama sekali tidak terbaca,
+   dan bordernya (hitam 14% alpha) juga hilang.
+
+   Bordernya tetap putus-putus supaya masih terbaca sebagai area unggah,
+   bukan kartu isian biasa. Radius dan padding disamakan dengan
+   .daftar-group karena keduanya kartu yang bertumpuk langsung
+   berdampingan di kolom yang sama. */
 .daftar-upload {
   border: 1.5px dashed var(--line);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 16px;
+  background: var(--white);
+  padding: 22px;
   margin-top: 14px;
 }
 
@@ -436,8 +449,14 @@ body.daftar-body::before {
 }
 
 /* Judul, pengantar, dan panel hasil duduk langsung di atas foto.
+
    Isian formulirnya sendiri ada di dalam kotak terang, jadi tidak
-   terpengaruh. */
+   terpengaruh -- TAPI itu berlaku hanya selama setiap kotak benar-benar
+   punya background sendiri. .daftar-upload dulu tidak punya, dan seluruh
+   isinya jadi hitam di atas hitam tanpa ada yang menyadarinya sampai
+   dilaporkan pemakainya. Kalau menambah kotak isian baru di halaman ini,
+   pastikan kotaknya punya background, atau warnai isinya untuk latar
+   gelap di bagian ini. */
 .daftar-shell h1 {
   color: var(--white);
 }

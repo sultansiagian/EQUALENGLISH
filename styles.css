@@ -459,6 +459,41 @@ h2 em {
   transform: translateY(3px);
 }
 
+/* Kedua kelas di atas ditulis dengan asumsi elemennya <a>, yang memang
+   polos. Tapi keduanya juga dipakai di <button> (kelas.html: "Coba akun
+   lain" dan "Muat ulang halaman"), dan di situ gaya bawaan browser tetap
+   tembus: latar abu-abu, border outset 2px, sudut siku, padding 1px 6px,
+   dan cursor default. Hasilnya teks putih .text-link di atas kotak abu
+   muda, nyaris tidak terbaca, dan tidak terlihat bisa diklik.
+
+   Fontnya sudah aman lewat `font-family: inherit` di bagian FONT UNTUK
+   ELEMEN FORM di atas. Sisanya direset di sini, bukan diketik ulang per
+   id, supaya tombol berikutnya yang memakai kelas ini otomatis benar.
+   (#kelas-signout di kelas.css sudah punya resetnya sendiri sejak awal,
+   itu sebabnya cuma dua tombol ini yang pernah terlihat rusak.) */
+button.text-link,
+button.arrow-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  /* Di lebar HP, .cta-actions berubah jadi kolom dengan align-items:
+     stretch, jadi tombol ini melar selebar wadahnya. Tanpa baris ini
+     labelnya menempel ke kiri sementara pil pink di atasnya terpusat,
+     dan keduanya terbaca tidak sejajar. Di lebar desktop tombolnya
+     selebar teksnya sendiri, jadi baris ini tidak mengubah apa pun. */
+  justify-content: center;
+}
+
+/* Varian <a> menandai dirinya bisa diklik lewat panah yang bergeser saat
+   hover. Dua tombol di atas tidak punya panah, jadi tanpa ini mereka sama
+   sekali tidak memberi umpan balik waktu disentuh. */
+button.text-link:hover,
+button.text-link:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
 .hero-footnote {
   display: flex;
   align-items: center;
