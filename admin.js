@@ -532,6 +532,13 @@ function renderKiriman() {
       kepala.appendChild(meta);
     }
 
+    // Dua penanda yang berbeda artinya, jadi sengaja tidak digabung:
+    // izin datang dari SISWA, tayang adalah keputusan admin.
+    var badgeIzin = document.createElement('span');
+    badgeIzin.className = 'kiriman-badge' + (t.izinTayang ? ' kiriman-badge-izin' : ' kiriman-badge-privat');
+    badgeIzin.textContent = t.izinTayang ? 'boleh ditayangkan' : 'khusus admin';
+    kepala.appendChild(badgeIzin);
+
     if (t.sudahTayang) {
       var badge = document.createElement('span');
       badge.className = 'kiriman-badge';
@@ -546,18 +553,34 @@ function renderKiriman() {
     var aksi = document.createElement('div');
     aksi.className = 'kiriman-aksi';
 
-    var tombol = document.createElement('button');
-    tombol.type = 'button';
-    tombol.className = 'admin-btn ' + (t.sudahTayang ? 'admin-btn-ghost' : 'admin-btn-primary');
-    tombol.textContent = t.sudahTayang ? 'Turunkan dari beranda' : 'Tayangkan di beranda';
-    tombol.addEventListener('click', function () {
-      prosesKiriman(i, t.sudahTayang ? 'turunkan' : 'tayangkan', tombol);
-    });
+    // Tanpa izin siswa, tombol tayangkan tidak ditawarkan sama sekali.
+    // Server juga menolaknya (lihat api/admin-testimoni.js) -- yang di
+    // sini semata supaya tidak ada tombol yang kelihatan bisa ditekan
+    // padahal pasti gagal.
+    //
+    // Yang SUDAH terlanjur tayang tetap diberi tombol turunkan, apa pun
+    // izinnya. Mencabut sesuatu dari halaman publik tidak boleh pernah
+    // terhalang.
+    if (t.izinTayang || t.sudahTayang) {
+      var tombol = document.createElement('button');
+      tombol.type = 'button';
+      tombol.className = 'admin-btn ' + (t.sudahTayang ? 'admin-btn-ghost' : 'admin-btn-primary');
+      tombol.textContent = t.sudahTayang ? 'Turunkan dari beranda' : 'Tayangkan di beranda';
+      tombol.addEventListener('click', function () {
+        prosesKiriman(i, t.sudahTayang ? 'turunkan' : 'tayangkan', tombol);
+      });
+      aksi.appendChild(tombol);
+    } else {
+      var catatan = document.createElement('span');
+      catatan.className = 'kiriman-catatan';
+      catatan.textContent =
+        'Siswa ini tidak mengizinkan ceritanya ditampilkan di halaman publik. ' +
+        'Isinya cuma untuk kamu baca.';
+      aksi.appendChild(catatan);
+    }
 
     var statusAksi = document.createElement('span');
     statusAksi.className = 'admin-save-status kiriman-status';
-
-    aksi.appendChild(tombol);
     aksi.appendChild(statusAksi);
 
     kartu.appendChild(kepala);

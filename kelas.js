@@ -611,6 +611,7 @@ async function kirimTestimoni(e) {
           nama: dataSertifikat ? dataSertifikat.nama : '',
           fakultas: document.getElementById('testi-fakultas').value.trim(),
           skorEpt: document.getElementById('testi-skor').value.trim(),
+          izinTayang: document.getElementById('testi-izin').checked,
           pesan: pesan,
         },
       }),

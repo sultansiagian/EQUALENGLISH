@@ -1045,3 +1045,35 @@
 .sertifikat-status-kirim[data-state='error'] {
   color: var(--red);
 }
+
+/* Izin menampilkan cerita di halaman publik. Sengaja TIDAK dicentang
+   dari awal: ini menerbitkan nama dan kalimat seseorang di halaman yang
+   bisa dibaca siapa saja, jadi harus jadi pilihan sadar, bukan sesuatu
+   yang terlewat karena sudah tercentang duluan. */
+.sertifikat-centang {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.sertifikat-centang input[type='checkbox'] {
+  /* margin-top kecil menyejajarkan kotaknya dengan baris pertama teks,
+     bukan dengan tengah seluruh paragraf yang bisa dua baris. */
+  margin: 3px 0 0;
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  accent-color: var(--pink);
+  cursor: pointer;
+}
+
+.sertifikat-catatan-izin {
+  margin: 0;
+  padding-left: 27px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--ink-muted);
+}

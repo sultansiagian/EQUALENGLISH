@@ -90,6 +90,10 @@ module.exports = async function handler(req, res) {
         fakultas: potong(kiriman.fakultas, MAKS_PENDEK),
         skorEpt: potong(kiriman.skorEpt, 20),
         pesan,
+        // Izin dari siswanya sendiri untuk menampilkan ceritanya di
+        // halaman publik. Tanpa ini, testimoninya tetap tersimpan dan
+        // sertifikatnya tetap terbuka, cuma tidak pernah boleh tayang.
+        izinTayang: kiriman.izinTayang === true,
       },
     });
 

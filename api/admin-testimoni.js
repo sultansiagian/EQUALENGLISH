@@ -74,11 +74,38 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-      const overrides = await readOverrides().catch(() => ({}));
+      // Isi yang ditayangkan diambil ULANG dari spreadsheet, bukan dari
+      // yang dikirim browser. Dua alasan:
+      //
+      //   1. Izin tayang adalah keputusan SISWA. Kalau nilainya ikut
+      //      datang dari browser admin, siapa pun yang bisa memanggil
+      //      endpoint ini bisa mengaku sudah diizinkan. Menyembunyikan
+      //      tombolnya di layar tidak menjaga apa pun.
+      //   2. Yang tayang di beranda jadi persis kalimat yang ditulis
+      //      siswanya, bukan versi yang sempat berubah di perjalanan.
+      const [daftarKiriman, overrides] = await Promise.all([
+        panggilAppsScript('listTestimoni'),
+        readOverrides().catch(() => ({})),
+      ]);
+
+      const kiriman = (daftarKiriman.testimoni || []).find((t) => String(t.id) === id);
+      if (!kiriman) {
+        return res.status(404).json({ ok: false, reason: 'id_tidak_ketemu' });
+      }
+
       const daftar = Array.isArray(overrides.testimonials) ? overrides.testimonials.slice() : [];
-      const pesan = potong(body.pesan, 600);
+      const pesan = potong(kiriman.pesan, 600);
 
       if (aksi === 'tayangkan') {
+        if (!kiriman.izinTayang) {
+          return res.status(403).json({
+            ok: false,
+            reason: 'tidak_diizinkan',
+            pesan:
+              'Siswa ini tidak mencentang izin menampilkan ceritanya di halaman publik, ' +
+              'jadi testimoninya tidak bisa ditayangkan. Isinya tetap bisa kamu baca di sini.',
+          });
+        }
         if (!pesan) {
           return res.status(400).json({ ok: false, reason: 'pesan_kosong' });
         }
@@ -98,9 +125,9 @@ module.exports = async function handler(req, res) {
         }
 
         daftar.push({
-          nama: potong(body.nama, 80),
-          fakultas: potong(body.fakultas, 120),
-          skorEpt: potong(body.skorEpt, 20),
+          nama: potong(kiriman.nama, 80),
+          fakultas: potong(kiriman.fakultas, 120),
+          skorEpt: potong(kiriman.skorEpt, 20),
           pesan,
           // Foto tidak ikut dari kiriman siswa; beranda otomatis memakai
           // inisial nama kalau fotonya kosong. Kamu bisa menambahkan foto
@@ -134,7 +161,6 @@ module.exports = async function handler(req, res) {
       return res.status(502).json({ ok: false, reason: 'gagal_proses', pesan: err.message });
     }
   }
-
   res.setHeader('Allow', 'GET, POST');
   return res.status(405).json({ ok: false, reason: 'method_not_allowed' });
 };

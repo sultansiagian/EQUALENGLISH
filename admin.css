@@ -1471,3 +1471,24 @@ body::before {
 .kiriman-status {
   min-width: 0;
 }
+
+/* Dua penanda berbeda arti di kartu kiriman: izin datang dari SISWA,
+   tayang adalah keputusan admin. Warnanya sengaja dibedakan supaya tidak
+   tertukar sekilas. */
+.kiriman-badge-izin {
+  border-color: var(--line);
+  color: #1a7f37;
+}
+
+.kiriman-badge-privat {
+  border-color: var(--line);
+  color: var(--ink-muted);
+}
+
+.kiriman-catatan {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  /* Boleh membungkus, jangan memaksa kartunya melebar. */
+  min-width: 0;
+}

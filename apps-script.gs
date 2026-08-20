@@ -312,7 +312,10 @@ function sheetTestimoni() {
   var sh = ss.getSheetByName(TAB_TESTIMONI);
   if (!sh) {
     sh = ss.insertSheet(TAB_TESTIMONI);
-    sh.appendRow(['ID (jangan diubah)', 'Waktu', 'Email', 'Nama', 'Fakultas', 'Skor EPT', 'Pesan', 'Tayang']);
+    sh.appendRow([
+      'ID (jangan diubah)', 'Waktu', 'Email', 'Nama', 'Fakultas', 'Skor EPT',
+      'Pesan', 'Izin tayang', 'Tayang',
+    ]);
     sh.setFrozenRows(1);
   }
   return sh;
@@ -335,6 +338,12 @@ function handleTestimoni(isi) {
     String(isi.fakultas || ''),
     String(isi.skorEpt || ''),
     String(isi.pesan || ''),
+    // Kolom H: izin dari siswanya sendiri untuk menampilkan ceritanya di
+    // halaman publik. Kolom I: sudah benar-benar ditayangkan admin atau
+    // belum. Keduanya beda: yang pertama keputusan siswa, yang kedua
+    // keputusan admin, dan yang kedua tidak boleh 'ya' kalau yang pertama
+    // tidak.
+    isi.izinTayang ? 'ya' : '',
     '',
   ]);
 
@@ -356,7 +365,8 @@ function handleListTestimoni() {
       fakultas: String(nilai[i][4]),
       skorEpt: String(nilai[i][5]),
       pesan: String(nilai[i][6]),
-      tayang: String(nilai[i][7]).toLowerCase() === 'ya',
+      izinTayang: String(nilai[i][7]).toLowerCase() === 'ya',
+      tayang: String(nilai[i][8]).toLowerCase() === 'ya',
     });
   }
 
@@ -365,7 +375,7 @@ function handleListTestimoni() {
 }
 
 /**
- * Tandai satu testimoni sudah/belum tayang. Kolom H dipakai sebagai
+ * Tandai satu testimoni sudah/belum tayang. Kolom I dipakai sebagai
  * penanda supaya pemilik situs bisa melihat statusnya langsung dari
  * spreadsheet juga, bukan cuma dari halaman admin.
  */
@@ -373,7 +383,7 @@ function handleTayangkanTestimoni(id, tayang) {
   var sh = sheetTestimoni();
   var ketemu = cariBarisById(sh, id);
   if (!ketemu) return jsonOut({ ok: false, reason: 'id_tidak_ketemu' });
-  sh.getRange(ketemu.nomorBaris, 8).setValue(tayang ? 'ya' : '');
+  sh.getRange(ketemu.nomorBaris, 9).setValue(tayang ? 'ya' : '');
   return jsonOut({ ok: true });
 }
 
