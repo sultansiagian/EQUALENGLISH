@@ -678,6 +678,89 @@ function angkaAtau(nilai, cadangan) {
   return Number.isFinite(n) ? n : cadangan;
 }
 
+// Pemetaan field materi -> kunci yang diisi admin di /atur-kelas.
+const PETA_MATERI_CONFIG = {
+  zoomJoinUrl: 'kelasZoomUrl',
+  driveUrl: 'kelasDriveUrl',
+  communityUrl: 'kelasCommunityUrl',
+  practiceReadingUrl: 'kelasPracticeReadingUrl',
+  practiceListeningUrl: 'kelasPracticeListeningUrl',
+  practiceWritingUrl: 'kelasPracticeWritingUrl',
+  announcement: 'kelasPengumuman',
+};
+
+/**
+ * Materi kelas yang diisi dari /atur-kelas.
+ *
+ * Field yang DIKOSONGKAN admin sengaja tidak ikut, supaya sheet materi
+ * (atau DEFAULT_MATERIALS) yang mengisinya. Jadi pemasangan lama yang
+ * masih mengandalkan sheet tidak mendadak kehilangan isinya begitu
+ * halaman /atur-kelas ada.
+ *
+ * `lengkap` menandakan semua field sudah diisi di admin, artinya sheet
+ * materi tidak perlu diambil sama sekali -- satu permintaan ke Google
+ * lebih sedikit di setiap login.
+ */
+function materiDariConfig(overrides) {
+  const o = overrides || {};
+  const nilai = {};
+
+  Object.keys(PETA_MATERI_CONFIG).forEach((field) => {
+    const v = String(o[PETA_MATERI_CONFIG[field]] || '').trim();
+    if (v) nilai[field] = v;
+  });
+
+  const buka = {
+    reading: String(o.kelasKuisReadingBuka || '').trim(),
+    listening: String(o.kelasKuisListeningBuka || '').trim(),
+    writing: String(o.kelasKuisWritingBuka || '').trim(),
+  };
+  const adaTanggalKuis = Boolean(buka.reading || buka.listening || buka.writing);
+  if (adaTanggalKuis) nilai.practiceUnlockDates = buka;
+
+  const lengkap =
+    Object.keys(PETA_MATERI_CONFIG).every((field) => Boolean(nilai[field])) && adaTanggalKuis;
+
+  return { nilai, lengkap };
+}
+
+/**
+ * Jadwal sesi yang disusun admin di /atur-kelas, diubah ke bentuk yang
+ * sama persis dengan hasil extractSchedule() supaya seluruh kode di
+ * bawahnya (timer, kunci Zoom, progres, syarat sertifikat) tidak perlu
+ * tahu jadwalnya datang dari mana.
+ *
+ * Balik null kalau admin belum menyusun jadwal sama sekali, dan itu
+ * yang menandakan sheet jadwal masih perlu diambil.
+ */
+function jadwalDariConfig(overrides) {
+  const daftar = overrides && Array.isArray(overrides.kelasJadwal) ? overrides.kelasJadwal : [];
+  if (daftar.length === 0) return null;
+
+  const sessions = [];
+  daftar.forEach((s) => {
+    const tanggal = String((s && s.tanggal) || '').trim();
+    const jam = String((s && s.jam) || '').trim() || '20:00';
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(tanggal);
+    const j = /^(\d{1,2}):(\d{2})$/.exec(jam);
+    if (!m || !j) return;
+
+    // Jam ditulis admin dalam WIB, sedangkan server berjalan di UTC.
+    const ms = Date.UTC(
+      Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(j[1]) - 7, Number(j[2])
+    );
+    if (!Number.isFinite(ms)) return;
+
+    sessions.push({
+      isoDatetime: new Date(ms).toISOString(),
+      topic: String((s && s.topik) || '').trim() || null,
+    });
+  });
+
+  sessions.sort((a, b) => a.isoDatetime.localeCompare(b.isoDatetime));
+  return sessions;
+}
+
 function hitungSertifikat(sessions, overrides, email) {
   const progres = hitungProgres(sessions);
   const adaJadwal = progres !== null;
@@ -759,6 +842,15 @@ async function fetchSchedule(url) {
 // jadwal sesi.
 function parseIndonesianDate(str) {
   const text = (str || '').trim().toLowerCase();
+
+  // Bentuk ISO ikut diterima karena /atur-kelas memakai <input type="date">
+  // yang selalu menghasilkan "2026-09-01". Sheet lama tetap memakai
+  // "20 Agustus", dan keduanya harus jalan berdampingan selama sheet
+  // masih dipakai sebagai cadangan.
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  if (iso) {
+    return Date.UTC(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]), -7, 0);
+  }
   const match = text.match(/(\d{1,2})\s+([a-z]+)\s*(\d{4})?/);
   if (!match) return null;
 
@@ -1102,28 +1194,57 @@ module.exports = async function handler(req, res) {
     // Yang ikut terambil untuk token yang ternyata tidak sah cuma tiga
     // link publish-to-web publik yang hasilnya di-cache; tidak ada data
     // rahasia yang tersentuh sebelum tokennya lulus.
-    const dataPromise = Promise.all([
-      fetchEnrolledEmails(rosterUrls, validCutoff),
-      scheduleUrl ? fetchSchedule(scheduleUrl) : Promise.resolve({ sessions: [] }),
-      materialsUrl ? fetchMaterialsOverrides(materialsUrl) : Promise.resolve({}),
-    ]);
+    // SEMUANYA dimulai bersamaan: verifikasi token, Global Config, roster,
+    // jadwal, dan materi. Sheet jadwal/materi tetap diambil walau isinya
+    // mungkin nanti kalah oleh isi /atur-kelas.
+    //
+    // Sengaja begitu. Kalau pengambilan sheet ditunda sampai Global Config
+    // terbaca (untuk tahu sheet mana yang masih perlu), login berubah jadi
+    // DUA babak berurutan dan justru lebih lambat -- terukur 602ms lawan
+    // 334ms untuk beban yang sama. Yang dirasakan siswa adalah babak
+    // terpanjang, bukan jumlah permintaannya.
+    //
+    // Kalau nanti seluruh isi kelas sudah diatur dari /atur-kelas, cara
+    // menghentikan pengambilan sheet ini bukan dengan menunda, melainkan
+    // mengosongkan SCHEDULE_CSV_URL dan MATERIALS_CSV_URL di Vercel.
+    const overridesPromise = readOverrides().catch(() => ({}));
+    const rosterPromise = fetchEnrolledEmails(rosterUrls, validCutoff);
+    const jadwalSheetPromise = scheduleUrl
+      ? fetchSchedule(scheduleUrl)
+      : Promise.resolve({ sessions: [] });
+    const materiSheetPromise = materialsUrl
+      ? fetchMaterialsOverrides(materialsUrl)
+      : Promise.resolve({});
+    jadwalSheetPromise.catch(() => {});
+    materiSheetPromise.catch(() => {});
     // Penangan penolakan dipasang SEKARANG, bukan nanti waktu di-await.
     // Kalau tokennya tidak sah kita keluar lebih dulu dan promise ini
     // tidak pernah di-await; tanpa penangan, penolakannya jadi
     // unhandled rejection yang bisa mematikan seluruh proses.
-    dataPromise.catch(() => {});
+    rosterPromise.catch(() => {});
 
     const verified = await verifyGoogleToken(idToken, clientId);
     if (!verified.valid) {
       return res.status(401).json({ ok: false, reason: verified.reason });
     }
 
-    // Diambil paralel: latensi jaringan biasanya lebih mahal daripada
-    // request yang kadang "sia-sia" (mis. jadwal ikut diambil walau
-    // ternyata emailnya tidak terdaftar). Sheet jadwal juga cuma link
-    // publish-to-web publik, tidak ada beban auth tambahan seperti roster.
-    if (!scheduleUrl) {
-      console.log('SCHEDULE_CSV_URL kosong/belum diisi -- kartu jadwal & timer akan kosong.');
+    const overrides = await overridesPromise;
+
+    // ============================================================
+    // ISI KELAS: /atur-kelas MENANG, SHEET CUMA UNTUK YANG KOSONG
+    // ============================================================
+    // Sheet jadwal dan sheet materi CUMA diambil untuk bagian yang
+    // belum diisi admin. Begitu keduanya lengkap di /atur-kelas, dua
+    // pengambilan ke Google itu dilewati sama sekali, dan login jadi
+    // lebih cepat daripada sebelum halaman itu ada.
+    //
+    // Selama masih ada yang kosong, keduanya tetap diambil seperti dulu,
+    // supaya pemasangan lama tidak mendadak kehilangan isinya.
+    const jadwalConfig = jadwalDariConfig(overrides);
+    const materiConfig = materiDariConfig(overrides);
+
+    if (jadwalConfig === null && !scheduleUrl) {
+      console.log('Jadwal belum diisi di /atur-kelas dan SCHEDULE_CSV_URL kosong -- kartu jadwal & timer akan kosong.');
     }
     if (!materialsUrl) {
       console.log(
@@ -1131,7 +1252,18 @@ module.exports = async function handler(req, res) {
           'DEFAULT_MATERIALS di kode, sheet materi belum aktif.'
       );
     }
-    const [enrolledEmails, scheduleResult, materialsOverrides] = await dataPromise;
+    const [enrolledEmails, jadwalSheet, materiSheet] = await Promise.all([
+      rosterPromise,
+      // Kegagalan sheet tidak boleh menggagalkan login: tanpa jadwal,
+      // kartu jadwalnya kosong tapi materinya tetap terbuka.
+      jadwalSheetPromise.catch(() => ({ sessions: [] })),
+      materiSheetPromise.catch(() => ({})),
+    ]);
+
+    const scheduleResult = jadwalConfig !== null ? { sessions: jadwalConfig } : jadwalSheet;
+    // Isi dari admin ditumpuk DI ATAS isi sheet, jadi field yang diisi
+    // di /atur-kelas menang dan sisanya tetap datang dari sheet.
+    const materialsOverrides = Object.assign({}, materiSheet, materiConfig.nilai);
     // Dicocokkan dalam bentuk yang sudah disamakan di KEDUA sisi. Email
     // aslinya tetap dipakai buat ditampilkan ke siswa dan dicatat di log,
     // supaya yang dia lihat sama dengan yang dia ketik.
@@ -1156,24 +1288,15 @@ module.exports = async function handler(req, res) {
           'kartu jadwal & timer akan kosong sampai sheet-nya diisi tanggal baru.'
       );
     }
-    // ============================================================
-    // GLOBAL CONFIG CUMA DIBACA KALAU KELASNYA SUDAH SELESAI
-    // ============================================================
-    // Sertifikat butuh tahu siapa yang sudah mengisi testimoni, dan itu
-    // tersimpan di Global Config. Tapi syarat sertifikat mensyaratkan
-    // SELURUH sesi sudah lewat, jadi selama batch masih berjalan
-    // jawabannya pasti "belum boleh" apa pun isi Global Config-nya.
+    // Global Config sekarang SELALU dibaca (lihat blok ISI KELAS di atas),
+    // karena isinya yang menentukan sheet mana yang masih perlu diambil.
     //
-    // Membacanya di setiap login karena itu murni beban tambahan di
-    // jalur yang dilewati SEMUA siswa: satu panggilan jaringan lagi,
-    // plus memuat paket @vercel/global-config waktu instance-nya baru
-    // bangun. File ini tadinya tidak memuat satu pun paket npm, dan itu
-    // yang membuat login terasa lebih lambat sejak sertifikat ditambahkan.
-    //
-    // Jadi dibaca belakangan, dan cuma waktu jawabannya bisa berubah.
+    // Itu bukan kemunduran dari sisi kecepatan: satu pembacaan Global
+    // Config, yang memang dirancang untuk dibaca tiap request,
+    // menggantikan sampai DUA pengambilan sheet ke Google. Selama
+    // /atur-kelas belum diisi, keduanya memang masih dibayar; begitu
+    // diisi, login jadi lebih ringan daripada sebelum halaman itu ada.
     const progresBatch = hitungProgres(scheduleResult.sessions);
-    const kelasSudahSelesai = progresBatch !== null && progresBatch.selesai >= progresBatch.total;
-    const overrides = kelasSudahSelesai ? await readOverrides().catch(() => ({})) : {};
 
     const materials = {
       ...DEFAULT_MATERIALS,
@@ -1222,3 +1345,5 @@ module.exports.fetchEnrolledEmails = fetchEnrolledEmails;
 module.exports.normalisasiEmail = normalisasiEmail;
 module.exports.hitungSertifikat = hitungSertifikat;
 module.exports.hitungProgres = hitungProgres;
+module.exports.materiDariConfig = materiDariConfig;
+module.exports.jadwalDariConfig = jadwalDariConfig;

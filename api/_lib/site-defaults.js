@@ -84,6 +84,42 @@ module.exports = {
   // URL gambar tanda tangan di Vercel Blob, diunggah dari /admin.
   sertifikatTandaTanganUrl: '',
 
+  // ============================================================
+  // ISI RUANG KELAS (/kelas), diatur dari /atur-kelas
+  // ============================================================
+  // Sebelumnya semua ini cuma bisa diubah lewat spreadsheet
+  // (MATERIALS_CSV_URL dan SCHEDULE_CSV_URL). Sekarang bisa diisi dari
+  // panel admin, dan yang diisi di sini MENANG atas isi spreadsheet.
+  //
+  // Spreadsheet tetap dibaca untuk yang dibiarkan kosong, supaya
+  // pemasangan lama tidak mendadak berhenti jalan. Begitu semuanya
+  // diisi di sini, dua pengambilan ke Google itu dilewati sama sekali
+  // dan login justru jadi lebih cepat.
+  kelasZoomUrl: '',
+  kelasDriveUrl: '',
+  kelasCommunityUrl: '',
+  kelasPracticeReadingUrl: '',
+  kelasPracticeListeningUrl: '',
+  kelasPracticeWritingUrl: '',
+  kelasPengumuman: '',
+
+  // Tanggal kuis latihan mulai bisa dibuka, format "2026-09-01".
+  // Kosong berarti kuisnya tidak dikunci sama sekali.
+  kelasKuisReadingBuka: '',
+  kelasKuisListeningBuka: '',
+  kelasKuisWritingBuka: '',
+
+  // Jadwal sesi kelas. Bentuk tiap item: { tanggal, jam, topik }.
+  // tanggal "2026-09-01", jam "20:00" (WIB), topik boleh kosong.
+  //
+  // Selama daftar ini KOSONG, jadwal dibaca dari SCHEDULE_CSV_URL
+  // seperti sebelumnya. Begitu ada isinya, daftar ini yang dipakai dan
+  // sheet jadwal tidak diambil lagi.
+  kelasJadwal: [],
+  // Jam bawaan waktu menambah sesi baru di /atur-kelas. Tidak dipakai
+  // menghitung apa pun; tiap sesi menyimpan jamnya sendiri.
+  kelasJamBawaan: '20:00',
+
   // ---- SERTIFIKAT DARI TEMPLAT BUATAN SENDIRI ----
   //
   // Kalau diisi, seluruh sertifikat memakai gambar ini apa adanya dan

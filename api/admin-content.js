@@ -9,6 +9,10 @@ const { normalisasiFields } = require('./_lib/form-schema');
 // bersama SELURUH konten situs.
 const MAX_TESTIMONIALS = 24;
 
+// Batas jumlah sesi jadwal kelas. Jauh di atas kebutuhan wajar
+// (bootcamp 10 hari), alasannya sama dengan batas testimoni di atas.
+const MAKS_SESI = 60;
+
 function trimTo(value, maxLen) {
   return String(value === undefined || value === null ? '' : value)
     .trim()
@@ -83,6 +87,31 @@ module.exports = async function handler(req, res) {
         // memutuskan item mana yang layak tampil di halaman publik adalah
         // renderTestimonials() di api/render-home.js, bukan di sini.
         .filter((t) => t.nama || t.pesan || t.fakultas || t.skorEpt || t.fotoUrl);
+    }
+
+    // Jadwal sesi kelas: array bebas juga, jadi perlu dinormalkan dan
+    // dibatasi dengan alasan yang sama seperti testimonials di atas.
+    // 60 sesi jauh di atas kebutuhan wajar (bootcamp 10 hari), tapi tetap
+    // ada batasnya supaya satu kesalahan tidak menghabiskan kuota 1 MB
+    // yang dipakai bersama SELURUH konten situs.
+    if (filtered.kelasJadwal !== undefined) {
+      if (!Array.isArray(filtered.kelasJadwal)) {
+        return res.status(400).json({ ok: false, reason: 'jadwal_bukan_array' });
+      }
+      filtered.kelasJadwal = filtered.kelasJadwal
+        .slice(0, MAKS_SESI)
+        .map((s) => ({
+          tanggal: trimTo(s && s.tanggal, 10),
+          jam: trimTo(s && s.jam, 5),
+          topik: trimTo(s && s.topik, 120),
+        }))
+        // Sesi tanpa tanggal tidak berarti apa-apa: jadwal, timer, progres,
+        // dan syarat sertifikat semuanya bergantung pada tanggalnya.
+        .filter((s) => /^\d{4}-\d{2}-\d{2}$/.test(s.tanggal))
+        // Diurutkan di sini, bukan dipercayakan ke urutan pengetikan admin.
+        // Sesi berikutnya, progres, dan kunci Zoom semuanya menganggap
+        // daftar ini urut waktu.
+        .sort((a, b) => (a.tanggal + a.jam).localeCompare(b.tanggal + b.jam));
     }
 
     // formFields juga array bebas seperti testimonials, tapi taruhannya
