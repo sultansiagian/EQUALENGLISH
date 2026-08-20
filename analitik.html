@@ -78,31 +78,67 @@
         <p id="stat-gagal" class="admin-hint stat-gagal" role="alert" hidden></p>
 
         <div id="stat-isi" hidden>
-          <section class="admin-card">
-            <h2>Batch Ini <span class="admin-card-note" id="stat-periode"></span></h2>
-            <p class="admin-hint" id="stat-periode-catatan"></p>
-
+          <!-- Angka kumulatif, tidak pernah di-reset. Ditaruh paling atas
+               karena ini angka yang paling sering dicari. -->
+          <section class="admin-card stat-kartu-total">
+            <h2>Sepanjang Waktu <span class="admin-card-note">seluruh pendaftar, semua batch</span></h2>
             <div class="stat-angka">
               <div class="stat-angka-item">
                 <span class="stat-angka-label">Pendaftaran</span>
-                <strong id="stat-pendaftaran">0</strong>
+                <strong id="all-pendaftaran">0</strong>
                 <small>baris di spreadsheet</small>
               </div>
               <div class="stat-angka-item">
                 <span class="stat-angka-label">Siswa</span>
-                <strong id="stat-siswa">0</strong>
+                <strong id="all-siswa">0</strong>
                 <small>Pair dihitung 2, Group 3</small>
               </div>
               <div class="stat-angka-item stat-angka-item-utama">
-                <span class="stat-angka-label">Pendapatan</span>
-                <strong id="stat-pendapatan">Rp0</strong>
+                <span class="stat-angka-label">Total pendapatan</span>
+                <strong id="all-pendapatan">Rp0</strong>
                 <small>harga per orang dikali jumlah orang</small>
               </div>
             </div>
           </section>
 
           <section class="admin-card">
-            <h2>Komposisi Paket</h2>
+            <h2>Catatan Batch <span class="admin-card-note" id="batch-jumlah"></span></h2>
+            <p class="admin-hint">
+              Yang disimpan cuma <strong>rentang waktunya</strong>, bukan angkanya.
+              Jumlah dan pendapatan dihitung ulang dari spreadsheet tiap kali
+              halaman ini dibuka, jadi kalau ada baris yang kamu betulkan
+              belakangan, angka batch lama ikut betul.
+            </p>
+
+            <p id="batch-kosong" class="admin-hint" hidden>
+              Belum ada batch. Mulai batch pertama untuk memisahkan pendapatan
+              per angkatan. <strong>Batch pertama menghitung sejak awal</strong>,
+              jadi tidak ada pendaftar lama yang tertinggal.
+            </p>
+
+            <!-- Perbandingan pendapatan antar batch. Digambar sebagai bar
+                 karena yang dicari di sini perbandingan besaran, bukan
+                 komposisi. -->
+            <figure id="batch-chart-wrap" class="stat-bar-wrap" hidden>
+              <figcaption>Pendapatan per batch</figcaption>
+              <div id="batch-bars" class="stat-bars"></div>
+            </figure>
+
+            <div id="batch-list" class="batch-list"></div>
+
+            <div class="admin-save-bar">
+              <button type="button" id="batch-mulai" class="admin-btn admin-btn-primary" hidden>
+                Mulai Batch Pertama
+              </button>
+              <button type="button" id="batch-tutup" class="admin-btn admin-btn-primary" hidden>
+                Tutup Batch Ini &amp; Mulai Batch Baru
+              </button>
+              <span id="batch-status" class="admin-save-status"></span>
+            </div>
+          </section>
+
+          <section class="admin-card">
+            <h2>Komposisi Paket <span class="admin-card-note" id="komposisi-periode"></span></h2>
             <div class="stat-chart-grid">
               <figure class="stat-donut-wrap">
                 <figcaption>Siswa per paket</figcaption>
@@ -196,6 +232,7 @@
             <ul id="stat-catatan" class="stat-catatan"></ul>
           </section>
         </div>
+
         <nav class="admin-nav admin-nav-bawah" data-nav-admin></nav>
       </main>
     </div>

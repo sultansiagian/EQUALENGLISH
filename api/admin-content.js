@@ -13,6 +13,10 @@ const MAX_TESTIMONIALS = 24;
 // (bootcamp 10 hari), alasannya sama dengan batas testimoni di atas.
 const MAKS_SESI = 60;
 
+// Batas jumlah catatan batch. Satu batch kira-kira sebulan, jadi 60
+// sudah lima tahun ke depan.
+const MAKS_BATCH = 60;
+
 function trimTo(value, maxLen) {
   return String(value === undefined || value === null ? '' : value)
     .trim()
@@ -87,6 +91,21 @@ module.exports = async function handler(req, res) {
         // memutuskan item mana yang layak tampil di halaman publik adalah
         // renderTestimonials() di api/render-home.js, bukan di sini.
         .filter((t) => t.nama || t.pesan || t.fakultas || t.skorEpt || t.fotoUrl);
+    }
+
+    // Catatan batch. Dinormalkan dan dibatasi dengan alasan yang sama
+    // seperti dua array di atas.
+    if (filtered.batchDaftar !== undefined) {
+      if (!Array.isArray(filtered.batchDaftar)) {
+        return res.status(400).json({ ok: false, reason: 'batch_bukan_array' });
+      }
+      filtered.batchDaftar = filtered.batchDaftar.slice(0, MAKS_BATCH).map((b, i) => ({
+        nama: trimTo(b && b.nama, 60) || 'Batch ' + (i + 1),
+        // null dipertahankan apa adanya: itu penanda sejak-awal untuk
+        // mulai, dan masih-berjalan untuk selesai.
+        mulai: b && b.mulai ? trimTo(b.mulai, 30) : null,
+        selesai: b && b.selesai ? trimTo(b.selesai, 30) : null,
+      }));
     }
 
     // Jadwal sesi kelas: array bebas juga, jadi perlu dinormalkan dan

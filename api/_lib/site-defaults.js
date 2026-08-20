@@ -85,6 +85,25 @@ module.exports = {
   sertifikatTandaTanganUrl: '',
 
   // ============================================================
+  // CATATAN BATCH, dipakai halaman /analitik
+  // ============================================================
+  // Tiap item: { nama, mulai, selesai }.
+  //   mulai/selesai : waktu ISO, atau null
+  //   mulai null    : batch ini menghitung sejak awal, dipakai batch
+  //                   pertama supaya pendaftar lama tidak jadi yatim
+  //   selesai null  : batch ini MASIH BERJALAN
+  //
+  // Cuma boleh ada satu batch yang selesai-nya null, dan itu selalu
+  // yang terakhir. Menutup batch berarti mengisi selesai-nya dengan
+  // waktu sekarang lalu menambahkan satu batch baru sesudahnya.
+  //
+  // Angkanya TIDAK disimpan di sini, cuma batas waktunya. Jumlah dan
+  // pendapatan dihitung ulang dari roster tiap kali halaman dibuka,
+  // jadi kalau ada baris yang dibetulkan belakangan, angka batch lama
+  // ikut betul. Menyimpan angkanya akan membekukan kesalahan.
+  batchDaftar: [],
+
+  // ============================================================
   // ISI RUANG KELAS (/kelas), diatur dari /atur-kelas
   // ============================================================
   // Sebelumnya semua ini cuma bisa diubah lewat spreadsheet

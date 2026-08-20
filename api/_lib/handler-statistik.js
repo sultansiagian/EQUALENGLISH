@@ -1,7 +1,6 @@
 const { requireAdmin } = require('./admin-guard');
 const { readOverrides, writeOverrides } = require('./global-config-store');
 const { hitungStatistik, gabungStatistik } = require('./statistik');
-const { waktuWibKeEpoch, formatWib } = require('./form-status');
 const DEFAULTS = require('./site-defaults');
 
 /**
@@ -13,17 +12,16 @@ const DEFAULTS = require('./site-defaults');
  * Tidak ada kemungkinan dua angka yang berbeda untuk hal yang sama.
  *
  * ============================================================
- * KENAPA PERIODENYA IKUT JENDELA PENDAFTARAN
+ * BATAS BATCH DICATAT, ANGKANYA TIDAK
  * ============================================================
- * Batch di sini tidak punya penanda sendiri di spreadsheet. Yang ada
- * cuma tanggal buka/tutup pendaftaran yang sudah diatur di /atur-form,
- * dan itu justru definisi batch yang paling tepat: satu batch = satu kali
- * pendaftaran dibuka sampai ditutup. Dengan memakai nilai itu, tidak ada
- * setelan baru yang harus diingat dan diisi ulang tiap batch.
+ * Yang disimpan cuma nama dan rentang waktu tiap batch. Jumlah pendaftar
+ * dan pendapatannya dihitung ULANG dari roster tiap kali halaman ini
+ * dibuka.
  *
- * Kalau mode formulirnya bukan 'jadwal' (mis. dibiarkan terbuka terus),
- * tidak ada jendela yang bisa dipakai, dan halaman ini menampilkan angka
- * sepanjang waktu sambil mengatakan alasannya.
+ * Kalau angkanya ikut disimpan waktu batch ditutup, satu baris yang
+ * dibetulkan belakangan (salah ketik paket, bukti bayar menyusul) tidak
+ * akan pernah tercermin, dan angka batch lama membeku salah selamanya.
+ * Menghitung ulang lebih mahal sedikit, tapi selalu jujur.
  */
 
 // Sama dengan cache CSV di verify-access.js: cukup untuk mencegah
@@ -58,38 +56,95 @@ async function ambilSemuaRoster(urls) {
   return { teks, gagal };
 }
 
-function jendelaBatch(overrides) {
-  const mulaiMs = waktuWibKeEpoch(overrides.formBukaPada);
-  const selesaiMs = waktuWibKeEpoch(overrides.formTutupPada);
-  const mode = overrides.formMode || 'buka';
+function daftarBatch(overrides) {
+  const d = overrides && Array.isArray(overrides.batchDaftar) ? overrides.batchDaftar : [];
+  return d.map((b, i) => ({
+    nama: String((b && b.nama) || '').trim() || 'Batch ' + (i + 1),
+    mulai: b && b.mulai ? String(b.mulai) : null,
+    selesai: b && b.selesai ? String(b.selesai) : null,
+  }));
+}
 
-  if (mulaiMs === null && selesaiMs === null) {
-    return {
-      aktif: false,
-      alasan:
-        mode === 'jadwal'
-          ? 'Mode jadwal aktif tapi tanggal buka dan tutup masih kosong.'
-          : 'Pendaftaran tidak sedang memakai jadwal, jadi belum ada batas batch.',
-      mulai: null,
+function tanggalAtauNull(nilai) {
+  if (!nilai) return null;
+  const d = new Date(nilai);
+  return Number.isFinite(d.getTime()) ? d : null;
+}
+
+/**
+ * Tulis ulang daftar batch, dengan satu aturan yang dijaga di sini:
+ * hanya batch TERAKHIR yang boleh punya selesai kosong.
+ *
+ * Dijaga di server, bukan dipercayakan ke tombol di layar. Dua tab admin
+ * yang terbuka bersamaan bisa saja sama-sama menekan tombolnya, dan hasil
+ * yang tersisa harus tetap masuk akal.
+ */
+function rapikanBatch(daftar) {
+  return daftar.map((b, i) => ({
+    nama: b.nama,
+    mulai: b.mulai,
+    selesai: i === daftar.length - 1 ? b.selesai : b.selesai || new Date().toISOString(),
+  }));
+}
+
+async function tanganiPost(req, res, admin) {
+  const aksi = (req.body && req.body.aksi) || '';
+  const overrides = await readOverrides().catch(() => ({}));
+  const daftar = daftarBatch(overrides);
+  const sekarang = new Date().toISOString();
+
+  if (aksi === 'mulai') {
+    // Batch PERTAMA sengaja dimulai tanpa tanggal awal, artinya menghitung
+    // sejak awal. Kalau dimulai dari sekarang, semua pendaftar yang sudah
+    // ada jadi tidak masuk batch mana pun dan hilang dari rincian.
+    const pertama = daftar.length === 0;
+    daftar.push({
+      nama: 'Batch ' + (daftar.length + 1),
+      mulai: pertama ? null : sekarang,
       selesai: null,
-    };
+    });
+  } else if (aksi === 'tutup') {
+    if (daftar.length === 0) {
+      return res.status(400).json({
+        ok: false,
+        reason: 'belum_ada_batch',
+        pesan: 'Belum ada batch yang berjalan, jadi tidak ada yang bisa ditutup.',
+      });
+    }
+    const terakhir = daftar[daftar.length - 1];
+    if (terakhir.selesai) {
+      return res.status(400).json({
+        ok: false,
+        reason: 'sudah_tertutup',
+        pesan: 'Batch terakhir sudah ditutup. Tekan "Mulai batch baru" untuk membuka yang berikutnya.',
+      });
+    }
+    terakhir.selesai = sekarang;
+    daftar.push({ nama: 'Batch ' + (daftar.length + 1), mulai: sekarang, selesai: null });
+  } else if (aksi === 'ganti-nama') {
+    const indeks = Number(req.body && req.body.indeks);
+    const nama = String((req.body && req.body.nama) || '').trim().slice(0, 60);
+    if (!Number.isInteger(indeks) || indeks < 0 || indeks >= daftar.length || !nama) {
+      return res.status(400).json({ ok: false, reason: 'permintaan_tidak_lengkap' });
+    }
+    daftar[indeks].nama = nama;
+  } else {
+    return res.status(400).json({ ok: false, reason: 'aksi_tidak_dikenal' });
   }
 
-  return {
-    aktif: true,
-    mulai: mulaiMs === null ? null : new Date(mulaiMs),
-    selesai: selesaiMs === null ? null : new Date(selesaiMs),
-    mulaiTeks: mulaiMs === null ? '' : formatWib(mulaiMs),
-    selesaiTeks: selesaiMs === null ? '' : formatWib(selesaiMs),
-  };
+  await writeOverrides({ batchDaftar: rapikanBatch(daftar) });
+  console.log('admin-statistik: ' + admin.email + ' -> batch ' + aksi);
+  return res.status(200).json({ ok: true });
 }
 
 module.exports = async function handler(req, res) {
   const admin = await requireAdmin(req);
   if (!admin.ok) return res.status(admin.status).json({ ok: false, reason: admin.reason });
 
+  if (req.method === 'POST') return tanganiPost(req, res, admin);
+
   if (req.method !== 'GET') {
-    res.setHeader('Allow', 'GET');
+    res.setHeader('Allow', 'GET, POST');
     return res.status(405).json({ ok: false, reason: 'method_not_allowed' });
   }
 
@@ -127,30 +182,35 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const jendela = jendelaBatch(overrides);
+    const hitung = (jendela) => gabungStatistik(teks.map((t) => hitungStatistik(t, overrides, jendela)));
 
-    // Dihitung DUA KALI dengan sengaja: batch untuk halaman ini, sepanjang
-    // waktu untuk angka siswa di beranda. Keduanya membaca teks CSV yang
-    // sama yang sudah diambil sekali, jadi tidak ada permintaan tambahan.
-    const batch = gabungStatistik(
-      teks.map((t) => hitungStatistik(t, overrides, jendela.aktif ? jendela : {}))
-    );
-    const sepanjangWaktu = gabungStatistik(teks.map((t) => hitungStatistik(t, overrides, {})));
+    const sepanjangWaktu = hitung({});
+
+    // Tiap batch dihitung sendiri dari rentang waktunya. Teks CSV-nya sudah
+    // diambil sekali di atas, jadi menambah batch tidak menambah permintaan
+    // ke Google, cuma perhitungan di memori.
+    const batchList = daftarBatch(overrides).map((b, i, semua) => ({
+      nama: b.nama,
+      mulai: b.mulai,
+      selesai: b.selesai,
+      aktif: i === semua.length - 1 && !b.selesai,
+      statistik: hitung({
+        mulai: tanggalAtauNull(b.mulai),
+        selesai: tanggalAtauNull(b.selesai),
+      }),
+    }));
 
     const dasar = Number(
       overrides.heroSiswaDasar !== undefined ? overrides.heroSiswaDasar : DEFAULTS.heroSiswaDasar
     );
     const angkaDasar = Number.isFinite(dasar) && dasar >= 0 ? Math.floor(dasar) : 0;
 
-    // Angka roster disimpan ke Global Config supaya beranda bisa
-    // memakainya TANPA ikut mengambil CSV tiap ada pengunjung (lihat
-    // heroSiswaOtomatis di _lib/site-defaults.js). Ditulis cuma kalau
-    // nilainya berubah: menulis di tiap muat halaman itu boros dan tidak
-    // ada gunanya.
+    // Angka roster disimpan ke Global Config supaya beranda bisa memakainya
+    // TANPA ikut mengambil CSV tiap ada pengunjung (lihat heroSiswaOtomatis
+    // di _lib/site-defaults.js). Ditulis cuma kalau nilainya berubah.
     //
     // Kegagalan menulis sengaja ditelan. Halaman ini tetap berguna walau
-    // sinkronisasinya gagal, dan menggagalkan seluruh halaman gara-gara
-    // satu angka promosi tidak sebanding.
+    // sinkronisasinya gagal.
     let disinkron = false;
     if (Number(overrides.heroSiswaOtomatis) !== sepanjangWaktu.totalOrang) {
       try {
@@ -165,14 +225,8 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({
       ok: true,
       disinkron,
-      jendela: {
-        aktif: jendela.aktif,
-        alasan: jendela.alasan || '',
-        mulaiTeks: jendela.mulaiTeks || '',
-        selesaiTeks: jendela.selesaiTeks || '',
-      },
-      batch,
       sepanjangWaktu,
+      batchList,
       // Ditampilkan sebagai penjumlahan yang terlihat, bukan satu angka
       // jadi, supaya kalau angka dasarnya ternyata dobel dengan isi roster
       // itu langsung kelihatan dan bisa dibetulkan.

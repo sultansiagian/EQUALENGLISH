@@ -79,31 +79,24 @@ async function muatStatistik() {
 }
 
 function render(data) {
-  var b = data.batch;
+  var semua = data.sepanjangWaktu;
 
-  el('stat-pendaftaran').textContent = b.totalPendaftaran;
-  el('stat-siswa').textContent = b.totalOrang;
-  el('stat-pendapatan').textContent = rupiah(b.totalPendapatan);
+  el('all-pendaftaran').textContent = semua.totalPendaftaran;
+  el('all-siswa').textContent = semua.totalOrang;
+  el('all-pendapatan').textContent = rupiah(semua.totalPendapatan);
 
-  // Periode ditulis terang-terangan. Angka pendapatan tanpa keterangan
-  // "ini periode apa" gampang disalahartikan sebagai total sepanjang
-  // waktu, dan itu selisih yang besar.
-  if (data.jendela.aktif) {
-    el('stat-periode').textContent =
-      (data.jendela.mulaiTeks || 'sejak awal') + ' sampai ' + (data.jendela.selesaiTeks || 'sekarang');
-    el('stat-periode-catatan').textContent =
-      'Periode ini mengikuti tanggal buka dan tutup pendaftaran yang kamu setel di Atur Formulir.';
-  } else {
-    el('stat-periode').textContent = 'sepanjang waktu';
-    el('stat-periode-catatan').textContent =
-      data.jendela.alasan +
-      ' Jadi yang ditampilkan di bawah adalah seluruh pendaftar, bukan satu batch. ' +
-      'Setel mode Sesuai jadwal di Atur Formulir kalau mau angkanya per batch.';
-  }
+  gambarBatch(data);
 
-  gambarDonut(b.perPaket);
-  gambarBar(b.perPaket);
-  gambarTabel(b);
+  // Komposisi paket mengikuti batch yang SEDANG BERJALAN, karena itu
+  // yang sedang bisa dipengaruhi. Kalau belum ada batch sama sekali,
+  // yang ditampilkan komposisi sepanjang waktu.
+  var aktif = (data.batchList || []).filter(function (x) { return x.aktif; })[0];
+  var dipakai = aktif ? aktif.statistik : semua;
+  el('komposisi-periode').textContent = aktif ? aktif.nama : 'sepanjang waktu';
+
+  gambarDonut(dipakai.perPaket);
+  gambarBar(dipakai.perPaket);
+  gambarTabel(dipakai);
   gambarHero(data.hero);
   gambarCatatan(data);
 }
@@ -263,13 +256,13 @@ function gambarCatatan(data) {
   var ul = el('stat-catatan');
   ul.textContent = '';
 
-  var b = data.batch;
+  var b = data.sepanjangWaktu;
   var baris = [];
 
   if (b.tanpaTanggal > 0) {
     baris.push(
       b.tanpaTanggal +
-        ' baris tidak punya tanggal yang terbaca, jadi tidak bisa dipastikan masuk batch ini dan tidak ikut dihitung.'
+        ' baris tidak punya tanggal yang terbaca, jadi tidak bisa dipastikan masuk batch mana dan tidak ikut dihitung di rincian batch.'
     );
   }
   if (b.takDikenal > 0) {
@@ -278,6 +271,33 @@ function gambarCatatan(data) {
         ' baris paketnya kosong atau tidak dikenali, jadi ikut dihitung sebagai pendaftaran tapi tidak masuk pendapatan.'
     );
   }
+  // Selisih antara total sepanjang waktu dan jumlah seluruh batch.
+  //
+  // Ini bisa terjadi dan bukan bug: baris yang kolom Timestamp-nya tidak
+  // terbaca tetap masuk hitungan sepanjang waktu (di sana tanggalnya
+  // memang tidak dipakai), tapi tidak bisa ditempatkan ke batch mana pun.
+  // Tanpa dikatakan, dua angka yang tidak cocok di satu layar terlihat
+  // seperti salah hitung.
+  var daftarBatch = data.batchList || [];
+  if (daftarBatch.length > 0) {
+    var jumlahBatch = daftarBatch.reduce(function (a, x) {
+      return {
+        pendaftaran: a.pendaftaran + x.statistik.totalPendaftaran,
+        pendapatan: a.pendapatan + x.statistik.totalPendapatan,
+      };
+    }, { pendaftaran: 0, pendapatan: 0 });
+
+    var selisihPendaftaran = b.totalPendaftaran - jumlahBatch.pendaftaran;
+    if (selisihPendaftaran > 0) {
+      baris.push(
+        selisihPendaftaran +
+          " baris tidak masuk batch mana pun karena tanggalnya tidak terbaca, senilai " +
+          rupiah(b.totalPendapatan - jumlahBatch.pendapatan) +
+          ". Itu sebabnya jumlah semua batch lebih kecil dari total sepanjang waktu. Perbaiki kolom Timestamp barisnya di spreadsheet supaya ikut terhitung."
+      );
+    }
+  }
+
   if (data.sumberGagal && data.sumberGagal.length > 0) {
     baris.push(
       data.sumberGagal.length +
@@ -349,4 +369,216 @@ async function simpanDasar() {
 
 document.addEventListener('DOMContentLoaded', function () {
   el('stat-simpan').addEventListener('click', simpanDasar);
+  pasangTombolBatch();
 });
+
+// ============================================================
+// CATATAN BATCH
+// ============================================================
+// Yang disimpan server cuma rentang waktu tiap batch; angkanya dihitung
+// ulang dari roster tiap halaman ini dibuka. Lihat alasannya di
+// api/_lib/handler-statistik.js.
+
+// Warna per batch, berputar. Sengaja beda TERANGNYA, bukan cuma beda
+// rona, jadi bar-nya tetap bisa dibedakan waktu dicetak hitam putih.
+var WARNA_BATCH = ['#000000', '#ffacdf', '#5c5b5b', '#ffd7ef', '#8a8888'];
+
+function tanggalSingkat(iso) {
+  if (!iso) return null;
+  var d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) return null;
+  return d.toLocaleDateString('id-ID', {
+    timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', year: 'numeric',
+  });
+}
+
+function periodeBatch(b) {
+  var mulai = tanggalSingkat(b.mulai);
+  var selesai = tanggalSingkat(b.selesai);
+  if (!mulai && !selesai) return 'sejak awal sampai sekarang';
+  if (!mulai) return 'sejak awal sampai ' + selesai;
+  if (!selesai) return mulai + ' sampai sekarang';
+  return mulai + ' sampai ' + selesai;
+}
+
+function gambarBatch(data) {
+  var daftar = data.batchList || [];
+  var wrap = el('batch-list');
+  var chartWrap = el('batch-chart-wrap');
+  wrap.textContent = '';
+
+  el('batch-jumlah').textContent = daftar.length === 0 ? '' : daftar.length + ' batch';
+  el('batch-kosong').hidden = daftar.length > 0;
+  chartWrap.hidden = daftar.length < 2;
+
+  // Tombolnya saling menggantikan, bukan dua-duanya tampil: sebelum ada
+  // batch cuma "mulai" yang masuk akal, sesudahnya cuma "tutup".
+  var adaAktif = daftar.some(function (b) { return b.aktif; });
+  el('batch-mulai').hidden = daftar.length > 0;
+  el('batch-tutup').hidden = !adaAktif;
+
+  // Terbaru di atas: batch yang sedang berjalan yang paling sering dilihat.
+  var urut = daftar.slice().reverse();
+
+  urut.forEach(function (b) {
+    var asli = daftar.indexOf(b);
+    var kartu = document.createElement('div');
+    kartu.className = 'batch-item' + (b.aktif ? ' batch-item-aktif' : '');
+
+    var kepala = document.createElement('div');
+    kepala.className = 'batch-kepala';
+
+    var titik = document.createElement('span');
+    titik.className = 'batch-titik';
+    titik.style.background = WARNA_BATCH[asli % WARNA_BATCH.length];
+    kepala.appendChild(titik);
+
+    var nama = document.createElement('strong');
+    nama.textContent = b.nama;
+    kepala.appendChild(nama);
+
+    if (b.aktif) {
+      var badge = document.createElement('span');
+      badge.className = 'batch-badge';
+      badge.textContent = 'sedang berjalan';
+      kepala.appendChild(badge);
+    }
+
+    var periode = document.createElement('span');
+    periode.className = 'batch-periode';
+    periode.textContent = periodeBatch(b);
+    kepala.appendChild(periode);
+
+    var ganti = document.createElement('button');
+    ganti.type = 'button';
+    ganti.className = 'batch-ganti-nama';
+    ganti.textContent = 'Ganti nama';
+    ganti.addEventListener('click', function () { gantiNamaBatch(asli, b.nama); });
+    kepala.appendChild(ganti);
+
+    var angka = document.createElement('div');
+    angka.className = 'batch-angka';
+    var s = b.statistik;
+    [
+      ['Pendaftaran', String(s.totalPendaftaran)],
+      ['Siswa', String(s.totalOrang)],
+      ['Pendapatan', rupiah(s.totalPendapatan)],
+    ].forEach(function (pasang) {
+      var kotak = document.createElement('div');
+      kotak.innerHTML =
+        '<span class="batch-angka-label"></span><strong class="batch-angka-nilai"></strong>';
+      kotak.querySelector('.batch-angka-label').textContent = pasang[0];
+      kotak.querySelector('.batch-angka-nilai').textContent = pasang[1];
+      angka.appendChild(kotak);
+    });
+
+    // Rincian paket per batch, supaya tidak perlu menebak dari mana
+    // pendapatannya datang.
+    var rinci = document.createElement('p');
+    rinci.className = 'batch-rinci';
+    rinci.textContent = s.perPaket
+      .map(function (p) { return p.nama + ' ' + p.pendaftaran; })
+      .join(' · ');
+
+    kartu.appendChild(kepala);
+    kartu.appendChild(angka);
+    kartu.appendChild(rinci);
+    wrap.appendChild(kartu);
+  });
+
+  gambarBatchBars(daftar);
+}
+
+function gambarBatchBars(daftar) {
+  var wrap = el('batch-bars');
+  wrap.textContent = '';
+  var maks = daftar.reduce(function (a, b) { return Math.max(a, b.statistik.totalPendapatan); }, 0);
+
+  daftar.forEach(function (b, i) {
+    var baris = document.createElement('div');
+    baris.className = 'stat-bar-baris';
+
+    var label = document.createElement('span');
+    label.className = 'stat-bar-label';
+    label.textContent = b.nama;
+
+    var rel = document.createElement('span');
+    rel.className = 'stat-bar-rel';
+    var isi = document.createElement('span');
+    isi.className = 'stat-bar-isi';
+    isi.style.width = maks > 0 ? (b.statistik.totalPendapatan / maks) * 100 + '%' : '0%';
+    isi.style.background = WARNA_BATCH[i % WARNA_BATCH.length];
+    rel.appendChild(isi);
+
+    var nilai = document.createElement('span');
+    nilai.className = 'stat-bar-nilai';
+    nilai.textContent = rupiah(b.statistik.totalPendapatan);
+
+    baris.appendChild(label);
+    baris.appendChild(rel);
+    baris.appendChild(nilai);
+    wrap.appendChild(baris);
+  });
+}
+
+async function aksiBatch(aksi, isi) {
+  var status = el('batch-status');
+  var tombol = [el('batch-mulai'), el('batch-tutup')];
+
+  tombol.forEach(function (t) { t.disabled = true; });
+  status.removeAttribute('data-state');
+  status.textContent = 'Menyimpan…';
+
+  try {
+    var res = await fetch('/api/admin-data', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify(Object.assign({ bagian: 'statistik', aksi: aksi }, isi || {})),
+    });
+    var data = await res.json();
+
+    if (res.status === 401) return handleUnauthorized(data.reason);
+
+    if (res.ok && data.ok) {
+      status.dataset.state = 'ok';
+      status.textContent = 'Tersimpan. Menghitung ulang…';
+      // Angkanya dihitung ulang server, jadi halaman ini memuat ulang
+      // datanya daripada menebak sendiri hasilnya.
+      await muatStatistik();
+      return;
+    }
+
+    status.dataset.state = 'error';
+    status.textContent = data.pesan || data.reason || 'Gagal (' + res.status + ').';
+  } catch (err) {
+    status.dataset.state = 'error';
+    status.textContent = 'Gagal: ' + err.message;
+  } finally {
+    tombol.forEach(function (t) { t.disabled = false; });
+  }
+}
+
+function gantiNamaBatch(indeks, namaSekarang) {
+  var nama = window.prompt('Nama batch ini:', namaSekarang);
+  if (nama === null) return;
+  nama = nama.trim();
+  if (!nama) return;
+  aksiBatch('ganti-nama', { indeks: indeks, nama: nama });
+}
+
+function pasangTombolBatch() {
+  el('batch-mulai').addEventListener('click', function () {
+    aksiBatch('mulai');
+  });
+  el('batch-tutup').addEventListener('click', function () {
+    if (
+      !window.confirm(
+        'Tutup batch yang sedang berjalan dan mulai batch baru?\n\n' +
+          'Pendaftar setelah ini masuk ke batch baru. Angka batch lama tidak berubah.'
+      )
+    ) {
+      return;
+    }
+    aksiBatch('tutup');
+  });
+}
