@@ -1580,15 +1580,27 @@ body::before {
 .admin-nav-bawah {
   margin: 32px 0 0;
   padding-top: 20px;
-  border-top: 1px solid var(--line);
+  /* Putih transparan, bukan var(--line): garis itu hitam 14% alpha dan
+     tidak terlihat sama sekali di atas foto gelap. */
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 /* Halaman yang sedang dibuka. Digambar sebagai <span>, bukan link, jadi
    perlu disamakan bentuknya di sini. */
+/* Halaman yang sedang dibuka: PINK dengan garis putih, kebalikan dari
+   link lain yang putih dengan garis pink. Dibalik begitu supaya yang
+   sedang dibuka langsung terbaca berbeda tanpa perlu membandingkan.
+
+   Sempat memakai var(--black) dan itu keliru: navigasi ini duduk di
+   atas foto gelap, bukan di dalam kartu terang, jadi teks hitamnya
+   nyaris hilang. Aturan terang untuk latar foto di bagian LATAR FOTO
+   cuma menyasar <a>, sedangkan halaman aktif digambar sebagai <span>
+   supaya tidak bisa diklik, jadi tidak ikut kena. */
 .admin-nav-aktif {
   font-weight: 700;
-  color: var(--black);
-  border-bottom: 2px solid var(--pink);
+  color: var(--pink);
+  border-bottom: 2px solid var(--white);
+  padding-bottom: 2px;
   cursor: default;
 }
 
