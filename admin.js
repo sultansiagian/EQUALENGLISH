@@ -20,6 +20,7 @@ window.onAdminReady = function (data) {
       })
     : [];
   renderTestiList();
+  muatKiriman();
 };
 
 // ============================================================
@@ -104,6 +105,11 @@ const PHOTO_SLOT_SPECS = {
   // JPEG, bukan WebP -- beberapa platform share link (WhatsApp/Instagram)
   // kadang tidak konsisten menampilkan preview WebP untuk og:image.
   ogBanner: { width: 1200, height: 630, mode: 'cover', type: 'image/jpeg', quality: 0.85 },
+  // Tanda tangan sertifikat. Mendatar dan lebar, jadi rasionya beda
+  // sendiri. 'contain' supaya coretannya tidak terpotong berapa pun
+  // bentuk foto aslinya, dan PNG supaya garis tipis tidak berbayang
+  // seperti pada JPEG.
+  tandaTangan: { width: 600, height: 200, mode: 'contain', type: 'image/png', quality: 1 },
 };
 
 // Foto testimoni: kecil dan bulat di halaman (52px, lihat .testi-avatar di
@@ -123,6 +129,7 @@ const SLOT_TO_KEY = {
   photoKomunitas: 'photoKomunitasUrl',
   photoKelasZoom: 'photoKelasZoomUrl',
   ogBanner: 'ogBannerUrl',
+  tandaTangan: 'sertifikatTandaTanganUrl',
 };
 
 function loadImageFromFile(file) {
@@ -454,3 +461,153 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+
+// ============================================================
+// KIRIMAN TESTIMONI DARI SISWA
+// ============================================================
+// Kiriman siswa tersimpan di tab Testimoni di spreadsheet, TIDAK di
+// konten situs. Yang tayang di beranda cuma yang disalin ke array
+// "testimonials" lewat tombol Tayangkan di sini. Alasan pemisahannya ada
+// di api/admin-testimoni.js.
+
+var kirimanTerakhir = [];
+
+async function muatKiriman() {
+  var status = document.getElementById('kiriman-status');
+  if (!status) return;
+
+  try {
+    var res = await fetch('/api/admin-testimoni', { headers: authHeaders() });
+    var data = await res.json();
+    if (res.status === 401) return handleUnauthorized(data.reason);
+
+    if (!res.ok || !data.ok) {
+      status.textContent = 'Gagal memuat kiriman: ' + (data.pesan || data.reason || res.status);
+      status.dataset.state = 'error';
+      return;
+    }
+
+    kirimanTerakhir = data.testimoni || [];
+    status.hidden = true;
+    renderKiriman();
+  } catch (err) {
+    status.textContent = 'Gagal memuat kiriman: ' + err.message;
+    status.dataset.state = 'error';
+  }
+}
+
+function renderKiriman() {
+  var wrap = document.getElementById('kiriman-list');
+  wrap.textContent = '';
+
+  if (kirimanTerakhir.length === 0) {
+    var kosong = document.createElement('p');
+    kosong.className = 'admin-hint';
+    kosong.textContent =
+      'Belum ada kiriman. Siswa baru bisa mengisi ini setelah seluruh sesi kelasnya selesai.';
+    wrap.appendChild(kosong);
+    return;
+  }
+
+  kirimanTerakhir.forEach(function (t, i) {
+    var kartu = document.createElement('div');
+    kartu.className = 'kiriman-item' + (t.sudahTayang ? ' kiriman-item-tayang' : '');
+
+    var kepala = document.createElement('div');
+    kepala.className = 'kiriman-kepala';
+
+    var nama = document.createElement('strong');
+    nama.textContent = t.nama || '(tanpa nama)';
+    kepala.appendChild(nama);
+
+    // Fakultas dan skor cuma ditampilkan kalau ada. Baris meta yang
+    // isinya tanda hubung kosong lebih berisik daripada tidak ada.
+    var metaTeks = [t.fakultas, t.skorEpt ? 'EPT ' + t.skorEpt : '', t.waktu]
+      .filter(Boolean)
+      .join(' · ');
+    if (metaTeks) {
+      var meta = document.createElement('span');
+      meta.className = 'kiriman-meta';
+      meta.textContent = metaTeks;
+      kepala.appendChild(meta);
+    }
+
+    if (t.sudahTayang) {
+      var badge = document.createElement('span');
+      badge.className = 'kiriman-badge';
+      badge.textContent = 'tayang di beranda';
+      kepala.appendChild(badge);
+    }
+
+    var pesan = document.createElement('p');
+    pesan.className = 'kiriman-pesan';
+    pesan.textContent = t.pesan;
+
+    var aksi = document.createElement('div');
+    aksi.className = 'kiriman-aksi';
+
+    var tombol = document.createElement('button');
+    tombol.type = 'button';
+    tombol.className = 'admin-btn ' + (t.sudahTayang ? 'admin-btn-ghost' : 'admin-btn-primary');
+    tombol.textContent = t.sudahTayang ? 'Turunkan dari beranda' : 'Tayangkan di beranda';
+    tombol.addEventListener('click', function () {
+      prosesKiriman(i, t.sudahTayang ? 'turunkan' : 'tayangkan', tombol);
+    });
+
+    var statusAksi = document.createElement('span');
+    statusAksi.className = 'admin-save-status kiriman-status';
+
+    aksi.appendChild(tombol);
+    aksi.appendChild(statusAksi);
+
+    kartu.appendChild(kepala);
+    kartu.appendChild(pesan);
+    kartu.appendChild(aksi);
+    wrap.appendChild(kartu);
+  });
+}
+
+async function prosesKiriman(indeks, aksi, tombol) {
+  var t = kirimanTerakhir[indeks];
+  var statusEl = tombol.parentNode.querySelector('.kiriman-status');
+
+  tombol.disabled = true;
+  statusEl.removeAttribute('data-state');
+  statusEl.textContent = aksi === 'tayangkan' ? 'Menayangkan…' : 'Menurunkan…';
+
+  try {
+    var res = await fetch('/api/admin-testimoni', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify({
+        aksi: aksi,
+        id: t.id,
+        nama: t.nama,
+        fakultas: t.fakultas,
+        skorEpt: t.skorEpt,
+        pesan: t.pesan,
+      }),
+    });
+    var data = await res.json();
+
+    if (res.status === 401) return handleUnauthorized(data.reason);
+
+    if (res.ok && data.ok) {
+      kirimanTerakhir[indeks].sudahTayang = aksi === 'tayangkan';
+      renderKiriman();
+      // Daftar testimoni beranda di atas TIDAK ikut disegarkan di sini.
+      // Isinya baru dibaca ulang waktu halaman dimuat berikutnya, dan
+      // menyegarkannya sekarang berisiko menimpa suntingan yang sedang
+      // diketik admin di daftar itu tapi belum ditekan Simpan.
+      return;
+    }
+
+    statusEl.dataset.state = 'error';
+    statusEl.textContent = data.pesan || data.reason || 'Gagal (' + res.status + ').';
+  } catch (err) {
+    statusEl.dataset.state = 'error';
+    statusEl.textContent = 'Gagal: ' + err.message;
+  } finally {
+    tombol.disabled = false;
+  }
+}

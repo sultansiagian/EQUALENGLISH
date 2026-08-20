@@ -247,6 +247,55 @@
           </div>
         </section>
 
+        <!-- Kiriman testimoni dari siswa lewat /kelas. Tidak pernah
+             tayang sendiri: tersimpan di tab Testimoni di spreadsheet,
+             lalu disalin ke daftar di atas hanya kalau kamu menekan
+             Tayangkan. Lihat api/admin-testimoni.js. -->
+        <section class="admin-card">
+          <h2>Kiriman Siswa <span class="admin-card-note">testimoni dari /kelas</span></h2>
+          <p class="admin-hint">
+            Siswa mengisi ini untuk membuka sertifikat kelulusannya. Tidak ada
+            yang tayang di beranda sebelum kamu menekan Tayangkan, dan yang
+            ditayangkan akan muncul di daftar Testimoni di atas.
+          </p>
+          <p id="kiriman-status" class="admin-status">
+            <span class="admin-spinner" aria-hidden="true"></span> Memuat kiriman…
+          </p>
+          <div id="kiriman-list" class="kiriman-list"></div>
+        </section>
+
+        <!-- Dipakai HANYA di sertifikat, tidak pernah tampil di halaman
+             publik mana pun. -->
+        <section class="admin-card">
+          <h2>Sertifikat Kelulusan <span class="admin-card-note">penandatangan</span></h2>
+          <p class="admin-hint">
+            Nama ini <strong>tidak tampil di halaman mana pun</strong>, cuma
+            tercetak di sertifikat. Tapi sertifikat itu sering diposting siswa
+            ke media sosial, jadi anggap saja namanya ikut jadi publik.
+            Kosongkan kalau sertifikatnya cukup memakai logo saja.
+          </p>
+          <label class="admin-field">
+            <span>Nama mentor</span>
+            <input type="text" data-key="sertifikatMentorNama" maxlength="80" />
+          </label>
+          <div class="admin-photo" data-slot="tandaTangan">
+            <span class="admin-photo-label">Gambar tanda tangan</span>
+            <img class="admin-photo-preview admin-photo-preview-contain" alt="Pratinjau tanda tangan" hidden />
+            <input type="file" accept="image/*" class="admin-photo-input" />
+            <span class="admin-photo-status"></span>
+          </div>
+          <p class="admin-hint">
+            Foto tanda tangan di atas kertas putih sudah cukup. Latarnya ikut
+            diputihkan waktu diproses, dan sertifikatnya juga berlatar putih,
+            jadi hasilnya tetap menyatu.
+          </p>
+          <p class="admin-hint">
+            Nama mentor ikut tersimpan waktu kamu menekan <strong>Simpan</strong>
+            di bagian teks dan harga. Gambar tanda tangan langsung tersimpan
+            begitu selesai diunggah, tanpa tombol terpisah.
+          </p>
+        </section>
+
         <!-- Alat bantu kalau menyimpan gagal. Sengaja ditaruh paling bawah
              dan tidak mencolok -- ini bukan fitur sehari-hari, cuma dipakai
              waktu ada yang error. -->

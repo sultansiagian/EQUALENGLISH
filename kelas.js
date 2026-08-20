@@ -72,6 +72,11 @@ function showState(name) {
 revealNow(document.querySelector('.kelas-hero-content > [data-reveal]'));
 revealNow(gateStates.signin);
 
+var kredensialTerakhir = null;
+// Disimpan supaya tombol unduh bisa menggambar sertifikat tanpa
+// meminta ulang datanya ke server.
+var dataSertifikat = null;
+
 function renderMaterials(materials) {
   const zoomLink = document.getElementById('kelas-zoom-link');
   const driveLink = document.getElementById('kelas-drive-link');
@@ -91,6 +96,7 @@ function renderMaterials(materials) {
 
   renderSchedule(materials.schedule || []);
   renderProgres(materials.progres);
+  renderSertifikat(materials);
 
   // Default terbuka kalau server belum kirim zoomUnlocked (mis. materials
   // lama yang di-cache) -- gagal terbuka, sama seperti practiceUnlocked.
@@ -430,6 +436,12 @@ function renderGreeting(profile) {
 window.handleCredentialResponse = async function handleCredentialResponse(response) {
   showState('loading');
 
+  // Disimpan karena pengiriman testimoni nanti perlu membuktikan
+  // identitas yang sama ke server. Token Google berlaku sekitar satu
+  // jam; setelah itu server menolak dan siswa diminta login ulang,
+  // yang memang perilaku yang benar.
+  kredensialTerakhir = response.credential;
+
   let profile = {};
   try {
     // Cuma buat ditampilkan di UI (email, nama, foto profil). Ini BUKAN
@@ -501,3 +513,313 @@ if (errorReloadBtn) errorReloadBtn.addEventListener('click', () => window.locati
 // shader-background.js mencari .hero-shader begitu file itu sendiri
 // dimuat (self-invoking), jadi tidak ada inisialisasi tambahan yang
 // perlu dipanggil dari sini -- lihat urutan <script> di kelas.html.
+
+// ============================================================
+// SERTIFIKAT KELULUSAN
+// ============================================================
+// Syaratnya ditentukan SERVER (hitungSertifikat di
+// api/verify-access.js), bukan di sini: seluruh sesi sudah lewat DAN
+// siswa ini sudah mengisi testimoni. File ini cuma menggambarkan
+// keadaannya dan menyediakan tombolnya.
+
+var SERTIFIKAT_LEBAR = 1600;
+var SERTIFIKAT_TINGGI = 1131; // sekitar rasio A4 mendatar
+
+function renderSertifikat(materials) {
+  var kartu = document.getElementById('kelas-sertifikat');
+  if (!kartu) return;
+
+  var s = materials.sertifikat;
+  // materials lama (mis. dari cache) belum punya field ini. Kartunya
+  // disembunyikan saja, bukan menampilkan keadaan yang salah.
+  if (!s) {
+    kartu.hidden = true;
+    return;
+  }
+
+  dataSertifikat = {
+    nama: materials.namaLengkap || '',
+    mentorNama: materials.sertifikatMentorNama || '',
+    tandaTanganUrl: materials.sertifikatTandaTanganUrl || '',
+  };
+
+  var status = document.getElementById('sertifikat-status');
+  var form = document.getElementById('sertifikat-form');
+  var unduh = document.getElementById('sertifikat-unduh');
+
+  kartu.hidden = false;
+  form.hidden = true;
+  unduh.hidden = true;
+
+  if (!s.adaJadwal) {
+    // Tanpa jadwal, tidak ada cara tahu kelasnya sudah selesai. Dikatakan
+    // apa adanya, bukan dibiarkan seperti tombol yang rusak.
+    status.textContent =
+      'Sertifikat terbuka setelah sesi terakhir selesai. Jadwal sesi belum terbaca di sini, ' +
+      'jadi hubungi kami lewat WhatsApp kalau kelasmu sebenarnya sudah selesai.';
+    return;
+  }
+
+  if (!s.kelasSelesai) {
+    status.textContent =
+      'Sertifikatmu terbuka setelah sesi terakhir selesai. Sedikit lagi, teruskan sampai tuntas.';
+    return;
+  }
+
+  if (!s.sudahTestimoni) {
+    status.textContent =
+      'Kelasmu sudah selesai. Tinggal satu langkah: ceritakan pengalamanmu di bawah, ' +
+      'lalu sertifikatmu langsung bisa diunduh.';
+    form.hidden = false;
+    return;
+  }
+
+  status.textContent =
+    'Selamat, kamu sudah menyelesaikan kelasnya. Terima kasih sudah menulis testimoni.';
+  unduh.hidden = false;
+}
+
+async function kirimTestimoni(e) {
+  e.preventDefault();
+
+  var pesan = document.getElementById('testi-pesan').value.trim();
+  var status = document.getElementById('testi-status');
+  var tombol = document.getElementById('testi-kirim');
+
+  if (!pesan) {
+    status.dataset.state = 'error';
+    status.textContent = 'Ceritanya masih kosong.';
+    return;
+  }
+  if (!kredensialTerakhir) {
+    status.dataset.state = 'error';
+    status.textContent = 'Sesi loginmu sudah kedaluwarsa. Muat ulang halaman lalu masuk lagi.';
+    return;
+  }
+
+  tombol.disabled = true;
+  status.removeAttribute('data-state');
+  status.textContent = 'Mengirim...';
+
+  try {
+    var res = await fetch('/api/kelas-testimoni', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        credential: kredensialTerakhir,
+        testimoni: {
+          nama: dataSertifikat ? dataSertifikat.nama : '',
+          fakultas: document.getElementById('testi-fakultas').value.trim(),
+          skorEpt: document.getElementById('testi-skor').value.trim(),
+          pesan: pesan,
+        },
+      }),
+    });
+    var data = await res.json();
+
+    if (res.ok && data.ok) {
+      document.getElementById('sertifikat-form').hidden = true;
+      document.getElementById('sertifikat-status').textContent = data.pesan
+        ? data.pesan
+        : 'Terima kasih. Sertifikatmu sudah bisa diunduh.';
+      document.getElementById('sertifikat-unduh').hidden = data.sertifikatTerbuka === false;
+      return;
+    }
+
+    status.dataset.state = 'error';
+    status.textContent = data.pesan || 'Gagal mengirim. Coba lagi sebentar lagi.';
+  } catch (err) {
+    status.dataset.state = 'error';
+    status.textContent = 'Gagal mengirim: ' + err.message;
+  } finally {
+    tombol.disabled = false;
+  }
+}
+
+/**
+ * Muat satu gambar, balik null kalau gagal.
+ *
+ * Sengaja tidak pernah melempar: sertifikat tanpa logo atau tanpa tanda
+ * tangan masih berguna, sedangkan sertifikat yang gagal dibuat sama
+ * sekali tidak.
+ */
+function muatGambar(src) {
+  return new Promise(function (resolve) {
+    if (!src) return resolve(null);
+    var img = new Image();
+    // Tanda tangan disimpan di Vercel Blob (domain lain). Tanpa ini,
+    // menggambarnya ke canvas membuat canvas tercemar dan toBlob ditolak
+    // browser, jadi unduhannya gagal total.
+    img.crossOrigin = 'anonymous';
+    img.onload = function () { resolve(img); };
+    img.onerror = function () { resolve(null); };
+    img.src = src;
+  });
+}
+
+function teksTengah(ctx, teks, y, font, warna) {
+  ctx.font = font;
+  ctx.fillStyle = warna;
+  ctx.textAlign = 'center';
+  ctx.fillText(teks, SERTIFIKAT_LEBAR / 2, y);
+}
+
+async function buatSertifikat() {
+  var status = document.getElementById('sertifikat-unduh-status');
+  var tombol = document.getElementById('sertifikat-tombol');
+
+  tombol.disabled = true;
+  status.removeAttribute('data-state');
+  status.textContent = 'Menyiapkan...';
+
+  try {
+    // Font harus benar-benar termuat sebelum digambar. Canvas tidak
+    // menunggu font seperti HTML: kalau digambar terlalu cepat, hasilnya
+    // memakai font cadangan dan sertifikatnya terlihat asal jadi.
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+
+    var hasil = await Promise.all([
+      muatGambar('/EDITS/logo-equal-black.png'),
+      muatGambar(dataSertifikat && dataSertifikat.tandaTanganUrl),
+    ]);
+    var logo = hasil[0];
+    var ttd = hasil[1];
+
+    var canvas = document.createElement('canvas');
+    canvas.width = SERTIFIKAT_LEBAR;
+    canvas.height = SERTIFIKAT_TINGGI;
+    var ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, SERTIFIKAT_LEBAR, SERTIFIKAT_TINGGI);
+
+    // Bingkai: garis pink tebal di luar, garis hitam tipis di dalam.
+    ctx.strokeStyle = '#ffacdf';
+    ctx.lineWidth = 18;
+    ctx.strokeRect(40, 40, SERTIFIKAT_LEBAR - 80, SERTIFIKAT_TINGGI - 80);
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(72, 72, SERTIFIKAT_LEBAR - 144, SERTIFIKAT_TINGGI - 144);
+
+    if (logo) {
+      var lebarLogo = 260;
+      var tinggiLogo = (logo.height / logo.width) * lebarLogo;
+      ctx.drawImage(logo, (SERTIFIKAT_LEBAR - lebarLogo) / 2, 140, lebarLogo, tinggiLogo);
+    }
+
+    teksTengah(ctx, 'SERTIFIKAT KELULUSAN', 330, '500 30px "DM Mono", monospace', '#5c5b5b');
+    teksTengah(ctx, 'Diberikan kepada', 420, '400 30px "DM Sans", sans-serif', '#5c5b5b');
+
+    var nama = (dataSertifikat && dataSertifikat.nama) || 'Peserta EQUAL English';
+    // Nama panjang dikecilkan supaya tetap muat di dalam bingkai, bukan
+    // terpotong di tepinya.
+    var ukuran = 90;
+    ctx.font = '700 ' + ukuran + 'px "Syne", sans-serif';
+    while (ctx.measureText(nama).width > SERTIFIKAT_LEBAR - 320 && ukuran > 36) {
+      ukuran -= 4;
+      ctx.font = '700 ' + ukuran + 'px "Syne", sans-serif';
+    }
+    teksTengah(ctx, nama, 530, '700 ' + ukuran + 'px "Syne", sans-serif', '#000000');
+
+    ctx.strokeStyle = '#ffacdf';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(SERTIFIKAT_LEBAR / 2 - 320, 570);
+    ctx.lineTo(SERTIFIKAT_LEBAR / 2 + 320, 570);
+    ctx.stroke();
+
+    teksTengah(
+      ctx,
+      'atas keikutsertaannya dalam Bootcamp Persiapan EPT UI',
+      650,
+      '400 32px "DM Sans", sans-serif',
+      '#000000'
+    );
+    teksTengah(
+      ctx,
+      'yang diselenggarakan oleh EQUAL English.',
+      700,
+      '400 32px "DM Sans", sans-serif',
+      '#000000'
+    );
+
+    var bulan = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+    ];
+    var kini = new Date();
+    teksTengah(
+      ctx,
+      kini.getDate() + ' ' + bulan[kini.getMonth()] + ' ' + kini.getFullYear(),
+      770,
+      '500 26px "DM Mono", monospace',
+      '#5c5b5b'
+    );
+
+    // Blok tanda tangan. Kalau tidak ada nama mentor yang disetel,
+    // seluruh blok ini dilewati -- garis tanda tangan kosong tanpa nama
+    // terlihat seperti sertifikat yang belum selesai dibuat.
+    var namaMentor = (dataSertifikat && dataSertifikat.mentorNama) || '';
+    if (namaMentor) {
+      // 915, bukan lebih rendah: di bawah garis masih ada nama mentor
+      // (+45) dan kata Mentor (+82), jadi barisan terakhirnya mendarat
+      // di 997 sementara bingkai dalam berakhir di 1059. Sisa 62px itu
+      // yang membuatnya tidak terlihat mepet.
+      var yGaris = 915;
+      if (ttd) {
+        var lebarTtd = 240;
+        var tinggiTtd = (ttd.height / ttd.width) * lebarTtd;
+        if (tinggiTtd > 120) {
+          tinggiTtd = 120;
+          lebarTtd = (ttd.width / ttd.height) * tinggiTtd;
+        }
+        ctx.drawImage(
+          ttd,
+          (SERTIFIKAT_LEBAR - lebarTtd) / 2,
+          yGaris - tinggiTtd - 10,
+          lebarTtd,
+          tinggiTtd
+        );
+      }
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(SERTIFIKAT_LEBAR / 2 - 200, yGaris);
+      ctx.lineTo(SERTIFIKAT_LEBAR / 2 + 200, yGaris);
+      ctx.stroke();
+      teksTengah(ctx, namaMentor, yGaris + 45, '600 28px "DM Sans", sans-serif', '#000000');
+      teksTengah(ctx, 'Mentor', yGaris + 82, '400 24px "DM Mono", monospace', '#5c5b5b');
+    }
+
+    var blob = await new Promise(function (resolve) {
+      canvas.toBlob(resolve, 'image/png');
+    });
+    if (!blob) throw new Error('gambar gagal dibuat');
+
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'Sertifikat EQUAL English - ' + nama + '.png';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    // Ditunda sebentar sebelum dilepas: sebagian browser membatalkan
+    // unduhan kalau URL blob-nya sudah dicabut waktu unduhan mulai.
+    window.setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+
+    status.dataset.state = 'ok';
+    status.textContent = 'Tersimpan ke folder unduhanmu.';
+  } catch (err) {
+    status.dataset.state = 'error';
+    status.textContent = 'Gagal membuat sertifikat: ' + err.message;
+  } finally {
+    tombol.disabled = false;
+  }
+}
+
+(function pasangSertifikat() {
+  var form = document.getElementById('sertifikat-form');
+  if (form) form.addEventListener('submit', kirimTestimoni);
+  var tombol = document.getElementById('sertifikat-tombol');
+  if (tombol) tombol.addEventListener('click', buatSertifikat);
+})();

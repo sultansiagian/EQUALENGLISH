@@ -7,6 +7,10 @@ const crypto = require('crypto');
 // sheet yang sama persis. Perilakunya sudah dibuktikan identik dengan
 // versi yang dulu ada di file ini.
 const { csvToRows } = require('./_lib/csv');
+// Dipakai HANYA untuk syarat sertifikat (siapa yang sudah mengisi
+// testimoni). Global Config dioptimalkan untuk dibaca tiap request --
+// api/render-home.js melakukannya untuk tiap pengunjung beranda.
+const { readOverrides } = require('./_lib/global-config-store');
 
 /**
  * Endpoint terlindungi untuk halaman kelas EQUAL English.
@@ -594,6 +598,36 @@ function hitungProgres(sessions) {
   return { selesai, total: sessions.length };
 }
 
+/**
+ * Boleh atau tidak siswa ini mengunduh sertifikat.
+ *
+ * Dua syarat, dan keduanya harus terpenuhi:
+ *   1. Seluruh sesi batch ini sudah lewat
+ *   2. Dia sudah mengisi form testimoni
+ *
+ * Syarat kedua yang membuat testimoni benar-benar terkumpul. Syarat
+ * pertama yang membuat sertifikatnya bermakna: tanpa itu, testimoni
+ * bisa diisi di hari pertama dan sertifikat diambil sebelum kelasnya
+ * jalan, yang membuat sertifikat itu tidak menyatakan apa-apa.
+ *
+ * TANPA data jadwal sama sekali, hasilnya TIDAK BOLEH. Ini kebalikan
+ * dari computeZoomUnlock yang sengaja gagal-terbuka: kartu Zoom yang
+ * keliru terkunci merugikan siswa yang sedang menunggu kelas, sedangkan
+ * sertifikat yang keliru terbit tidak bisa ditarik kembali.
+ */
+function hitungSertifikat(sessions, overrides, email) {
+  const progres = hitungProgres(sessions);
+  const adaJadwal = progres !== null;
+  const kelasSelesai = adaJadwal && progres.selesai >= progres.total;
+
+  const daftar = Array.isArray(overrides && overrides.testimoniSudahIsi)
+    ? overrides.testimoniSudahIsi
+    : [];
+  const sudahTestimoni = daftar.indexOf(normalisasiEmail(email)) !== -1;
+
+  return { boleh: kelasSelesai && sudahTestimoni, adaJadwal, kelasSelesai, sudahTestimoni };
+}
+
 function computeZoomUnlock(sessions) {
   const now = Date.now();
 
@@ -885,7 +919,13 @@ async function verifyGoogleTokenLocal(idToken, expectedClientId) {
     return { valid: false, reason: 'token_expired' };
   }
 
-  return { valid: true, email: String(payload.email || '').toLowerCase() };
+  return {
+    valid: true,
+    email: String(payload.email || '').toLowerCase(),
+    // Dipakai mencetak nama di sertifikat. Diambil dari token yang sudah
+    // diverifikasi, bukan dari yang dikirim browser.
+    nama: String(payload.name || '').trim(),
+  };
 }
 
 // Jalur CADANGAN -- ini cara verifikasi yang dipakai SEBELUM ada
@@ -913,7 +953,13 @@ async function verifyGoogleTokenRemote(idToken, expectedClientId) {
     return { valid: false, reason: 'token_expired' };
   }
 
-  return { valid: true, email: String(payload.email || '').toLowerCase() };
+  return {
+    valid: true,
+    email: String(payload.email || '').toLowerCase(),
+    // Dipakai mencetak nama di sertifikat. Diambil dari token yang sudah
+    // diverifikasi, bukan dari yang dikirim browser.
+    nama: String(payload.name || '').trim(),
+  };
 }
 
 async function verifyGoogleToken(idToken, expectedClientId) {
@@ -1001,10 +1047,14 @@ module.exports = async function handler(req, res) {
           'DEFAULT_MATERIALS di kode, sheet materi belum aktif.'
       );
     }
-    const [enrolledEmails, scheduleResult, materialsOverrides] = await Promise.all([
+    const [enrolledEmails, scheduleResult, materialsOverrides, overrides] = await Promise.all([
       fetchEnrolledEmails(rosterUrls, validCutoff),
       scheduleUrl ? fetchSchedule(scheduleUrl) : Promise.resolve({ sessions: [] }),
       materialsUrl ? fetchMaterialsOverrides(materialsUrl) : Promise.resolve({}),
+      // Gagal-diam-diam: readOverrides sendiri sudah menangkap errornya
+      // dan balik {}. Syarat sertifikat lalu jadi "belum isi testimoni",
+      // yang aman -- tidak ada yang kehilangan akses materi gara-gara ini.
+      readOverrides().catch(() => ({})),
     ]);
     // Dicocokkan dalam bentuk yang sudah disamakan di KEDUA sisi. Email
     // aslinya tetap dipakai buat ditampilkan ke siswa dan dicatat di log,
@@ -1042,6 +1092,12 @@ module.exports = async function handler(req, res) {
       zoomUnlocked: computeZoomUnlock(scheduleResult.sessions),
       // Sama alasannya: progres perlu tahu total sesi seluruhnya.
       progres: hitungProgres(scheduleResult.sessions),
+      sertifikat: hitungSertifikat(scheduleResult.sessions, overrides, verified.email),
+      // Nama dari token yang sudah diverifikasi, dipakai mencetak
+      // sertifikat. Bukan dari yang dikirim browser.
+      namaLengkap: verified.nama || '',
+      sertifikatMentorNama: String(overrides.sertifikatMentorNama || '').trim(),
+      sertifikatTandaTanganUrl: String(overrides.sertifikatTandaTanganUrl || '').trim(),
     };
 
     return res.status(200).json({ ok: true, materials });
@@ -1050,3 +1106,13 @@ module.exports = async function handler(req, res) {
     return res.status(502).json({ ok: false, reason: 'upstream_error' });
   }
 }
+
+// Diekspor supaya api/kelas-testimoni.js tidak perlu menyalin ulang
+// verifikasi token Google dan pengecekan roster. Pola yang sama dipakai
+// api/render-home.js. Vercel tetap memanggil module.exports sebagai
+// fungsi handler; properti tambahan di atasnya tidak mengganggu.
+module.exports.verifyGoogleToken = verifyGoogleToken;
+module.exports.fetchEnrolledEmails = fetchEnrolledEmails;
+module.exports.normalisasiEmail = normalisasiEmail;
+module.exports.hitungSertifikat = hitungSertifikat;
+module.exports.hitungProgres = hitungProgres;

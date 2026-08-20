@@ -24,7 +24,9 @@
  *        APPS_SCRIPT_URL     = URL dari langkah 5
  *        APPS_SCRIPT_SECRET  = SECRET dari langkah 3
  *   7. Redeploy project-nya
- *   8. Buka /atur-form di situs, tekan "Uji tanda terima" di bagian Email
+ *   8. Tab "Testimoni" dibuat otomatis waktu ada siswa mengirim
+ *      testimoni pertama kali, tidak perlu disiapkan manual.
+ *   9. Buka /atur-form di situs, tekan "Uji tanda terima" di bagian Email
  *      ke Pendaftar. Kalau emailnya sampai, pemasangannya sudah benar.
  *
  * KALAU FILE INI DIUBAH: setelah menempel versi barunya, harus
@@ -66,6 +68,7 @@ var SECRET = 'GANTI_DENGAN_KATA_SANDI_ACAK_PANJANG';
 
 var TAB_PENDING = 'Pendaftar Web';
 var TAB_ROSTER = 'Form_Responses';
+var TAB_TESTIMONI = 'Testimoni';
 
 function doPost(e) {
   try {
@@ -80,6 +83,9 @@ function doPost(e) {
     if (body.action === 'approve') return handleApprove(body.id, body.isiTambahan);
     if (body.action === 'reject') return handleReject(body.id);
     if (body.action === 'email') return handleEmail(body.ke, body.subjek, body.isi);
+    if (body.action === 'testimoni') return handleTestimoni(body.isi);
+    if (body.action === 'listTestimoni') return handleListTestimoni();
+    if (body.action === 'tayangkanTestimoni') return handleTayangkanTestimoni(body.id, body.tayang);
     if (body.action === 'ping') return jsonOut({ ok: true, pesan: 'terhubung' });
 
     return jsonOut({ ok: false, reason: 'action_tidak_dikenal' });
@@ -283,6 +289,92 @@ function handleEmail(ke, subjek, isi) {
   } catch (err) {
     return jsonOut({ ok: false, reason: 'gagal_kirim', pesan: String(err) });
   }
+}
+
+/**
+ * ============================================================
+ * TESTIMONI DARI SISWA
+ * ============================================================
+ * Kiriman testimoni ditulis ke tab tersendiri, BUKAN langsung ke
+ * konten situs. Alasannya dua:
+ *
+ *   1. Penyimpanan konten situs (Vercel Global Config) dibatasi 1 MB
+ *      untuk SELURUH isi situs. Kiriman siswa yang tidak dibatasi bisa
+ *      menghabiskannya dan membuat semua penyimpanan berikutnya gagal.
+ *   2. Testimoni yang belum dibaca pemilik situs tidak boleh langsung
+ *      tayang di beranda.
+ *
+ * Jadi tab ini menampung semuanya tanpa batas, lalu pemilik situs
+ * memilih mana yang layak tayang dari /admin.
+ */
+function sheetTestimoni() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(TAB_TESTIMONI);
+  if (!sh) {
+    sh = ss.insertSheet(TAB_TESTIMONI);
+    sh.appendRow(['ID (jangan diubah)', 'Waktu', 'Email', 'Nama', 'Fakultas', 'Skor EPT', 'Pesan', 'Tayang']);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function handleTestimoni(isi) {
+  if (!isi || !String(isi.pesan || '').trim()) {
+    return jsonOut({ ok: false, reason: 'pesan_kosong' });
+  }
+
+  var sh = sheetTestimoni();
+  var id = 'TES' + new Date().getTime() + Math.floor(Math.random() * 1000);
+  var stempel = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyy-MM-dd HH:mm:ss');
+
+  sh.appendRow([
+    id,
+    stempel,
+    String(isi.email || ''),
+    String(isi.nama || ''),
+    String(isi.fakultas || ''),
+    String(isi.skorEpt || ''),
+    String(isi.pesan || ''),
+    '',
+  ]);
+
+  return jsonOut({ ok: true, id: id });
+}
+
+function handleListTestimoni() {
+  var sh = sheetTestimoni();
+  var nilai = sh.getDataRange().getValues();
+  var hasil = [];
+
+  for (var i = 1; i < nilai.length; i++) {
+    if (!nilai[i][0]) continue;
+    hasil.push({
+      id: String(nilai[i][0]),
+      waktu: String(nilai[i][1]),
+      email: String(nilai[i][2]),
+      nama: String(nilai[i][3]),
+      fakultas: String(nilai[i][4]),
+      skorEpt: String(nilai[i][5]),
+      pesan: String(nilai[i][6]),
+      tayang: String(nilai[i][7]).toLowerCase() === 'ya',
+    });
+  }
+
+  hasil.reverse(); // terbaru di atas
+  return jsonOut({ ok: true, testimoni: hasil });
+}
+
+/**
+ * Tandai satu testimoni sudah/belum tayang. Kolom H dipakai sebagai
+ * penanda supaya pemilik situs bisa melihat statusnya langsung dari
+ * spreadsheet juga, bukan cuma dari halaman admin.
+ */
+function handleTayangkanTestimoni(id, tayang) {
+  var sh = sheetTestimoni();
+  var ketemu = cariBarisById(sh, id);
+  if (!ketemu) return jsonOut({ ok: false, reason: 'id_tidak_ketemu' });
+  sh.getRange(ketemu.nomorBaris, 8).setValue(tayang ? 'ya' : '');
+  return jsonOut({ ok: true });
 }
 
 function handleReject(id) {

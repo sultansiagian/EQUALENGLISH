@@ -1398,3 +1398,76 @@ body::before {
     transition: none;
   }
 }
+
+/* =====================================================================
+   KIRIMAN TESTIMONI DARI SISWA (/admin)
+   =====================================================================
+   Daftar baca-lalu-putuskan, bukan daftar yang bisa disunting. Isinya
+   sengaja ditampilkan apa adanya: kalau ada yang perlu diperbaiki
+   kalimatnya, itu dilakukan setelah ditayangkan, di daftar Testimoni
+   beranda di atas. */
+
+.kiriman-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.kiriman-item {
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+/* Yang sudah tayang diberi tanda pink supaya sekali lihat ketahuan mana
+   yang sudah diputuskan dan mana yang masih menunggu. */
+.kiriman-item-tayang {
+  border-color: var(--pink);
+  background: var(--pink-light);
+}
+
+.kiriman-kepala {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.kiriman-meta {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  color: var(--ink-muted);
+}
+
+.kiriman-badge {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--white);
+  border: 1px solid var(--pink);
+}
+
+.kiriman-pesan {
+  margin: 0 0 14px;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  /* Kiriman siswa bisa berisi baris baru dan kata sangat panjang tanpa
+     spasi (mis. tempelan link). Keduanya harus tertahan di dalam kartu. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.kiriman-aksi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.kiriman-status {
+  min-width: 0;
+}

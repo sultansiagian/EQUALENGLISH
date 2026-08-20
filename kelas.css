@@ -953,3 +953,95 @@
     align-items: flex-start;
   }
 }
+
+/* ============================================================
+   SERTIFIKAT KELULUSAN
+   ============================================================
+   Kartunya berdiri di zona fungsional yang terang, jadi isiannya
+   memakai gaya yang sama dengan formulir /daftar: kotak terang,
+   border tipis, fokus pink. */
+
+.sertifikat-form {
+  width: 100%;
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.sertifikat-field {
+  display: block;
+}
+
+.sertifikat-field > span {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+/* Penanda "(boleh dikosongkan)" dan "(wajib)" di dalam label. Dibedakan
+   dengan warna dan berat font, bukan cuma tanda kurung, supaya terbaca
+   sekilas tanpa harus membaca seluruh labelnya. */
+.sertifikat-field > span em {
+  font-style: normal;
+  font-weight: 400;
+  color: var(--ink-muted);
+}
+
+.sertifikat-field input[type='text'],
+.sertifikat-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--body);
+  font-size: 1rem;
+  padding: 11px 13px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--black);
+}
+
+.sertifikat-field textarea {
+  resize: vertical;
+}
+
+.sertifikat-field input[type='text']:focus,
+.sertifikat-field textarea:focus {
+  outline: none;
+  border-color: var(--pink);
+  background: var(--white);
+}
+
+.sertifikat-field small {
+  display: block;
+  margin-top: 6px;
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.sertifikat-aksi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.sertifikat-status-kirim {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+  line-height: 1.45;
+  /* Pesan gagal bisa panjang (berisi langkah yang harus dikerjakan),
+     jadi harus boleh membungkus, bukan mendorong tombolnya menyempit. */
+  min-width: 0;
+}
+
+.sertifikat-status-kirim[data-state='ok'] {
+  color: #1a7f37;
+}
+
+.sertifikat-status-kirim[data-state='error'] {
+  color: var(--red);
+}

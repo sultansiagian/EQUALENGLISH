@@ -256,6 +256,58 @@
             <ul id="kelas-schedule-list" class="kelas-schedule-list"></ul>
           </article>
 
+          <!-- Sertifikat kelulusan. Syaratnya ditentukan SERVER
+               (hitungSertifikat di api/verify-access.js): seluruh sesi
+               sudah lewat DAN siswa ini sudah mengisi testimoni. Tanpa
+               data jadwal, sengaja tidak pernah terbuka. -->
+          <article id="kelas-sertifikat" class="kelas-tile kelas-tile-wide" hidden>
+            <div class="kelas-tile-top">
+              <span class="kelas-tile-badge kelas-tile-badge-quiet">SERTIFIKAT</span>
+            </div>
+            <h3>Sertifikat <em>kelulusan</em></h3>
+
+            <p id="sertifikat-status" class="kelas-tile-desc"></p>
+
+            <!-- Tahap 1: form testimoni. Ditampilkan begitu kelas selesai
+                 tapi testimoninya belum diisi. -->
+            <form id="sertifikat-form" class="sertifikat-form" hidden>
+              <label class="sertifikat-field">
+                <span>Fakultas kamu</span>
+                <input type="text" id="testi-fakultas" maxlength="120" placeholder="mis. Fasilkom" />
+              </label>
+              <label class="sertifikat-field">
+                <span>Skor EPT UI kamu <em>(boleh dikosongkan)</em></span>
+                <input type="text" id="testi-skor" maxlength="20" placeholder="mis. 573" />
+                <small>
+                  Skor biasanya baru keluar beberapa minggu setelah kelas.
+                  Kosongkan dulu, nanti bisa kamu kabari lewat WhatsApp.
+                </small>
+              </label>
+              <label class="sertifikat-field">
+                <span>Ceritamu ikut kelas ini <em>(wajib)</em></span>
+                <textarea id="testi-pesan" rows="5" maxlength="600" required></textarea>
+                <small>
+                  Yang jujur saja. Kalau kami tayangkan di beranda, nama dan
+                  fakultasmu ikut tampil.
+                </small>
+              </label>
+              <div class="sertifikat-aksi">
+                <button type="submit" id="testi-kirim" class="button button-pink">
+                  Kirim &amp; Buka Sertifikat
+                </button>
+                <span id="testi-status" class="sertifikat-status-kirim"></span>
+              </div>
+            </form>
+
+            <!-- Tahap 2: unduhan. -->
+            <div id="sertifikat-unduh" class="sertifikat-aksi" hidden>
+              <button type="button" id="sertifikat-tombol" class="button button-pink">
+                Unduh Sertifikat (PNG)
+              </button>
+              <span id="sertifikat-unduh-status" class="sertifikat-status-kirim"></span>
+            </div>
+          </article>
+
           <!-- Link Wayground (rebrand dari Quizizz) cuma hidup di server,
                sama seperti Zoom/Drive/WhatsApp -- lihat CLASS_MATERIALS
                di api/verify-access.js. Tidak pernah ada di HTML/JS

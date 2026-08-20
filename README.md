@@ -35,6 +35,10 @@ Untuk menguji hasil penyisipannya, panggil `renderHtml()` dari
 | `api/_lib/kirim-email.js` | Email otomatis ke pendaftar, lewat Apps Script. Semua kegagalannya sengaja ditelan supaya tidak ikut membatalkan pendaftaran. |
 | `api/admin-email-uji.js` | Tombol "kirim email uji" di `/atur-form`. Ada justru karena email di atas gagal diam-diam: ini satu-satunya cara tahu pengirimannya masih hidup. |
 | `api/_lib/kerja-latar.js` | Menitipkan pekerjaan yang selesai setelah balasan dikirim (mis. email) ke `waitUntil`, supaya tidak ikut hilang waktu fungsi Vercel dibekukan. |
+| `analitik.html` / `analitik.js` | Halaman `/analitik`: jumlah pendaftar, komposisi paket, dan pendapatan per batch. Chart digambar sendiri dengan SVG, tanpa library. |
+| `api/admin-statistik.js`, `api/_lib/statistik.js` | Perhitungan angkanya. Membaca sheet yang sama dengan gerbang login siswa, jadi tidak mungkin ada dua angka berbeda untuk hal yang sama. |
+| `api/_lib/csv.js` | Parser CSV bersama, plus penebak format tanggal kolom Timestamp (sheet bisa berisi `bulan/tanggal` dan `tanggal/bulan` sekaligus). |
+| `api/kelas-testimoni.js`, `api/admin-testimoni.js` | Siswa mengirim testimoni dari `/kelas` untuk membuka sertifikat; admin memilih mana yang tayang di beranda. Isi testimoni disimpan di spreadsheet, bukan di Global Config yang dibatasi 1 MB. |
 
 ## Panel admin (`/admin`)
 

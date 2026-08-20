@@ -43,6 +43,16 @@ module.exports = {
   // Kalau ternyata roster sudah memuat semua alumni, isi 0. Halaman
   // /analitik menampilkan penjumlahannya terang-terangan supaya dobel
   // hitung seperti itu langsung kelihatan.
+  // Daftar email siswa yang SUDAH mengisi form testimoni. Dipakai
+  // api/verify-access.js untuk menentukan sertifikatnya boleh diunduh
+  // atau belum, dan ditulis api/kelas-testimoni.js.
+  //
+  // Yang disimpan di sini CUMA emailnya, bukan isi testimoninya. Isinya
+  // masuk ke tab Testimoni di spreadsheet, yang tidak punya batas
+  // ukuran. Penyimpanan ini dibatasi 1 MB untuk SELURUH konten situs,
+  // jadi tidak boleh dipakai menampung kiriman yang jumlahnya bebas.
+  testimoniSudahIsi: [],
+
   heroSiswaDasar: 130,
   // Jumlah siswa hasil hitungan dari roster, DISIMPAN di sini oleh
   // api/admin-statistik.js tiap kali halaman /analitik dibuka dan
