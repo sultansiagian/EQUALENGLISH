@@ -21,6 +21,7 @@ window.onAdminReady = function (data) {
     : [];
   renderTestiList();
   muatKiriman();
+  siapkanPratinjauSertifikat(data.values.sertifikatTemplateUrl);
 };
 
 // ============================================================
@@ -110,6 +111,12 @@ const PHOTO_SLOT_SPECS = {
   // bentuk foto aslinya, dan PNG supaya garis tipis tidak berbayang
   // seperti pada JPEG.
   tandaTangan: { width: 600, height: 200, mode: 'contain', type: 'image/png', quality: 1 },
+  // Templat sertifikat. Dibatasi 2000px supaya tetap di bawah batas body
+  // request Vercel, tapi 'contain' cuma MENGECILKAN kalau lebih besar,
+  // tidak pernah membesarkan dan tidak pernah memotong. PNG, bukan JPEG:
+  // sertifikat isinya bidang warna rata dan teks tajam, dan justru di
+  // situ artefak JPEG paling kelihatan sebagai bayangan di tepi huruf.
+  sertifikatTemplate: { width: 2000, height: 2000, mode: 'contain', type: 'image/png', quality: 1 },
 };
 
 // Foto testimoni: kecil dan bulat di halaman (52px, lihat .testi-avatar di
@@ -130,6 +137,7 @@ const SLOT_TO_KEY = {
   photoKelasZoom: 'photoKelasZoomUrl',
   ogBanner: 'ogBannerUrl',
   tandaTangan: 'sertifikatTandaTanganUrl',
+  sertifikatTemplate: 'sertifikatTemplateUrl',
 };
 
 function loadImageFromFile(file) {
@@ -224,6 +232,10 @@ async function handlePhotoUpload(container, file) {
     if (res.ok && data.ok) {
       showPhotoPreview(container, data.url);
       setPhotoStatus(container, 'ok', 'Tersimpan dan langsung tayang.');
+      // Templat sertifikat punya pengatur posisi nama yang menempel
+      // padanya, jadi begitu gambarnya berganti, pratinjaunya harus
+      // ikut digambar ulang dengan gambar yang baru.
+      if (slot === 'sertifikatTemplate') siapkanPratinjauSertifikat(data.url);
     } else if (res.status === 401) {
       handleUnauthorized(data.reason);
     } else {
@@ -635,3 +647,158 @@ async function prosesKiriman(indeks, aksi, tombol) {
     tombol.disabled = false;
   }
 }
+
+// ============================================================
+// TEMPLAT SERTIFIKAT
+// ============================================================
+// Pemilik situs mengunggah desain sertifikat utuh, lalu mengatur di mana
+// nama siswa dituliskan. Pratinjau di bawah HARUS memakai perhitungan
+// yang sama persis dengan gambarNamaDiTemplat() di kelas.js -- kalau
+// salah satunya berubah sendiri, pratinjaunya berbohong dan posisi yang
+// terlihat pas di sini akan meleset di sertifikat sungguhan.
+
+var TMPL_KUNCI = [
+  'sertifikatNamaX',
+  'sertifikatNamaY',
+  'sertifikatNamaUkuran',
+  'sertifikatNamaWarna',
+  'sertifikatNamaFont',
+];
+
+var tmplGambar = null;
+
+function tmplNilai(kunci) {
+  var el = document.querySelector('[data-key="' + kunci + '"]');
+  return el ? el.value : '';
+}
+
+/**
+ * Muat templat lalu gambar pratinjaunya. Dipanggil waktu halaman siap
+ * dan tiap kali fotonya baru diunggah.
+ */
+function siapkanPratinjauSertifikat(url) {
+  var kotak = document.getElementById('tmpl-atur');
+  if (!kotak) return;
+
+  if (!url) {
+    kotak.hidden = true;
+    tmplGambar = null;
+    return;
+  }
+
+  var img = new Image();
+  // Templat disimpan di Vercel Blob (domain lain). Tanpa ini, canvas
+  // pratinjau jadi tercemar -- di sini belum terasa karena tidak diekspor,
+  // tapi kelas.js memakai aturan yang sama dan di sana toBlob akan
+  // ditolak. Disamakan supaya tidak ada kejutan.
+  img.crossOrigin = 'anonymous';
+  img.onload = function () {
+    tmplGambar = img;
+    kotak.hidden = false;
+    gambarPratinjauSertifikat();
+  };
+  img.onerror = function () {
+    kotak.hidden = true;
+    tmplGambar = null;
+  };
+  img.src = url;
+}
+
+function gambarPratinjauSertifikat() {
+  var canvas = document.getElementById('tmpl-pratinjau');
+  if (!canvas || !tmplGambar) return;
+
+  // Pratinjau digambar pada ukuran yang diperkecil, tapi seluruh posisi
+  // dihitung dalam PERSEN, jadi hasilnya sebangun dengan yang sungguhan.
+  var maksLebar = 760;
+  var skala = Math.min(maksLebar / tmplGambar.width, 1);
+  canvas.width = Math.round(tmplGambar.width * skala);
+  canvas.height = Math.round(tmplGambar.height * skala);
+
+  var ctx = canvas.getContext('2d');
+  ctx.drawImage(tmplGambar, 0, 0, canvas.width, canvas.height);
+
+  var nama = document.getElementById('tmpl-nama-contoh').value.trim() || 'Nama Siswa';
+  var font = tmplNilai('sertifikatNamaFont') === 'DM Sans' ? '"DM Sans", sans-serif' : '"Syne", sans-serif';
+
+  var px = (Number(tmplNilai('sertifikatNamaUkuran')) / 100) * canvas.width;
+  if (!Number.isFinite(px) || px <= 0) px = canvas.width * 0.06;
+  ctx.font = '700 ' + px + 'px ' + font;
+
+  var maks = canvas.width * 0.84;
+  while (ctx.measureText(nama).width > maks && px > 10) {
+    px -= Math.max(1, px * 0.04);
+    ctx.font = '700 ' + px + 'px ' + font;
+  }
+
+  ctx.fillStyle = tmplNilai('sertifikatNamaWarna') || '#000000';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(
+    nama,
+    (Number(tmplNilai('sertifikatNamaX')) / 100) * canvas.width,
+    (Number(tmplNilai('sertifikatNamaY')) / 100) * canvas.height
+  );
+
+  // Angka di sebelah label ikut berubah, supaya nilainya bisa dicatat dan
+  // diketik ulang persis kalau nanti perlu.
+  var el;
+  el = document.getElementById('tmpl-x-nilai');
+  if (el) el.textContent = tmplNilai('sertifikatNamaX') + '%';
+  el = document.getElementById('tmpl-y-nilai');
+  if (el) el.textContent = tmplNilai('sertifikatNamaY') + '%';
+  el = document.getElementById('tmpl-ukuran-nilai');
+  if (el) el.textContent = tmplNilai('sertifikatNamaUkuran') + '%';
+}
+
+async function simpanPosisiNama() {
+  var btn = document.getElementById('tmpl-simpan');
+  var status = document.getElementById('tmpl-status');
+
+  btn.disabled = true;
+  status.removeAttribute('data-state');
+  status.textContent = 'Menyimpan…';
+
+  var items = {};
+  TMPL_KUNCI.forEach(function (k) {
+    var v = tmplNilai(k);
+    items[k] = k === 'sertifikatNamaWarna' || k === 'sertifikatNamaFont' ? v : Number(v);
+  });
+
+  try {
+    var res = await fetch('/api/admin-content', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify({ items: items }),
+    });
+    var data = await res.json();
+
+    if (res.status === 401) return handleUnauthorized(data.reason);
+
+    if (res.ok && data.ok) {
+      status.dataset.state = 'ok';
+      status.textContent = 'Tersimpan. Sertifikat berikutnya memakai posisi ini.';
+    } else {
+      status.dataset.state = 'error';
+      status.textContent =
+        'Gagal menyimpan: ' + (data.message || data.pesan || data.reason || res.status);
+    }
+  } catch (err) {
+    status.dataset.state = 'error';
+    status.textContent = 'Gagal menyimpan: ' + err.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+(function pasangTemplat() {
+  var kontrol = document.querySelector('.tmpl-kontrol');
+  if (!kontrol) return;
+
+  // 'input' bukan 'change': pratinjau harus ikut bergerak selagi slider
+  // digeser, bukan baru setelah dilepas.
+  kontrol.addEventListener('input', gambarPratinjauSertifikat);
+
+  var simpan = document.getElementById('tmpl-simpan');
+  if (simpan) simpan.addEventListener('click', simpanPosisiNama);
+})();

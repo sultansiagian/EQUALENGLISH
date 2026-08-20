@@ -84,6 +84,26 @@ module.exports = {
   // URL gambar tanda tangan di Vercel Blob, diunggah dari /admin.
   sertifikatTandaTanganUrl: '',
 
+  // ---- SERTIFIKAT DARI TEMPLAT BUATAN SENDIRI ----
+  //
+  // Kalau diisi, seluruh sertifikat memakai gambar ini apa adanya dan
+  // sistem CUMA menuliskan nama siswa di atasnya. Nama mentor, tanda
+  // tangan, tanggal, dan hiasan apa pun sudah tercetak di templat.
+  // Kalau kosong, dipakai desain bawaan yang digambar kelas.js sendiri.
+  sertifikatTemplateUrl: '',
+
+  // Posisi dan bentuk nama di atas templat. Semuanya PERSEN terhadap
+  // ukuran templat, bukan piksel, supaya setelan yang sama tetap benar
+  // kalau nanti templatnya diganti dengan yang resolusinya berbeda.
+  //
+  // X 50 berarti titik tengah nama ada di tengah lebar templat.
+  sertifikatNamaX: 50,
+  sertifikatNamaY: 47,
+  // Tinggi huruf, persen terhadap LEBAR templat.
+  sertifikatNamaUkuran: 6,
+  sertifikatNamaWarna: '#000000',
+  sertifikatNamaFont: 'Syne',
+
   mentorTitle: 'Satu mentor untuk saat ini.',
   mentorDesc:
     'Seluruh kelas dipandu langsung oleh mentor yang sama, sehingga arahan yang ' +

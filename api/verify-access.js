@@ -615,6 +615,27 @@ function hitungProgres(sessions) {
  * keliru terkunci merugikan siswa yang sedang menunggu kelas, sedangkan
  * sertifikat yang keliru terbit tidak bisa ditarik kembali.
  */
+// Nilai bawaan posisi nama di atas templat. Dikembarkan dengan
+// site-defaults.js daripada di-require, karena file ini sengaja tidak
+// bergantung pada berkas konten -- gerbang login siswa harus tetap
+// jalan walau konfigurasi situsnya bermasalah.
+const DEFAULT_SERTIFIKAT = {
+  namaX: 50,
+  namaY: 47,
+  namaUkuran: 6,
+  namaWarna: '#000000',
+  namaFont: 'Syne',
+};
+
+// Nilai dari Global Config bisa saja tersimpan sebagai string ("47")
+// atau kosong. Yang tidak terbaca sebagai angka dikembalikan ke nilai
+// bawaannya, bukan diteruskan sebagai NaN yang bikin nama tidak
+// tergambar sama sekali.
+function angkaAtau(nilai, cadangan) {
+  const n = Number(nilai);
+  return Number.isFinite(n) ? n : cadangan;
+}
+
 function hitungSertifikat(sessions, overrides, email) {
   const progres = hitungProgres(sessions);
   const adaJadwal = progres !== null;
@@ -1098,6 +1119,16 @@ module.exports = async function handler(req, res) {
       namaLengkap: verified.nama || '',
       sertifikatMentorNama: String(overrides.sertifikatMentorNama || '').trim(),
       sertifikatTandaTanganUrl: String(overrides.sertifikatTandaTanganUrl || '').trim(),
+      // Templat buatan pemilik situs. Kalau ada, kelas.js memakainya
+      // menggantikan seluruh desain bawaan dan cuma menulis nama di atasnya.
+      sertifikatTemplate: {
+        url: String(overrides.sertifikatTemplateUrl || '').trim(),
+        namaX: angkaAtau(overrides.sertifikatNamaX, DEFAULT_SERTIFIKAT.namaX),
+        namaY: angkaAtau(overrides.sertifikatNamaY, DEFAULT_SERTIFIKAT.namaY),
+        namaUkuran: angkaAtau(overrides.sertifikatNamaUkuran, DEFAULT_SERTIFIKAT.namaUkuran),
+        namaWarna: String(overrides.sertifikatNamaWarna || DEFAULT_SERTIFIKAT.namaWarna),
+        namaFont: String(overrides.sertifikatNamaFont || DEFAULT_SERTIFIKAT.namaFont),
+      },
     };
 
     return res.status(200).json({ ok: true, materials });

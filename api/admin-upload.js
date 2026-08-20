@@ -11,6 +11,9 @@ const SLOT_KEYS = {
   // Tanda tangan di sertifikat kelulusan. Tidak pernah tampil di
   // halaman publik, cuma digambar ke canvas sertifikat di kelas.js.
   tandaTangan: 'sertifikatTandaTanganUrl',
+  // Templat sertifikat utuh buatan pemilik situs. Kalau ada, dipakai
+  // menggantikan seluruh desain bawaan.
+  sertifikatTemplate: 'sertifikatTemplateUrl',
 };
 
 // Foto testimoni ditangani BEDA dari empat slot di atas: fotonya bukan

@@ -541,6 +541,9 @@ function renderSertifikat(materials) {
     nama: materials.namaLengkap || '',
     mentorNama: materials.sertifikatMentorNama || '',
     tandaTanganUrl: materials.sertifikatTandaTanganUrl || '',
+    // Setelan templat buatan pemilik situs. Kalau url-nya terisi,
+    // seluruh desain bawaan dilewati (lihat buatSertifikat).
+    templat: materials.sertifikatTemplate || null,
   };
 
   var status = document.getElementById('sertifikat-status');
@@ -665,6 +668,42 @@ function teksTengah(ctx, teks, y, font, warna) {
   ctx.fillText(teks, SERTIFIKAT_LEBAR / 2, y);
 }
 
+/**
+ * Tulis nama siswa di atas templat buatan pemilik situs.
+ *
+ * Semua nilai posisinya PERSEN terhadap ukuran templat, bukan piksel,
+ * supaya setelan yang sama tetap benar kalau templatnya nanti diganti
+ * dengan yang resolusinya berbeda.
+ *
+ * Dipakai bersama pratinjau di /admin (lihat gambarPratinjauSertifikat di
+ * admin.js). Kalau perhitungan di sini berubah, yang di sana harus ikut,
+ * kalau tidak pratinjaunya berbohong.
+ */
+function gambarNamaDiTemplat(ctx, lebar, tinggi, nama, t) {
+  var font = t.namaFont === 'DM Sans' ? '"DM Sans", sans-serif' : '"Syne", sans-serif';
+  var px = (Number(t.namaUkuran) / 100) * lebar;
+  if (!Number.isFinite(px) || px <= 0) px = lebar * 0.06;
+
+  ctx.font = '700 ' + px + 'px ' + font;
+
+  // Nama panjang dikecilkan supaya tidak keluar dari templat. Batasnya
+  // 84% lebar, menyisakan tepi kiri kanan supaya tidak menempel bingkai
+  // desain apa pun yang dipakai.
+  var maks = lebar * 0.84;
+  while (ctx.measureText(nama).width > maks && px > 10) {
+    px -= Math.max(1, px * 0.04);
+    ctx.font = '700 ' + px + 'px ' + font;
+  }
+
+  ctx.fillStyle = t.namaWarna || '#000000';
+  ctx.textAlign = 'center';
+  // 'middle' supaya titik Y yang diatur admin adalah TENGAH tinggi
+  // hurufnya. Dengan baseline bawaan ('alphabetic'), menggeser Y akan
+  // terasa meleset karena yang dipindah adalah garis dasar huruf.
+  ctx.textBaseline = 'middle';
+  ctx.fillText(nama, (Number(t.namaX) / 100) * lebar, (Number(t.namaY) / 100) * tinggi);
+}
+
 async function buatSertifikat() {
   var status = document.getElementById('sertifikat-unduh-status');
   var tombol = document.getElementById('sertifikat-tombol');
@@ -679,117 +718,29 @@ async function buatSertifikat() {
     // memakai font cadangan dan sertifikatnya terlihat asal jadi.
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
 
-    var hasil = await Promise.all([
-      muatGambar('/EDITS/logo-equal-black.png'),
-      muatGambar(dataSertifikat && dataSertifikat.tandaTanganUrl),
-    ]);
-    var logo = hasil[0];
-    var ttd = hasil[1];
+    var nama = (dataSertifikat && dataSertifikat.nama) || 'Peserta EQUAL English';
+    var templat = (dataSertifikat && dataSertifikat.templat) || null;
 
     var canvas = document.createElement('canvas');
-    canvas.width = SERTIFIKAT_LEBAR;
-    canvas.height = SERTIFIKAT_TINGGI;
     var ctx = canvas.getContext('2d');
 
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, SERTIFIKAT_LEBAR, SERTIFIKAT_TINGGI);
-
-    // Bingkai: garis pink tebal di luar, garis hitam tipis di dalam.
-    ctx.strokeStyle = '#ffacdf';
-    ctx.lineWidth = 18;
-    ctx.strokeRect(40, 40, SERTIFIKAT_LEBAR - 80, SERTIFIKAT_TINGGI - 80);
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(72, 72, SERTIFIKAT_LEBAR - 144, SERTIFIKAT_TINGGI - 144);
-
-    if (logo) {
-      var lebarLogo = 260;
-      var tinggiLogo = (logo.height / logo.width) * lebarLogo;
-      ctx.drawImage(logo, (SERTIFIKAT_LEBAR - lebarLogo) / 2, 140, lebarLogo, tinggiLogo);
+    // Templat buatan sendiri menang atas desain bawaan. Kalau gambarnya
+    // gagal dimuat (URL mati, jaringan bermasalah), TIDAK jatuh ke desain
+    // bawaan diam-diam: pemilik situs sudah memutuskan sertifikatnya
+    // berbentuk lain, dan mengirim bentuk yang berbeda tanpa memberi tahu
+    // siapa pun lebih buruk daripada berterus terang gagal.
+    var tmplImg = templat && templat.url ? await muatGambar(templat.url) : null;
+    if (templat && templat.url && !tmplImg) {
+      throw new Error('templat sertifikat gagal dimuat');
     }
 
-    teksTengah(ctx, 'SERTIFIKAT KELULUSAN', 330, '500 30px "DM Mono", monospace', '#5c5b5b');
-    teksTengah(ctx, 'Diberikan kepada', 420, '400 30px "DM Sans", sans-serif', '#5c5b5b');
-
-    var nama = (dataSertifikat && dataSertifikat.nama) || 'Peserta EQUAL English';
-    // Nama panjang dikecilkan supaya tetap muat di dalam bingkai, bukan
-    // terpotong di tepinya.
-    var ukuran = 90;
-    ctx.font = '700 ' + ukuran + 'px "Syne", sans-serif';
-    while (ctx.measureText(nama).width > SERTIFIKAT_LEBAR - 320 && ukuran > 36) {
-      ukuran -= 4;
-      ctx.font = '700 ' + ukuran + 'px "Syne", sans-serif';
-    }
-    teksTengah(ctx, nama, 530, '700 ' + ukuran + 'px "Syne", sans-serif', '#000000');
-
-    ctx.strokeStyle = '#ffacdf';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(SERTIFIKAT_LEBAR / 2 - 320, 570);
-    ctx.lineTo(SERTIFIKAT_LEBAR / 2 + 320, 570);
-    ctx.stroke();
-
-    teksTengah(
-      ctx,
-      'atas keikutsertaannya dalam Bootcamp Persiapan EPT UI',
-      650,
-      '400 32px "DM Sans", sans-serif',
-      '#000000'
-    );
-    teksTengah(
-      ctx,
-      'yang diselenggarakan oleh EQUAL English.',
-      700,
-      '400 32px "DM Sans", sans-serif',
-      '#000000'
-    );
-
-    var bulan = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
-    ];
-    var kini = new Date();
-    teksTengah(
-      ctx,
-      kini.getDate() + ' ' + bulan[kini.getMonth()] + ' ' + kini.getFullYear(),
-      770,
-      '500 26px "DM Mono", monospace',
-      '#5c5b5b'
-    );
-
-    // Blok tanda tangan. Kalau tidak ada nama mentor yang disetel,
-    // seluruh blok ini dilewati -- garis tanda tangan kosong tanpa nama
-    // terlihat seperti sertifikat yang belum selesai dibuat.
-    var namaMentor = (dataSertifikat && dataSertifikat.mentorNama) || '';
-    if (namaMentor) {
-      // 915, bukan lebih rendah: di bawah garis masih ada nama mentor
-      // (+45) dan kata Mentor (+82), jadi barisan terakhirnya mendarat
-      // di 997 sementara bingkai dalam berakhir di 1059. Sisa 62px itu
-      // yang membuatnya tidak terlihat mepet.
-      var yGaris = 915;
-      if (ttd) {
-        var lebarTtd = 240;
-        var tinggiTtd = (ttd.height / ttd.width) * lebarTtd;
-        if (tinggiTtd > 120) {
-          tinggiTtd = 120;
-          lebarTtd = (ttd.width / ttd.height) * tinggiTtd;
-        }
-        ctx.drawImage(
-          ttd,
-          (SERTIFIKAT_LEBAR - lebarTtd) / 2,
-          yGaris - tinggiTtd - 10,
-          lebarTtd,
-          tinggiTtd
-        );
-      }
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(SERTIFIKAT_LEBAR / 2 - 200, yGaris);
-      ctx.lineTo(SERTIFIKAT_LEBAR / 2 + 200, yGaris);
-      ctx.stroke();
-      teksTengah(ctx, namaMentor, yGaris + 45, '600 28px "DM Sans", sans-serif', '#000000');
-      teksTengah(ctx, 'Mentor', yGaris + 82, '400 24px "DM Mono", monospace', '#5c5b5b');
+    if (tmplImg) {
+      canvas.width = tmplImg.width;
+      canvas.height = tmplImg.height;
+      ctx.drawImage(tmplImg, 0, 0);
+      gambarNamaDiTemplat(ctx, canvas.width, canvas.height, nama, templat);
+    } else {
+      await gambarDesainBawaan(ctx, canvas, nama);
     }
 
     var blob = await new Promise(function (resolve) {
@@ -812,9 +763,127 @@ async function buatSertifikat() {
     status.textContent = 'Tersimpan ke folder unduhanmu.';
   } catch (err) {
     status.dataset.state = 'error';
-    status.textContent = 'Gagal membuat sertifikat: ' + err.message;
+    status.textContent =
+      'Gagal membuat sertifikat: ' + err.message + '. Hubungi kami lewat WhatsApp.';
   } finally {
     tombol.disabled = false;
+  }
+}
+
+/**
+ * Desain bawaan, dipakai selama pemilik situs belum mengunggah templat
+ * sendiri. Menggambar seluruh sertifikat dari nol: bingkai, logo, teks,
+ * dan blok tanda tangan.
+ */
+async function gambarDesainBawaan(ctx, canvas, nama) {
+  canvas.width = SERTIFIKAT_LEBAR;
+  canvas.height = SERTIFIKAT_TINGGI;
+
+  var hasil = await Promise.all([
+    muatGambar('/EDITS/logo-equal-black.png'),
+    muatGambar(dataSertifikat && dataSertifikat.tandaTanganUrl),
+  ]);
+  var logo = hasil[0];
+  var ttd = hasil[1];
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, SERTIFIKAT_LEBAR, SERTIFIKAT_TINGGI);
+
+  // Bingkai: garis pink tebal di luar, garis hitam tipis di dalam.
+  ctx.strokeStyle = '#ffacdf';
+  ctx.lineWidth = 18;
+  ctx.strokeRect(40, 40, SERTIFIKAT_LEBAR - 80, SERTIFIKAT_TINGGI - 80);
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(72, 72, SERTIFIKAT_LEBAR - 144, SERTIFIKAT_TINGGI - 144);
+
+  if (logo) {
+    var lebarLogo = 260;
+    var tinggiLogo = (logo.height / logo.width) * lebarLogo;
+    ctx.drawImage(logo, (SERTIFIKAT_LEBAR - lebarLogo) / 2, 140, lebarLogo, tinggiLogo);
+  }
+
+  teksTengah(ctx, 'SERTIFIKAT KELULUSAN', 330, '500 30px "DM Mono", monospace', '#5c5b5b');
+  teksTengah(ctx, 'Diberikan kepada', 420, '400 30px "DM Sans", sans-serif', '#5c5b5b');
+
+  // Nama panjang dikecilkan supaya tetap muat di dalam bingkai, bukan
+  // terpotong di tepinya.
+  var ukuran = 90;
+  ctx.font = '700 ' + ukuran + 'px "Syne", sans-serif';
+  while (ctx.measureText(nama).width > SERTIFIKAT_LEBAR - 320 && ukuran > 36) {
+    ukuran -= 4;
+    ctx.font = '700 ' + ukuran + 'px "Syne", sans-serif';
+  }
+  teksTengah(ctx, nama, 530, '700 ' + ukuran + 'px "Syne", sans-serif', '#000000');
+
+  ctx.strokeStyle = '#ffacdf';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(SERTIFIKAT_LEBAR / 2 - 320, 570);
+  ctx.lineTo(SERTIFIKAT_LEBAR / 2 + 320, 570);
+  ctx.stroke();
+
+  teksTengah(
+    ctx,
+    'atas keikutsertaannya dalam Bootcamp Persiapan EPT UI',
+    650,
+    '400 32px "DM Sans", sans-serif',
+    '#000000'
+  );
+  teksTengah(
+    ctx,
+    'yang diselenggarakan oleh EQUAL English.',
+    700,
+    '400 32px "DM Sans", sans-serif',
+    '#000000'
+  );
+
+  var bulan = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+  ];
+  var kini = new Date();
+  teksTengah(
+    ctx,
+    kini.getDate() + ' ' + bulan[kini.getMonth()] + ' ' + kini.getFullYear(),
+    770,
+    '500 26px "DM Mono", monospace',
+    '#5c5b5b'
+  );
+
+  // Blok tanda tangan. Kalau tidak ada nama mentor yang disetel, seluruh
+  // blok ini dilewati -- garis tanda tangan kosong tanpa nama terlihat
+  // seperti sertifikat yang belum selesai dibuat.
+  var namaMentor = (dataSertifikat && dataSertifikat.mentorNama) || '';
+  if (namaMentor) {
+    // 915, bukan lebih rendah: di bawah garis masih ada nama mentor
+    // (+45) dan kata Mentor (+82), jadi barisan terakhirnya mendarat di
+    // 997 sementara bingkai dalam berakhir di 1059. Sisa 62px itu yang
+    // membuatnya tidak terlihat mepet.
+    var yGaris = 915;
+    if (ttd) {
+      var lebarTtd = 240;
+      var tinggiTtd = (ttd.height / ttd.width) * lebarTtd;
+      if (tinggiTtd > 120) {
+        tinggiTtd = 120;
+        lebarTtd = (ttd.width / ttd.height) * tinggiTtd;
+      }
+      ctx.drawImage(
+        ttd,
+        (SERTIFIKAT_LEBAR - lebarTtd) / 2,
+        yGaris - tinggiTtd - 10,
+        lebarTtd,
+        tinggiTtd
+      );
+    }
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(SERTIFIKAT_LEBAR / 2 - 200, yGaris);
+    ctx.lineTo(SERTIFIKAT_LEBAR / 2 + 200, yGaris);
+    ctx.stroke();
+    teksTengah(ctx, namaMentor, yGaris + 45, '600 28px "DM Sans", sans-serif', '#000000');
+    teksTengah(ctx, 'Mentor', yGaris + 82, '400 24px "DM Mono", monospace', '#5c5b5b');
   }
 }
 
