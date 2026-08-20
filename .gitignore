@@ -39,3 +39,10 @@ desktop.ini
 # env var secara lokal (isinya bisa berupa token asli).
 node_modules/
 .env.local
+
+# Secret Apps Script (nilai SECRET di apps-script.gs, sama dengan
+# APPS_SCRIPT_SECRET di Vercel). Kalau ini bocor, siapa pun bisa menulis
+# baris ke spreadsheet pendaftaran, menyimpan berkas ke Drive, dan
+# mengirim email dari akun Gmail pemilik sheet. Berkasnya tetap ada di
+# komputer, cuma tidak pernah ikut ter-push.
+PW APPSRIPT.txt
