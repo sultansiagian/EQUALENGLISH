@@ -203,6 +203,43 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Batas waktu SATU percobaan pengambilan. fetch() bawaan tidak punya
+// batas waktu sama sekali: satu sumber yang menggantung (mis. link
+// publish sheet yang sudah dicabut lalu tidak pernah membalas) akan
+// menahan SELURUH login sampai fungsinya sendiri dimatikan Vercel,
+// sementara sumber lain sudah lama selesai.
+//
+// 3,5 detik dipilih supaya dua percobaan plus jedanya (7,3 detik)
+// masih di bawah batas waktu fungsi Vercel, jadi yang gagal tetap
+// gagal dengan pesan, bukan mati tanpa keterangan.
+const BATAS_FETCH_MS = 3500;
+
+async function fetchDenganBatas(url) {
+  const pembatal = new AbortController();
+  let kehabisanWaktu = false;
+  const jam = setTimeout(() => {
+    kehabisanWaktu = true;
+    pembatal.abort();
+  }, BATAS_FETCH_MS);
+
+  try {
+    return await fetch(url, { signal: pembatal.signal });
+  } catch (err) {
+    // Ditandai dari sini, bukan ditebak dari nama errornya. Runtime yang
+    // berbeda menamai pembatalan berbeda-beda (AbortError, TimeoutError,
+    // atau error biasa), dan yang benar-benar tahu apakah ini kehabisan
+    // waktu atau kegagalan lain cuma fungsi yang memasang jamnya.
+    if (kehabisanWaktu) {
+      const e = new Error('kehabisan waktu setelah ' + BATAS_FETCH_MS + 'ms');
+      e.kehabisanWaktu = true;
+      throw e;
+    }
+    throw err;
+  } finally {
+    clearTimeout(jam);
+  }
+}
+
 async function fetchTextWithRetry(url, attempts = 2) {
   // Sengaja cuma diulang SEKALI (attempts=2 -> 1 percobaan awal + 1
   // percobaan ulang), bukan berkali-kali -- momen paling rawan gagal
@@ -212,11 +249,16 @@ async function fetchTextWithRetry(url, attempts = 2) {
   let lastErr;
   for (let i = 0; i < attempts; i++) {
     try {
-      const res = await fetch(url);
+      const res = await fetchDenganBatas(url);
       if (!res.ok) throw new Error('status ' + res.status);
       return await res.text();
     } catch (err) {
       lastErr = err;
+      // Percobaan yang dibatalkan karena kehabisan waktu TIDAK diulang.
+      // Habis waktu artinya sumbernya memang tidak menjawab, bukan
+      // gangguan sesaat, dan mengulanginya cuma menggandakan lama
+      // tunggu setiap siswa yang login.
+      if (err && err.kehabisanWaktu) break;
       if (i < attempts - 1) await sleep(300);
     }
   }
@@ -1050,6 +1092,27 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    // Pengambilan data DIMULAI bersamaan dengan verifikasi token, bukan
+    // sesudahnya. Keduanya tidak saling bergantung: roster, jadwal, dan
+    // materi sama saja isinya siapa pun yang login. Kalau diurutkan,
+    // setiap login menunggu dua babak jaringan berturut-turut, dan babak
+    // pertama itu paling mahal justru waktu instance-nya baru bangun --
+    // saat kunci publik Google belum ada di memori dan harus diambil.
+    //
+    // Yang ikut terambil untuk token yang ternyata tidak sah cuma tiga
+    // link publish-to-web publik yang hasilnya di-cache; tidak ada data
+    // rahasia yang tersentuh sebelum tokennya lulus.
+    const dataPromise = Promise.all([
+      fetchEnrolledEmails(rosterUrls, validCutoff),
+      scheduleUrl ? fetchSchedule(scheduleUrl) : Promise.resolve({ sessions: [] }),
+      materialsUrl ? fetchMaterialsOverrides(materialsUrl) : Promise.resolve({}),
+    ]);
+    // Penangan penolakan dipasang SEKARANG, bukan nanti waktu di-await.
+    // Kalau tokennya tidak sah kita keluar lebih dulu dan promise ini
+    // tidak pernah di-await; tanpa penangan, penolakannya jadi
+    // unhandled rejection yang bisa mematikan seluruh proses.
+    dataPromise.catch(() => {});
+
     const verified = await verifyGoogleToken(idToken, clientId);
     if (!verified.valid) {
       return res.status(401).json({ ok: false, reason: verified.reason });
@@ -1068,15 +1131,7 @@ module.exports = async function handler(req, res) {
           'DEFAULT_MATERIALS di kode, sheet materi belum aktif.'
       );
     }
-    const [enrolledEmails, scheduleResult, materialsOverrides, overrides] = await Promise.all([
-      fetchEnrolledEmails(rosterUrls, validCutoff),
-      scheduleUrl ? fetchSchedule(scheduleUrl) : Promise.resolve({ sessions: [] }),
-      materialsUrl ? fetchMaterialsOverrides(materialsUrl) : Promise.resolve({}),
-      // Gagal-diam-diam: readOverrides sendiri sudah menangkap errornya
-      // dan balik {}. Syarat sertifikat lalu jadi "belum isi testimoni",
-      // yang aman -- tidak ada yang kehilangan akses materi gara-gara ini.
-      readOverrides().catch(() => ({})),
-    ]);
+    const [enrolledEmails, scheduleResult, materialsOverrides] = await dataPromise;
     // Dicocokkan dalam bentuk yang sudah disamakan di KEDUA sisi. Email
     // aslinya tetap dipakai buat ditampilkan ke siswa dan dicatat di log,
     // supaya yang dia lihat sama dengan yang dia ketik.
@@ -1101,6 +1156,25 @@ module.exports = async function handler(req, res) {
           'kartu jadwal & timer akan kosong sampai sheet-nya diisi tanggal baru.'
       );
     }
+    // ============================================================
+    // GLOBAL CONFIG CUMA DIBACA KALAU KELASNYA SUDAH SELESAI
+    // ============================================================
+    // Sertifikat butuh tahu siapa yang sudah mengisi testimoni, dan itu
+    // tersimpan di Global Config. Tapi syarat sertifikat mensyaratkan
+    // SELURUH sesi sudah lewat, jadi selama batch masih berjalan
+    // jawabannya pasti "belum boleh" apa pun isi Global Config-nya.
+    //
+    // Membacanya di setiap login karena itu murni beban tambahan di
+    // jalur yang dilewati SEMUA siswa: satu panggilan jaringan lagi,
+    // plus memuat paket @vercel/global-config waktu instance-nya baru
+    // bangun. File ini tadinya tidak memuat satu pun paket npm, dan itu
+    // yang membuat login terasa lebih lambat sejak sertifikat ditambahkan.
+    //
+    // Jadi dibaca belakangan, dan cuma waktu jawabannya bisa berubah.
+    const progresBatch = hitungProgres(scheduleResult.sessions);
+    const kelasSudahSelesai = progresBatch !== null && progresBatch.selesai >= progresBatch.total;
+    const overrides = kelasSudahSelesai ? await readOverrides().catch(() => ({})) : {};
+
     const materials = {
       ...DEFAULT_MATERIALS,
       ...materialsOverrides,
@@ -1112,7 +1186,8 @@ module.exports = async function handler(req, res) {
       // upcomingSessions -- lihat computeZoomUnlock().
       zoomUnlocked: computeZoomUnlock(scheduleResult.sessions),
       // Sama alasannya: progres perlu tahu total sesi seluruhnya.
-      progres: hitungProgres(scheduleResult.sessions),
+      // Dipakai ulang dari perhitungan di atas, bukan dihitung lagi.
+      progres: progresBatch,
       sertifikat: hitungSertifikat(scheduleResult.sessions, overrides, verified.email),
       // Nama dari token yang sudah diverifikasi, dipakai mencetak
       // sertifikat. Bukan dari yang dikirim browser.
