@@ -17,6 +17,10 @@ const MAKS_SESI = 60;
 // sudah lima tahun ke depan.
 const MAKS_BATCH = 60;
 
+// Batas jumlah catatan perubahan harga. Harga jarang berubah, jadi 40
+// entri sudah sangat longgar.
+const MAKS_RIWAYAT_HARGA = 40;
+
 function trimTo(value, maxLen) {
   return String(value === undefined || value === null ? '' : value)
     .trim()
@@ -91,6 +95,56 @@ module.exports = async function handler(req, res) {
         // memutuskan item mana yang layak tampil di halaman publik adalah
         // renderTestimonials() di api/render-home.js, bukan di sini.
         .filter((t) => t.nama || t.pesan || t.fakultas || t.skorEpt || t.fotoUrl);
+    }
+
+    // ============================================================
+    // PERUBAHAN HARGA DICATAT, BUKAN CUMA DITIMPA
+    // ============================================================
+    // Kalau harga paket berubah, harga LAMA dicatat dulu beserta waktu
+    // berlakunya. Halaman /analitik memakai catatan ini untuk menghargai
+    // tiap pendaftar menurut tanggal dia mendaftar, bukan menurut harga
+    // yang kebetulan berlaku hari ini.
+    //
+    // Kalau riwayatnya masih kosong, harga lama disimpan lebih dulu
+    // dengan berlakuSejak null (artinya sejak awal). Tanpa langkah itu,
+    // harga lama hilang selamanya begitu diganti sekali.
+    const KUNCI_HARGA = ['pkg1Price', 'pkg2Price', 'pkg3Price'];
+    const adaHargaBaru = KUNCI_HARGA.some((k) => filtered[k] !== undefined);
+
+    if (adaHargaBaru) {
+      const lama = await readOverrides().catch(() => ({}));
+      const nilaiLama = KUNCI_HARGA.map((k) =>
+        Number(lama[k] !== undefined ? lama[k] : DEFAULTS[k])
+      );
+      const nilaiBaru = KUNCI_HARGA.map((k, i) =>
+        filtered[k] !== undefined ? Number(filtered[k]) : nilaiLama[i]
+      );
+
+      if (nilaiLama.join() !== nilaiBaru.join()) {
+        const riwayat = Array.isArray(lama.hargaRiwayat) ? lama.hargaRiwayat.slice(0, MAKS_RIWAYAT_HARGA) : [];
+
+        if (riwayat.length === 0) {
+          riwayat.push({
+            berlakuSejak: null,
+            pkg1Price: nilaiLama[0],
+            pkg2Price: nilaiLama[1],
+            pkg3Price: nilaiLama[2],
+          });
+        }
+
+        riwayat.push({
+          berlakuSejak: new Date().toISOString(),
+          pkg1Price: nilaiBaru[0],
+          pkg2Price: nilaiBaru[1],
+          pkg3Price: nilaiBaru[2],
+        });
+
+        filtered.hargaRiwayat = riwayat.slice(-MAKS_RIWAYAT_HARGA);
+        console.log(
+          'admin-content: harga berubah ' + nilaiLama.join('/') + ' -> ' + nilaiBaru.join('/') +
+            ', dicatat ke riwayat (' + filtered.hargaRiwayat.length + ' entri).'
+        );
+      }
     }
 
     // Catatan batch. Dinormalkan dan dibatasi dengan alasan yang sama

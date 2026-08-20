@@ -215,11 +215,16 @@ function gambarTabel(b) {
   var tbody = el('stat-tabel-isi');
   tbody.textContent = '';
 
+  // Paket yang sebagian pendaftarnya membayar dengan harga lain diberi
+  // tanda bintang. Tanpa itu, baris "Rp59.000 x 18" terlihat seperti
+  // salah hitung waktu tidak cocok dengan kolom pendapatannya.
+  var adaBeragam = b.perPaket.some(function (p) { return p.hargaBeragam; });
+
   b.perPaket.forEach(function (p) {
     var tr = document.createElement('tr');
     [
       p.nama,
-      rupiah(p.harga),
+      rupiah(p.harga) + (p.hargaBeragam ? ' *' : ''),
       String(p.pendaftaran),
       String(p.orang),
       rupiah(p.pendapatan),
@@ -244,6 +249,13 @@ function gambarTabel(b) {
     }
   );
   tfoot.appendChild(tr);
+
+  var catatan = el('stat-harga-catatan');
+  catatan.hidden = !adaBeragam;
+  if (adaBeragam) {
+    catatan.textContent =
+      'Tanda * berarti sebagian pendaftar di periode ini membayar dengan harga yang berbeda, karena harganya pernah diubah. Kolom Pendapatan sudah memakai harga yang benar-benar berlaku saat mereka mendaftar, jadi harga dikali pendaftaran di baris itu memang tidak akan cocok dengan kolom pendapatannya.';
+  }
 }
 
 function gambarHero(hero) {

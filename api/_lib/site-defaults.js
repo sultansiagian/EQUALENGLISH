@@ -85,6 +85,21 @@ module.exports = {
   sertifikatTandaTanganUrl: '',
 
   // ============================================================
+  // RIWAYAT HARGA
+  // ============================================================
+  // Tiap item: { berlakuSejak, pkg1Price, pkg2Price, pkg3Price }.
+  // berlakuSejak null berarti berlaku sejak awal.
+  //
+  // Ditulis OTOMATIS oleh api/admin-content.js tiap kali harga paket
+  // diubah, bukan diisi tangan. Gunanya supaya pendapatan batch lama
+  // tetap dihitung dengan harga yang benar-benar berlaku waktu itu.
+  //
+  // Tanpa ini, menaikkan harga untuk batch berikutnya akan diam-diam
+  // menaikkan juga pendapatan batch-batch sebelumnya, dan catatan yang
+  // tadinya benar jadi salah tanpa ada yang menyentuhnya.
+  hargaRiwayat: [],
+
+  // ============================================================
   // CATATAN BATCH, dipakai halaman /analitik
   // ============================================================
   // Tiap item: { nama, mulai, selesai }.

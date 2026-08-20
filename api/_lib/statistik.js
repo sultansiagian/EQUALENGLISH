@@ -54,6 +54,74 @@ function ambilHarga(overrides, kunci) {
   return Number.isFinite(angka) ? angka : 0;
 }
 
+/**
+ * ============================================================
+ * HARGA DIPAKAI MENURUT KAPAN ORANGNYA MENDAFTAR
+ * ============================================================
+ * Harga paket bisa berubah antar batch. Kalau semua baris dihitung
+ * memakai harga yang berlaku SEKARANG, menaikkan harga untuk batch
+ * berikutnya akan diam-diam menaikkan juga pendapatan batch-batch lama,
+ * dan catatan yang tadinya benar jadi salah tanpa ada yang menyentuhnya.
+ *
+ * Karena itu tiap perubahan harga dicatat beserta waktu berlakunya
+ * (lihat hargaRiwayat di site-defaults.js dan penulisnya di
+ * api/admin-content.js), dan tiap baris dihargai memakai catatan yang
+ * berlaku pada tanggal pendaftarannya.
+ *
+ * Selama belum pernah ada perubahan harga, riwayatnya kosong dan
+ * semuanya memakai harga sekarang -- persis seperti perilaku lama.
+ */
+function susunRiwayatHarga(overrides) {
+  const o = overrides || {};
+  const riwayat = Array.isArray(o.hargaRiwayat) ? o.hargaRiwayat : [];
+
+  const daftar = riwayat
+    .map((r) => ({
+      // null berarti berlaku sejak awal.
+      sejak: r && r.berlakuSejak ? new Date(r.berlakuSejak).getTime() : null,
+      harga: PAKET.map((p) => {
+        const n = Number(String((r && r[p.kunciHarga]) || 0).replace(/[^\d]/g, ""));
+        return Number.isFinite(n) ? n : 0;
+      }),
+    }))
+    .filter((r) => r.sejak === null || Number.isFinite(r.sejak))
+    .sort((a, b) => (a.sejak === null ? -1 : b.sejak === null ? 1 : a.sejak - b.sejak));
+
+  // Harga yang berlaku sekarang selalu jadi entri terakhir, supaya
+  // pendaftar sesudah perubahan terakhir tetap terhargai dengan benar
+  // tanpa menunggu ada perubahan berikutnya.
+  const sekarang = PAKET.map((p) => ambilHarga(o, p.kunciHarga));
+  const terakhir = daftar[daftar.length - 1];
+  if (!terakhir || terakhir.harga.join() !== sekarang.join()) {
+    daftar.push({ sejak: daftar.length === 0 ? null : Date.now(), harga: sekarang });
+  }
+
+  return daftar;
+}
+
+/**
+ * Harga satu paket pada tanggal tertentu.
+ *
+ * Baris yang tanggalnya tidak terbaca dihargai memakai catatan PALING
+ * AWAL, bukan yang terbaru. Baris tanpa tanggal di data ini datangnya
+ * dari respons Google Form lama, jadi menebak "lama" lebih sering benar
+ * daripada menebak "baru", dan tebakan itu tidak pernah menggelembungkan
+ * pendapatan.
+ */
+function hargaPada(riwayat, indeksPaket, tanggal) {
+  const t = tanggal ? tanggal.getTime() : null;
+  let dipakai = riwayat[0];
+
+  if (t !== null) {
+    for (const r of riwayat) {
+      if (r.sejak === null || r.sejak <= t) dipakai = r;
+      else break;
+    }
+  }
+
+  return dipakai ? dipakai.harga[indeksPaket] : 0;
+}
+
 function ambilNama(overrides, kunci, cadangan) {
   const o = overrides || {};
   const nilai = o[kunci] !== undefined ? o[kunci] : DEFAULTS[kunci];
@@ -77,6 +145,7 @@ function hitungStatistik(csvText, overrides, jendela) {
       nama: ambilNama(overrides, p.kunciNama, p.label),
       orangPerPendaftaran: p.orang,
       harga: ambilHarga(overrides, p.kunciHarga),
+      hargaBeragam: false,
       pendaftaran: 0,
       orang: 0,
       pendapatan: 0,
@@ -98,6 +167,7 @@ function hitungStatistik(csvText, overrides, jendela) {
 
   // Format tanggal ditentukan dari SELURUH kolom sekaligus, lihat
   // penjelasan panjang di _lib/csv.js.
+  const riwayatHarga = susunRiwayatHarga(overrides);
   const kolomTanggal = rows.slice(1).map((r) => (r ? r[KOLOM.timestamp] : ''));
   const bacaTanggal = buatPembacaTanggal(kolomTanggal);
 
@@ -112,8 +182,12 @@ function hitungStatistik(csvText, overrides, jendela) {
     const adaIsi = row.some((sel) => String(sel || '').trim());
     if (!adaIsi) continue;
 
+    // Tanggal dibaca untuk SEMUA baris, bukan cuma waktu ada jendela:
+    // selain menentukan batch, tanggal juga menentukan harga mana yang
+    // berlaku untuk baris itu.
+    const tgl = bacaTanggal(row[KOLOM.timestamp]);
+
     if (pakaiJendela) {
-      const tgl = bacaTanggal(row[KOLOM.timestamp]);
       if (!tgl) {
         hasil.tanpaTanggal++;
         continue;
@@ -129,14 +203,23 @@ function hitungStatistik(csvText, overrides, jendela) {
       continue;
     }
 
-    const p = hasil.perPaket.find((x) => x.id === paketId);
+    const indeks = hasil.perPaket.findIndex((x) => x.id === paketId);
+    const p = hasil.perPaket[indeks];
+    const hargaBaris = hargaPada(riwayatHarga, indeks, tgl);
+
+    // Ditandai kalau ada baris di paket ini yang harganya berbeda dari
+    // harga yang berlaku sekarang. Tanpa penanda, tabel akan menampilkan
+    // "Rp59.000 x 18" padahal sebagian dibayar dengan harga lain, dan
+    // perkaliannya tidak akan pernah cocok dengan totalnya.
+    if (hargaBaris !== p.harga) p.hargaBeragam = true;
+
     p.pendaftaran++;
     p.orang += p.orangPerPendaftaran;
-    p.pendapatan += p.orangPerPendaftaran * p.harga;
+    p.pendapatan += p.orangPerPendaftaran * hargaBaris;
 
     hasil.totalPendaftaran++;
     hasil.totalOrang += p.orangPerPendaftaran;
-    hasil.totalPendapatan += p.orangPerPendaftaran * p.harga;
+    hasil.totalPendapatan += p.orangPerPendaftaran * hargaBaris;
   }
 
   return hasil;
@@ -171,6 +254,7 @@ function gabungStatistik(daftar) {
       hasil.perPaket[i].pendaftaran += p.pendaftaran;
       hasil.perPaket[i].orang += p.orang;
       hasil.perPaket[i].pendapatan += p.pendapatan;
+      if (p.hargaBeragam) hasil.perPaket[i].hargaBeragam = true;
     });
   }
 
