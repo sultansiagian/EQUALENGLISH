@@ -391,6 +391,7 @@ async function simpan() {
 
     if (res.ok && data.ok) {
       berhasil = true;
+      tandaiAdminTersimpan();
       setStatus('ok', 'Tersimpan. Buka /daftar untuk melihat hasilnya.');
       // Dimuat ulang dari server supaya yang tampil di layar persis yang
       // benar-benar tersimpan setelah dibersihkan server -- termasuk kalau

@@ -42,6 +42,8 @@ window.tombolSibuk =
     if (tombol) tombol.disabled = !!sibuk;
   };
 window.tombolBerhasil = window.tombolBerhasil || function () {};
+window.tandaiAdminBerubah = window.tandaiAdminBerubah || function () {};
+window.tandaiAdminTersimpan = window.tandaiAdminTersimpan || function () {};
 window.hitungNaik =
   window.hitungNaik ||
   function (elemen, nilai, format) {

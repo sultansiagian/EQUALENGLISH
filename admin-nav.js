@@ -187,3 +187,97 @@ function ikonSVG(nama) {
     if (window.innerWidth >= 1024 && terbuka()) setLaci(false, false);
   });
 })();
+
+/* =====================================================================
+   PENJAGA ISIAN YANG BELUM DISIMPAN
+   =====================================================================
+   Sebelum ada sidebar, pindah halaman berarti menggulir sampai bawah
+   dulu -- cukup jauh sampai tidak pernah terjadi tanpa sengaja. Sekarang
+   satu klik, dan satu klik itu membuang seluruh isian /atur-kelas yang
+   belum ditekan Simpan, tanpa bilang apa-apa. Kemudahan yang dibawa
+   sidebar itu yang bikin penjaga ini jadi perlu.
+
+   Dua jalan keluar yang dijaga:
+   1. Klik tautan di sidebar (pindah halaman di tab yang sama).
+   2. Tutup tab atau muat ulang, lewat beforeunload.
+
+   "Lihat formulir" sengaja TIDAK dijaga: dia membuka tab baru, jadi
+   halaman ini tidak ditinggalkan dan tidak ada yang hilang. */
+
+var adaPerubahan = false;
+
+/* CATATAN YANG PERLU DIINGAT kalau nanti ada yang menyempurnakan ini:
+   penandanya satu untuk seluruh halaman, bukan satu per kartu. Di
+   /admin ada DUA tombol simpan yang berdiri sendiri (Teks & Harga, dan
+   Testimoni). Menyimpan salah satunya membersihkan penanda untuk
+   dua-duanya, jadi kalau kamu menyunting keduanya lalu menyimpan satu
+   saja, yang satunya bisa lolos tanpa peringatan.
+
+   Dibiarkan begitu dengan sadar: alternatifnya melacak per kelompok
+   isian, dan itu jauh lebih rumit demi kasus yang jarang. Keadaan
+   sekarang tetap lebih baik daripada sebelumnya, yang tidak pernah
+   memperingatkan apa pun sama sekali. */
+window.tandaiAdminBerubah = function () {
+  adaPerubahan = true;
+};
+window.tandaiAdminTersimpan = function () {
+  adaPerubahan = false;
+};
+
+(function pasangPenjagaAdmin() {
+  var panel = document.getElementById('admin-panel-dashboard');
+  if (!panel) return;
+
+  /* Kolom yang isinya tidak pernah disimpan ke mana-mana. Mengetik di
+     kotak pencarian /pendaftar tidak boleh dianggap kerjaan yang bisa
+     hilang -- peringatan palsu adalah cara tercepat membuat orang
+     berhenti membaca peringatan. */
+  function diabaikan(el) {
+    if (!el || !el.tagName) return true;
+    if (el.type === 'search' || el.type === 'file') return true;
+    return !!el.closest('[data-tanpa-jaga]');
+  }
+
+  /* Didengarkan di tingkat panel, bukan dipasang satu per satu ke tiap
+     kolom: baris jadwal, testimoni, dan pertanyaan formulir dibuat
+     belakangan oleh JavaScript, dan pendengar yang dipasang di awal
+     tidak akan pernah mengenal mereka.
+
+     Pengisian formulir dari server TIDAK ikut terhitung, karena
+     menetapkan .value lewat JavaScript memang tidak memicu event input
+     maupun change. Jadi penanda ini hanya menyala oleh ketikan orang. */
+  ['input', 'change'].forEach(function (jenis) {
+    panel.addEventListener(
+      jenis,
+      function (e) {
+        if (!diabaikan(e.target)) window.tandaiAdminBerubah();
+      },
+      true
+    );
+  });
+
+  var sidebar = document.getElementById('admin-sidebar');
+  if (sidebar) {
+    sidebar.addEventListener('click', function (e) {
+      if (!adaPerubahan) return;
+
+      var tautan = e.target.closest('a.admin-nav-item');
+      // Tautan yang membuka tab baru meninggalkan halaman ini tetap utuh.
+      if (!tautan || tautan.target === '_blank') return;
+
+      var lanjut = window.confirm(
+        'Ada isian di halaman ini yang belum disimpan. Kalau pindah sekarang, ' +
+          'isian itu hilang.\n\nTetap pindah?'
+      );
+      if (!lanjut) e.preventDefault();
+    });
+  }
+
+  window.addEventListener('beforeunload', function (e) {
+    if (!adaPerubahan) return;
+    // Browser modern mengabaikan teks buatan sendiri dan memakai
+    // kalimatnya sendiri; yang penting dialognya muncul.
+    e.preventDefault();
+    e.returnValue = '';
+  });
+})();

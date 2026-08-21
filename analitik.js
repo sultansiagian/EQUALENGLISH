@@ -372,6 +372,7 @@ async function simpanDasar() {
 
     if (res.ok && data.ok) {
       berhasil = true;
+      tandaiAdminTersimpan();
       status.dataset.state = 'ok';
       status.textContent = 'Tersimpan. Beranda akan memakai angka baru ini.';
       // Penjumlahan di layar ikut diperbarui supaya yang terlihat sama

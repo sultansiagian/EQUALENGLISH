@@ -93,7 +93,18 @@ function renderJadwal() {
     });
 
     baris.querySelector('.jadwal-hapus').addEventListener('click', function () {
+      // Tanggalnya disebut, bukan cuma nomor barisnya: nomor berubah
+      // sendiri tiap kali ada yang dihapus, tanggal tidak.
+      var s = jadwal[i];
+      var kapan = (s.tanggal || '').trim() || 'yang tanggalnya belum diisi';
+      var konfirmasi = window.confirm(
+        'Hapus sesi ' + kapan + '? ' +
+          'Belum benar-benar hilang sampai kamu menekan Simpan Isi Ruang Kelas, ' +
+          'jadi kalau salah tekan, muat ulang halaman ini.'
+      );
+      if (!konfirmasi) return;
       jadwal.splice(i, 1);
+      tandaiAdminBerubah();
       renderJadwal();
     });
 
@@ -268,6 +279,7 @@ async function simpanKelas() {
 
     if (res.ok && data.ok) {
       berhasil = true;
+      tandaiAdminTersimpan();
       status.dataset.state = 'ok';
       status.textContent = 'Tersimpan. Siswa yang masuk setelah ini langsung melihat isi baru.';
     } else {

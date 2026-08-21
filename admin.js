@@ -78,6 +78,7 @@ async function saveForm() {
 
     if (res.ok && data.ok) {
       berhasil = true;
+      tandaiAdminTersimpan();
       setSaveStatus('ok', 'Tersimpan. Biasanya tayang di situs dalam ~10 detik.');
     } else if (res.status === 401) {
       handleUnauthorized(data.reason);
@@ -158,7 +159,17 @@ function testiTemplate(index, item) {
   });
 
   row.querySelector('.admin-testi-remove').addEventListener('click', () => {
+    // Sebut namanya, supaya jelas baris mana yang akan hilang -- semua
+    // tombol Hapus di daftar ini kelihatan sama persis.
+    const nama = String(testimonials[index].nama || '').trim();
+    const konfirmasi = window.confirm(
+      'Hapus testimoni ' + (nama ? '"' + nama + '"' : 'ini') + '? ' +
+        'Belum benar-benar hilang sampai kamu menekan Simpan Testimoni, ' +
+        'jadi kalau salah tekan, muat ulang halaman ini.'
+    );
+    if (!konfirmasi) return;
     testimonials.splice(index, 1);
+    tandaiAdminBerubah();
     renderTestiList();
   });
 
@@ -253,6 +264,7 @@ async function saveTestimonials() {
 
     if (res.ok && data.ok) {
       berhasil = true;
+      tandaiAdminTersimpan();
       const tampil = testimonials.filter(
         (t) => String(t.nama || '').trim() && String(t.pesan || '').trim()
       ).length;
