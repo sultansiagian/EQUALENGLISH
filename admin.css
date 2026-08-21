@@ -29,17 +29,58 @@ body {
   font-family: var(--body);
 }
 
+/* Ukuran rangka aplikasi. Tinggi topbar dipakai lagi di tiga tempat lain
+   (posisi lengket sidebar, tinggi laci di HP, batas atas scrim), jadi
+   ditulis sekali di sini supaya tidak pernah meleset satu piksel. */
+:root {
+  --admin-topbar-h: 64px;
+  --admin-sidebar-w: 256px;
+}
+
+/* =====================================================================
+   RANGKA: TOPBAR DI ATAS, SIDEBAR DI KIRI, ISI DI TENGAH
+   =====================================================================
+   Bentuknya mengikuti Google Classroom: satu bar hitam yang selalu
+   kelihatan di atas, daftar halaman yang diam di kiri, dan cuma kolom
+   isi yang ikut menggulir.
+
+   Ditulis sebagai grid dengan area bernama, bukan flex bersarang, karena
+   kelima panel state (signin/loading/denied/error/dashboard) semuanya
+   menempati area 'konten' yang SAMA. Cuma satu yang terlihat pada satu
+   waktu, jadi mereka boleh saling menumpuk di petak yang sama dan tidak
+   perlu satu pun div pembungkus tambahan di HTML-nya. */
 .admin-shell {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    'topbar'
+    'konten';
+}
+
+/* Sebelum login sidebar-nya tidak ada, jadi kolomnya juga tidak boleh
+   ada -- kalau kolom selebar sidebar tetap dipesan, panel login melenceng
+   ke kanan mengikuti ruang kosong yang tidak ditempati apa pun. */
+body.admin-masuk .admin-shell {
+  grid-template-columns: var(--admin-sidebar-w) minmax(0, 1fr);
+  grid-template-areas:
+    'topbar topbar'
+    'sidebar konten';
 }
 
 .admin-topbar {
+  grid-area: topbar;
+  /* Lengket, bukan fixed: tidak perlu menambal padding-top di isi halaman,
+     dan tidak pernah menutupi apa pun waktu digulir. */
+  position: sticky;
+  top: 0;
+  z-index: 40;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 18px 32px;
+  gap: 12px;
+  min-height: var(--admin-topbar-h);
+  padding: 0 20px;
   background: var(--black);
   color: var(--white);
 }
@@ -56,18 +97,108 @@ body {
   color: var(--pink);
 }
 
+/* Di HP, "EQUAL English Admin" + email + tombol laci tidak muat dalam
+   satu baris: brand-nya membungkus jadi dua baris dan topbar-nya terlihat
+   berantakan. Nama produknya yang dilepas, bukan emailnya -- judul tab
+   dan favicon sudah bilang ini situs mana, sedangkan email adalah
+   satu-satunya penanda kamu sedang masuk sebagai akun yang mana. */
+@media (max-width: 560px) {
+  .admin-topbar-nama {
+    display: none;
+  }
+}
+
 .admin-topbar-user {
+  margin-left: auto;
   font-family: var(--mono);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   color: var(--pink-light);
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  /* Email panjang tidak boleh mendorong brand keluar layar. Batasnya
+     cuma 320px; sisanya diserahkan ke flexbox, yang akan menyusutkan
+     kapsul ini lebih jauh kalau memang ruangnya kurang -- overflow:hidden
+     yang membuat penyusutan itu boleh terjadi (tanpanya, lebar minimum
+     otomatis flex item adalah selebar isinya dan topbar-nya jebol).
+
+     Yang terpotong tetap bisa dibaca utuh lewat tooltip judul, dipasang
+     admin-auth.js waktu mengisi teksnya. */
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tombol laci, cuma muncul di layar sempit setelah login (lihat media
+   query di bagian SIDEBAR). Ukurannya 44px penuh walau ikonnya 24px,
+   supaya tetap gampang ditekan di HP. */
+.admin-menu {
+  display: none;
+  width: 44px;
+  height: 44px;
+  margin-left: -10px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--white);
+  cursor: pointer;
+  transition: background-color 0.18s var(--ease-out);
+}
+
+.admin-menu:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.admin-menu:focus-visible {
+  outline: 2px solid var(--pink);
+  outline-offset: 2px;
+}
+
+.admin-menu svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Enam tautan sidebar berdiri sebelum isi halaman di urutan tab. Tanpa
+   pintasan ini, pengguna keyboard menekan Tab enam kali di tiap halaman
+   cuma untuk sampai ke kolom yang mau disunting. */
+.admin-lompat {
+  /* fixed, bukan absolute: kalau halaman sedang tergulir jauh ke bawah
+     waktu Tab ditekan, versi absolute muncul di puncak dokumen yang tidak
+     terlihat -- pintasannya jadi ada tapi tidak kelihatan. */
+  position: fixed;
+  left: 8px;
+  top: 8px;
+  z-index: 90;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--pink);
+  color: var(--black);
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 0.88rem;
+  text-decoration: none;
+  /* Digeser keluar layar, bukan display:none, supaya tetap bisa dijangkau
+     Tab. Tanpa transisi: ini satu-satunya kontrol yang tugasnya menghemat
+     waktu, jadi tidak pantas kalau justru harus ditunggu muncul. */
+  transform: translateY(-160%);
+}
+
+.admin-lompat:focus {
+  transform: none;
 }
 
 .admin-panel {
-  flex: 1;
+  grid-area: konten;
   width: 100%;
-  max-width: 880px;
+  max-width: 920px;
   margin: 0 auto;
-  padding: 40px 24px 80px;
+  padding: 36px 28px 96px;
 }
 
 .admin-panel-center {
@@ -731,21 +862,6 @@ body {
   color: var(--red);
 }
 
-/* Navigasi antar halaman admin (/admin dan /pendaftar). */
-.admin-nav {
-  margin-bottom: 20px;
-}
-
-.admin-nav a {
-  font-family: var(--body);
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--black);
-  text-decoration: none;
-  border-bottom: 2px solid var(--pink);
-  padding-bottom: 2px;
-}
-
 .admin-pendaftar-topbar {
   display: flex;
   align-items: flex-start;
@@ -903,13 +1019,6 @@ body {
   color: var(--black);
 }
 
-/* Beberapa halaman admin sekarang punya lebih dari satu tautan. */
-.admin-nav {
-  display: flex;
-  gap: 18px;
-  flex-wrap: wrap;
-}
-
 /* Pemilih mode buka/tutup pendaftaran di /atur-form */
 .form-mode {
   display: grid;
@@ -1037,6 +1146,24 @@ body::before {
   background-position: center;
 }
 
+/* Foto ini latar untuk LAYAR LOGIN, bukan untuk panel kerjanya. Setelah
+   login, sidebar putih dan kolom isi menutupi seluruh layar sampai
+   fotonya tidak terlihat sedikit pun, jadi lapisannya dimatikan saja
+   daripada terus dikomposit percuma di belakang halaman.
+
+   Yang lebih penting: seluruh aturan di bawah menerangkan teks supaya
+   terbaca DI ATAS foto gelap. Begitu panel kerjanya jadi terang, aturan
+   yang sama berubah jadi putih-di-atas-terang. Karena itu masing-masing
+   dibatasi ke .admin-panel-center -- panel login, loading, ditolak, dan
+   error -- dan tidak satu pun boleh menyentuh isi dashboard. */
+body.admin-masuk {
+  background-color: var(--paper);
+}
+
+body.admin-masuk::before {
+  display: none;
+}
+
 /* Teks yang duduk langsung di atas foto, bukan di dalam kartu. */
 .admin-panel-center h1 {
   color: var(--white);
@@ -1056,10 +1183,6 @@ body::before {
   border-color: var(--white);
 }
 
-.admin-nav a {
-  color: var(--white);
-}
-
 /* Pesan error login juga di luar kartu, jadi versi terangnya dipakai
    supaya tetap terbaca di atas foto gelap. */
 .admin-panel-center .admin-signin-error {
@@ -1068,29 +1191,12 @@ body::before {
   border-color: rgba(255, 255, 255, 0.25);
 }
 
-.admin-status {
+/* Cuma "Memeriksa akses…" di panel loading yang duduk di atas foto.
+   Baris .admin-status lain ("Memuat kiriman…", "Menghitung dari
+   spreadsheet…") ada di dalam dashboard yang berlatar terang, dan dulu
+   ikut kena aturan ini sampai jadi putih-di-atas-putih. */
+.admin-panel-center .admin-status {
   color: rgba(255, 255, 255, 0.75);
-}
-
-/* Kartu "Cek Koneksi" sengaja dibuat transparan supaya terlihat sekunder
-   dibanding kartu editor. Waktu latar halaman masih terang itu bekerja,
-   tapi di atas foto gelap isinya jadi teks gelap di atas gelap (terukur
-   1,87:1). Diberi latar terang setengah tembus: tetap terbaca sekunder,
-   tapi isinya kembali terbaca. */
-.admin-card-muted {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.admin-card-muted h2,
-.admin-card-muted .admin-card-note,
-.admin-card-muted .admin-hint {
-  color: rgba(255, 255, 255, 0.82);
-}
-
-.admin-card-muted .admin-btn-ghost {
-  color: var(--white);
-  border-color: var(--white);
 }
 
 /* Item grid bawaannya punya min-width:auto, artinya dia MENOLAK menyusut
@@ -1497,42 +1603,242 @@ body::before {
 }
 
 /* =====================================================================
-   NAVIGASI ANTAR HALAMAN ADMIN
+   SIDEBAR NAVIGASI ANTAR HALAMAN ADMIN
    =====================================================================
    Isinya digambar admin-nav.js supaya satu daftar berlaku di semua
-   halaman. Ditaruh di atas DAN diulang di bawah, jadi tidak perlu
-   menggulir balik ke atas cuma untuk pindah halaman. */
+   halaman. Bentuknya daftar tegak yang diam di kiri, seperti Google
+   Classroom: pindah halaman selalu satu klik, dari posisi gulir mana
+   pun. Yang sedang dibuka ditandai kapsul pink yang membuka ke kiri
+   layar, jadi terbaca sebagai "kamu di sini" dan bukan sekadar tautan
+   yang kebetulan berwarna lain.
 
-.admin-nav-bawah {
-  margin: 32px 0 0;
-  padding-top: 20px;
-  /* Putih transparan, bukan var(--line): garis itu hitam 14% alpha dan
-     tidak terlihat sama sekali di atas foto gelap. */
-  border-top: 1px solid rgba(255, 255, 255, 0.18);
+   Sidebar-nya berlatar putih di atas kolom isi yang berwarna paper, jadi
+   seluruh teks di dalamnya hitam. Ini kebalikan dari versi lama yang
+   duduk di atas foto gelap dan harus serba putih. */
+
+.admin-sidebar {
+  grid-area: sidebar;
+  /* Sebelum login tidak ada gunanya menawarkan pindah halaman: semua
+     halaman admin cuma menampilkan tombol login yang sama. */
+  display: none;
 }
 
-/* Halaman yang sedang dibuka. Digambar sebagai <span>, bukan link, jadi
-   perlu disamakan bentuknya di sini. */
-/* Halaman yang sedang dibuka: PINK dengan garis putih, kebalikan dari
-   link lain yang putih dengan garis pink. Dibalik begitu supaya yang
-   sedang dibuka langsung terbaca berbeda tanpa perlu membandingkan.
+body.admin-masuk .admin-sidebar {
+  display: block;
+  position: sticky;
+  /* align-self:start wajib. Tanpa itu grid meregangkan sidebar setinggi
+     barisnya, dan elemen yang setinggi wadahnya sendiri tidak punya
+     ruang untuk menempel -- position:sticky-nya diam saja. */
+  align-self: start;
+  top: var(--admin-topbar-h);
+  height: calc(100dvh - var(--admin-topbar-h));
+  overflow-y: auto;
+  /* Kiri nol: kapsul halaman aktif memang dibiarkan menyentuh tepi
+     layar, ujung kanannya saja yang membulat. */
+  padding: 14px 0 24px;
+  background: var(--white);
+  border-right: 1px solid var(--line);
+}
 
-   Sempat memakai var(--black) dan itu keliru: navigasi ini duduk di
-   atas foto gelap, bukan di dalam kartu terang, jadi teks hitamnya
-   nyaris hilang. Aturan terang untuk latar foto di bagian LATAR FOTO
-   cuma menyasar <a>, sedangkan halaman aktif digambar sebagai <span>
-   supaya tidak bisa diklik, jadi tidak ikut kena. */
+.admin-nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  /* 48px: masih nyaman ditekan di HP, tempat sidebar ini jadi laci. */
+  min-height: 48px;
+  padding: 10px 16px 10px 24px;
+  margin-right: 14px;
+  border-radius: 0 999px 999px 0;
+  font-family: var(--body);
+  font-size: 0.94rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--black);
+  text-decoration: none;
+  transition: background-color 0.16s var(--ease-out), color 0.16s var(--ease-out);
+}
+
+.admin-nav-ikon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  /* Ikon di sini menemani label yang sudah tertulis, bukan menggantikannya,
+     jadi warnanya boleh lebih redup dari teksnya. */
+  color: var(--ink-muted);
+  transition: color 0.16s var(--ease-out);
+}
+
+a.admin-nav-item:hover {
+  background: rgba(0, 0, 0, 0.055);
+}
+
+a.admin-nav-item:hover .admin-nav-ikon {
+  color: var(--black);
+}
+
+a.admin-nav-item:focus-visible {
+  outline: 2px solid var(--black);
+  /* Ke dalam, bukan ke luar: kapsulnya menempel tepi kiri layar dan
+     garis fokus di luar tepi itu akan terpotong. */
+  outline-offset: -2px;
+}
+
+/* Halaman yang sedang dibuka. Digambar admin-nav.js sebagai <span>,
+   bukan <a>: tautan yang mengarah ke halamannya sendiri tidak melakukan
+   apa-apa waktu diklik, dan itu terbaca seperti tombol rusak. */
 .admin-nav-aktif {
+  background: var(--pink);
   font-weight: 700;
-  color: var(--pink);
-  border-bottom: 2px solid var(--white);
-  padding-bottom: 2px;
   cursor: default;
 }
 
+.admin-nav-aktif .admin-nav-ikon {
+  color: var(--black);
+}
+
+.admin-nav-pisah {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 12px 14px 12px 24px;
+}
+
 .admin-nav-luar {
-  margin-left: auto;
   color: var(--ink-muted);
+  font-weight: 500;
+}
+
+/* =====================================================================
+   SIDEBAR JADI LACI DI LAYAR SEMPIT
+   =====================================================================
+   Di bawah 1024px tidak ada 256px yang bisa disisihkan tanpa memeras
+   kolom isi sampai formulirnya sempit. Sidebar-nya jadi laci yang
+   digeser masuk dari kiri lewat tombol di topbar.
+
+   Lacinya mulai DI BAWAH topbar, bukan menutupi seluruh layar, supaya
+   tombol yang membukanya tetap terlihat dan bisa dipakai menutup lagi. */
+
+/* Di layar lebar sidebar-nya permanen dan tidak pernah ada yang perlu
+   diredupkan, jadi scrim-nya tidak ada sama sekali. */
+.admin-scrim {
+  display: none;
+}
+
+@keyframes admin-scrim-masuk {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 1023px) {
+  body.admin-masuk .admin-shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'topbar'
+      'konten';
+  }
+
+  body.admin-masuk .admin-menu {
+    display: inline-flex;
+  }
+
+  body.admin-masuk .admin-sidebar {
+    position: fixed;
+    top: var(--admin-topbar-h);
+    left: 0;
+    z-index: 60;
+    width: min(288px, 82vw);
+    height: calc(100dvh - var(--admin-topbar-h));
+    border-right: 0;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+    transform: translateX(-100%);
+  }
+
+  /* Transisinya sengaja TIDAK ada sampai tombol laci ditekan sekali.
+     Sidebar muncul dari display:none waktu login berhasil, dan browser
+     memperlakukan kemunculan itu sebagai perubahan transform yang layak
+     dianimasikan -- akibatnya di HP lacinya berkelebat terbuka menutupi
+     halaman, lalu meluncur keluar sendiri, tiap kali login. Class ini
+     dipasang admin-nav.js di dalam setLaci(), jadi baru ada persis pada
+     perubahan yang memang diminta pengguna. */
+  body.admin-laci-siap .admin-sidebar {
+    transition: transform 0.26s var(--ease-out);
+  }
+
+  body.admin-laci-buka .admin-sidebar {
+    transform: none;
+  }
+
+  /* Halaman di belakang laci tidak boleh ikut tergulir waktu jari
+     menggeser di atas scrim -- itu bikin pengguna kehilangan tempatnya
+     di formulir yang sedang diisi. */
+  body.admin-laci-buka {
+    overflow: hidden;
+  }
+
+  body.admin-laci-buka .admin-scrim {
+    display: block;
+    position: fixed;
+    inset: var(--admin-topbar-h) 0 0 0;
+    z-index: 50;
+    background: rgba(0, 0, 0, 0.45);
+    animation: admin-scrim-masuk 0.22s var(--ease-out);
+  }
+}
+
+/* Laci yang meluncur adalah gerakan besar melintasi layar, persis jenis
+   yang bikin pusing kalau pengguna minta gerakan dikurangi. Lacinya tetap
+   berfungsi, cuma langsung ada di tempatnya. */
+@media (prefers-reduced-motion: reduce) {
+  body.admin-laci-siap .admin-sidebar {
+    transition: none;
+  }
+
+  body.admin-laci-buka .admin-scrim {
+    animation: none;
+  }
+}
+
+/* =====================================================================
+   JUDUL HALAMAN
+   =====================================================================
+   Dulu tiap halaman admin langsung dimulai dari kartu ber-<h2> tanpa
+   <h1> sama sekali, dan nama halamannya cuma ada di topbar. Sekarang
+   topbar-nya selalu berbunyi "EQUAL English Admin" di kelima halaman
+   (yang membedakan halaman adalah kapsul aktif di sidebar), jadi nama
+   halamannya pindah ke sini sebagai judul asli. */
+
+.admin-judul {
+  margin: 0 0 26px;
+}
+
+.admin-judul h1 {
+  font-family: var(--display);
+  font-size: clamp(1.6rem, 1.2rem + 1.3vw, 2.05rem);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.admin-judul p {
+  margin: 8px 0 0;
+  color: var(--ink-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  max-width: 62ch;
+}
+
+.admin-judul p a {
+  color: var(--black);
+  font-weight: 600;
+  text-decoration-color: var(--pink);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
 }
 
 .admin-intro {

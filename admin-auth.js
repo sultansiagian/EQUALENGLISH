@@ -30,6 +30,19 @@ function showPanel(name) {
     var el = document.getElementById('admin-panel-' + p);
     if (el) el.hidden = p !== name;
   });
+
+  // Sidebar navigasi cuma masuk akal setelah login: sebelum itu semua
+  // halaman admin cuma menampilkan tombol login yang sama, jadi menawarkan
+  // pindah halaman tidak membawa ke mana-mana. Class ini yang menyalakan
+  // sidebar, tombol menu, dan latar terang panel isi (lihat admin.css);
+  // ditaruh di satu tempat ini supaya kelima halaman ikut sekaligus.
+  document.body.classList.toggle('admin-masuk', name === 'dashboard');
+
+  // Keluar dari dashboard sementara laci di HP masih terbuka akan
+  // meninggalkan scrim gelap menutupi panel login.
+  if (name !== 'dashboard' && typeof window.tutupLaciAdmin === 'function') {
+    window.tutupLaciAdmin();
+  }
 }
 
 function authHeaders() {
@@ -101,6 +114,11 @@ window.handleAdminCredential = async function handleAdminCredential(response) {
       var userEl = document.getElementById('admin-user');
       if (userEl) {
         userEl.textContent = data.email;
+        // Email panjang dipotong ellipsis di topbar sempit (lihat
+        // .admin-topbar-user). Yang terpotong harus tetap bisa dibaca
+        // utuh, kalau tidak admin tidak bisa memastikan sedang masuk
+        // sebagai akun yang mana.
+        userEl.title = data.email;
         userEl.hidden = false;
       }
       if (typeof window.onAdminReady === 'function') window.onAdminReady(data);

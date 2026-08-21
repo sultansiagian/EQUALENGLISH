@@ -18,10 +18,45 @@
   </head>
   <body>
     <div class="admin-shell">
+      <!-- Enam tautan sidebar berdiri sebelum isi halaman di urutan tab. -->
+      <a class="admin-lompat" href="#admin-panel-dashboard">Lompat ke isi halaman</a>
+
       <header class="admin-topbar">
-        <span class="admin-topbar-brand">EQUAL English <em>Atur Ruang Kelas</em></span>
+        <!-- Tombol laci, cuma terlihat di layar sempit tempat sidebar-nya
+             tidak muat berdiri permanen. -->
+        <button
+          type="button"
+          id="admin-menu"
+          class="admin-menu"
+          aria-label="Buka menu"
+          aria-expanded="false"
+          aria-controls="admin-sidebar"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M4 6h16" />
+            <path d="M4 12h16" />
+            <path d="M4 18h16" />
+          </svg>
+        </button>
+        <span class="admin-topbar-brand"
+          ><span class="admin-topbar-nama">EQUAL English </span><em>Admin</em></span
+        >
         <span id="admin-user" class="admin-topbar-user" hidden></span>
       </header>
+
+      <!-- Daftar halaman admin. Isinya digambar admin-nav.js supaya satu
+           daftar berlaku di kelima halaman, dan cuma muncul setelah login
+           (lihat body.admin-masuk di admin.css). -->
+      <nav id="admin-sidebar" class="admin-sidebar" data-nav-admin aria-label="Halaman admin"></nav>
+      <div id="admin-scrim" class="admin-scrim"></div>
 
       <!-- Empat panel state di bawah bentuknya harus sama dengan admin.html,
            karena admin-auth.js yang mengaturnya lewat id yang sama. -->
@@ -68,16 +103,17 @@
         </button>
       </section>
 
-      <main id="admin-panel-dashboard" class="admin-panel" hidden>
-        <!-- Navigasi antar halaman admin. Bentuk dan isinya sama di semua
-             halaman, ditaruh di atas dan diulang di bawah, supaya tidak
-             perlu menggulir balik ke atas cuma untuk pindah halaman. -->
-        <nav class="admin-nav" data-nav-admin></nav>
+      <main id="admin-panel-dashboard" class="admin-panel" tabindex="-1" hidden>
+        <header class="admin-judul">
+          <h1>Ruang Kelas</h1>
+          <p>
+            Link, jadwal sesi, materi, dan Final Test yang dibuka siswa di
+            <a href="/kelas" target="_blank" rel="noopener">/kelas</a>.
+          </p>
+        </header>
 
         <p class="admin-hint admin-intro">
-          Semua yang ada di halaman ini dilihat langsung oleh siswa di
-          <a href="/kelas" target="_blank" rel="noopener">/kelas</a>. Yang
-          <strong>dikosongkan</strong> akan diambil dari spreadsheet seperti
+          Yang <strong>dikosongkan</strong> akan diambil dari spreadsheet seperti
           dulu, jadi kamu bisa memindahkannya sedikit demi sedikit.
         </p>
 
@@ -204,7 +240,6 @@
           <span id="kelas-simpan-status" class="admin-save-status"></span>
         </div>
 
-        <nav class="admin-nav admin-nav-bawah" data-nav-admin></nav>
       </main>
     </div>
 

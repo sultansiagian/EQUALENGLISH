@@ -23,10 +23,45 @@
   </head>
   <body>
     <div class="admin-shell">
+      <!-- Enam tautan sidebar berdiri sebelum isi halaman di urutan tab. -->
+      <a class="admin-lompat" href="#admin-panel-dashboard">Lompat ke isi halaman</a>
+
       <header class="admin-topbar">
-        <span class="admin-topbar-brand">EQUAL English <em>Admin</em></span>
+        <!-- Tombol laci, cuma terlihat di layar sempit tempat sidebar-nya
+             tidak muat berdiri permanen. -->
+        <button
+          type="button"
+          id="admin-menu"
+          class="admin-menu"
+          aria-label="Buka menu"
+          aria-expanded="false"
+          aria-controls="admin-sidebar"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M4 6h16" />
+            <path d="M4 12h16" />
+            <path d="M4 18h16" />
+          </svg>
+        </button>
+        <span class="admin-topbar-brand"
+          ><span class="admin-topbar-nama">EQUAL English </span><em>Admin</em></span
+        >
         <span id="admin-user" class="admin-topbar-user" hidden></span>
       </header>
+
+      <!-- Daftar halaman admin. Isinya digambar admin-nav.js supaya satu
+           daftar berlaku di kelima halaman, dan cuma muncul setelah login
+           (lihat body.admin-masuk di admin.css). -->
+      <nav id="admin-sidebar" class="admin-sidebar" data-nav-admin aria-label="Halaman admin"></nav>
+      <div id="admin-scrim" class="admin-scrim"></div>
 
       <!-- STATE 1: belum login -->
       <section id="admin-panel-signin" class="admin-panel admin-panel-center">
@@ -81,7 +116,12 @@
       </section>
 
       <!-- STATE 5: dashboard -->
-      <main id="admin-panel-dashboard" class="admin-panel" hidden>
+      <main id="admin-panel-dashboard" class="admin-panel" tabindex="-1" hidden>
+        <header class="admin-judul">
+          <h1>Beranda</h1>
+          <p>Teks, harga, foto, dan testimoni yang tampil di halaman depan equalenglish.vercel.app.</p>
+        </header>
+
         <div id="admin-toast" class="admin-toast" role="status" hidden></div>
 
         <section class="admin-card">
@@ -209,8 +249,6 @@
           </div>
         </section>
 
-        <nav class="admin-nav" data-nav-admin></nav>
-
         <section class="admin-card">
           <h2>Testimoni <span class="admin-card-note">beranda</span></h2>
           <p class="admin-hint">
@@ -275,7 +313,6 @@
           </button>
           <pre id="admin-diagnose-output" class="admin-diagnose-output" hidden></pre>
         </section>
-        <nav class="admin-nav admin-nav-bawah" data-nav-admin></nav>
       </main>
     </div>
 
