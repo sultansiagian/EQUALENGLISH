@@ -25,6 +25,71 @@
 
 var currentIdToken = null;
 
+/* =====================================================================
+   TOKEN BERTAHAN ANTAR HALAMAN
+   =====================================================================
+   Dulu token cuma ada di variabel currentIdToken di atas, dan variabel
+   JS mati tiap kali halaman dimuat ulang. Akibatnya pindah dari /admin
+   ke /pendaftar berarti login Google lagi, padahal loginnya baru sedetik
+   yang lalu. Waktu navigasinya masih berupa bar mendatar yang jarang
+   dipakai itu cuma menjengkelkan; setelah jadi sidebar yang mengundang
+   pindah halaman, jadi tidak masuk akal.
+
+   sessionStorage, BUKAN localStorage: isinya ikut hilang begitu tab
+   ditutup. Untuk alat admin itu batas yang benar -- tidak ada alasan
+   token tertinggal di komputer setelah pekerjaannya selesai.
+
+   Ini TIDAK melonggarkan keamanan. Yang disimpan adalah token yang sama
+   persis yang tadinya dipegang di memori, umurnya tetap sekitar 1 jam
+   dari Google, dan server tetap memverifikasinya dari nol di setiap
+   permintaan lewat requireAdmin() -- tidak ada satu pun pemeriksaan yang
+   dipindah ke sisi browser. Skrip jahat yang bisa membaca sessionStorage
+   halaman ini juga sudah bisa membaca variabel currentIdToken sejak
+   dulu, jadi permukaan serangannya sama saja. */
+var KUNCI_TOKEN = 'equalAdminIdToken';
+
+function bacaProfilToken(token) {
+  try {
+    var bagian = token.split('.');
+    return JSON.parse(atob(bagian[1].replace(/-/g, '+').replace(/_/g, '/')));
+  } catch (err) {
+    // Cuma buat ditampilkan dan buat cek kedaluwarsa; kalau gagal
+    // dibaca, server tetap yang menentukan.
+    return null;
+  }
+}
+
+function tokenKedaluwarsa(token) {
+  var profil = bacaProfilToken(token);
+  // Tidak punya exp atau tidak bisa dibaca sama sekali: perlakukan
+  // sebagai tidak layak pakai, jangan dikirim ke server.
+  if (!profil || !profil.exp) return true;
+  // Disisakan 30 detik supaya token yang tinggal sedetik lagi tidak
+  // dipakai lalu ditolak di tengah jalan.
+  return Date.now() >= profil.exp * 1000 - 30000;
+}
+
+function simpanToken(token) {
+  currentIdToken = token;
+  try {
+    window.sessionStorage.setItem(KUNCI_TOKEN, token);
+  } catch (err) {
+    // Sebagian browser melarang sessionStorage di mode penyamaran. Itu
+    // bukan alasan untuk menggagalkan login: token tetap ada di memori,
+    // cuma tidak bertahan waktu pindah halaman, persis seperti perilaku
+    // sebelum bagian ini ada.
+  }
+}
+
+function lupakanToken() {
+  currentIdToken = null;
+  try {
+    window.sessionStorage.removeItem(KUNCI_TOKEN);
+  } catch (err) {
+    // Tidak bisa dihapus berarti memang tidak pernah tersimpan.
+  }
+}
+
 function showPanel(name) {
   ['signin', 'loading', 'denied', 'error', 'dashboard'].forEach(function (p) {
     var el = document.getElementById('admin-panel-' + p);
@@ -73,7 +138,7 @@ var AUTH_REASON_TEXT = {
 // itu terlihat seperti "diklik tapi tidak terjadi apa-apa" -- gagal
 // diam-diam yang bikin masalah aslinya mustahil didiagnosis.
 function handleUnauthorized(reason) {
-  currentIdToken = null;
+  lupakanToken();
   showPanel('signin');
 
   var box = document.getElementById('admin-signin-error');
@@ -87,20 +152,17 @@ function handleUnauthorized(reason) {
   console.error('Login admin ditolak server. reason=' + reason);
 }
 
-// Dipanggil otomatis oleh Google Identity Services lewat
-// data-callback="handleAdminCredential" di HTML.
-window.handleAdminCredential = async function handleAdminCredential(response) {
+// Memeriksa satu token ke server lalu membuka dashboard kalau diterima.
+// Dipakai DUA jalur: token baru dari tombol Google, dan token lama yang
+// diambil dari sessionStorage waktu halaman dibuka. Sengaja satu fungsi
+// supaya keduanya tidak bisa menyimpang -- perbaikan di penanganan 401
+// atau 403 otomatis berlaku untuk dua-duanya.
+async function masukDenganToken(token) {
   showPanel('loading');
-  currentIdToken = response.credential;
+  currentIdToken = token;
 
-  var payloadEmail = '';
-  try {
-    var parts = response.credential.split('.');
-    var profile = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-    payloadEmail = profile.email || '';
-  } catch (err) {
-    // Cuma buat ditampilkan; kalau gagal decode, server tetap yang menentukan.
-  }
+  var profil = bacaProfilToken(token);
+  var payloadEmail = (profil && profil.email) || '';
 
   try {
     // /api/admin-content dipakai sebagai pemeriksa login untuk SEMUA halaman
@@ -127,6 +189,11 @@ window.handleAdminCredential = async function handleAdminCredential(response) {
     }
 
     if (res.status === 403 && data.reason === 'not_admin') {
+      // Token sah tapi bukan admin. Jangan disimpan: kalau dibiarkan,
+      // tiap halaman yang dibuka berikutnya akan mencobanya lagi dan
+      // memunculkan panel "Bukan akun admin" tanpa pernah menawarkan
+      // tombol login yang bisa dipakai untuk ganti akun.
+      lupakanToken();
       var deniedEl = document.getElementById('admin-denied-email');
       if (deniedEl) deniedEl.textContent = payloadEmail;
       showPanel('denied');
@@ -150,13 +217,49 @@ window.handleAdminCredential = async function handleAdminCredential(response) {
     if (detail2) detail2.textContent = 'Tidak bisa menghubungi server: ' + err.message;
     showPanel('error');
   }
+}
+
+// Dipanggil otomatis oleh Google Identity Services lewat
+// data-callback="handleAdminCredential" di HTML.
+window.handleAdminCredential = function handleAdminCredential(response) {
+  simpanToken(response.credential);
+  masukDenganToken(response.credential);
 };
 
 function trySwitchAdminAccount() {
   if (window.google && window.google.accounts && window.google.accounts.id) {
     window.google.accounts.id.disableAutoSelect();
   }
-  currentIdToken = null;
+  lupakanToken();
   showPanel('signin');
 }
 window.trySwitchAdminAccount = trySwitchAdminAccount;
+
+/* Login otomatis dari token yang masih berlaku di tab ini. Inilah yang
+   membuat pindah halaman lewat sidebar tidak minta login lagi.
+   Dijalankan langsung (bukan menunggu DOMContentLoaded) supaya
+   showPanel('loading') sempat mengganti panel login SEBELUM gambar
+   pertama halaman ini dilukis -- kalau ditunda, tombol Google sempat
+   berkelebat sekejap tiap kali pindah halaman.
+
+   Token yang sudah lewat umurnya dibuang tanpa pesan apa-apa dan
+   halaman kembali ke panel login biasa. Itu bukan kegagalan yang perlu
+   dijelaskan, cuma sesi yang habis; kotak merah untuk hal seperti ini
+   akan terbaca seperti ada yang rusak. */
+(function masukOtomatis() {
+  var tersimpan = null;
+  try {
+    tersimpan = window.sessionStorage.getItem(KUNCI_TOKEN);
+  } catch (err) {
+    // sessionStorage diblokir. Tidak ada yang bisa dipulihkan, tampilkan
+    // panel login seperti biasa.
+  }
+  if (!tersimpan) return;
+
+  if (tokenKedaluwarsa(tersimpan)) {
+    lupakanToken();
+    return;
+  }
+
+  masukDenganToken(tersimpan);
+})();
