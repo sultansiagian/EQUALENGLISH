@@ -25,6 +25,29 @@
 
 var currentIdToken = null;
 
+/* Cadangan kalau admin-motion.js gagal dimuat.
+ *
+ * File itu isinya hiasan: reveal, angka menghitung naik, keadaan tombol.
+ * Halaman-halaman admin memanggil fungsinya dari kode penyimpanan yang
+ * BUKAN hiasan, jadi kalau file-nya hilang, tombol Simpan akan melempar
+ * "tombolSibuk is not a function" dan menyimpan jadi mustahil. Menukar
+ * animasi dengan kemampuan menyimpan jelas bukan tukar yang benar.
+ *
+ * Ditaruh di sini karena admin-auth.js selalu dimuat (tanpa dia tidak ada
+ * halaman admin sama sekali) dan urutannya SETELAH admin-motion.js, jadi
+ * `||` di bawah tidak pernah menimpa versi asli yang berhasil dimuat. */
+window.tombolSibuk =
+  window.tombolSibuk ||
+  function (tombol, sibuk) {
+    if (tombol) tombol.disabled = !!sibuk;
+  };
+window.tombolBerhasil = window.tombolBerhasil || function () {};
+window.hitungNaik =
+  window.hitungNaik ||
+  function (elemen, nilai, format) {
+    if (elemen) elemen.textContent = (format || String)(nilai);
+  };
+
 /* =====================================================================
    TOKEN BERTAHAN ANTAR HALAMAN
    =====================================================================
@@ -107,6 +130,14 @@ function showPanel(name) {
   // meninggalkan scrim gelap menutupi panel login.
   if (name !== 'dashboard' && typeof window.tutupLaciAdmin === 'function') {
     window.tutupLaciAdmin();
+  }
+
+  // Isi dashboard baru punya ukuran dan posisi begitu atribut hidden-nya
+  // dilepas. Sebelum itu IntersectionObserver tidak pernah menganggapnya
+  // terlihat, jadi kartu-kartunya perlu diamati ulang di sini -- kalau
+  // tidak, semuanya berhenti di opacity 0 dan halamannya terlihat kosong.
+  if (name === 'dashboard' && typeof window.segarkanGerakAdmin === 'function') {
+    window.segarkanGerakAdmin();
   }
 }
 

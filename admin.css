@@ -2048,3 +2048,155 @@ a.admin-nav-item:focus-visible {
   margin: 14px 0 0;
   line-height: 1.55;
 }
+
+/* =====================================================================
+   BAHASA BERANDA DI PANEL ADMIN
+   =====================================================================
+   Panel ini memakai token yang sama dengan beranda sejak awal (Syne,
+   DM Sans, DM Mono, pink/hitam/paper), tapi bentuknya masih seperti
+   formulir pengaturan generik: judul kecil, kartu diam, tidak ada
+   penanda urutan.
+
+   Yang dipinjam dari beranda: kicker mono bernomor di atas tiap judul
+   ("01 / TEKS BERANDA", persis pola "02 / KENAPA EQUAL"), judul display
+   yang lebih besar dengan aksen pink di <em>, dan lapisan reveal waktu
+   tergulir masuk (aturan CSS-nya dipakai ulang langsung dari styles.css,
+   lihat admin-motion.js).
+
+   Yang sengaja TIDAK dipinjam: hero setinggi layar dan latar bergerak.
+   Halaman ini alat kerja yang dibuka untuk menyunting sesuatu lalu
+   ditutup; ruang layarnya milik formulir, bukan milik dekorasi. */
+
+.admin-kicker {
+  margin: 0 0 10px;
+  font-family: var(--mono);
+  font-size: 0.69rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  line-height: 1.25;
+  color: var(--ink-muted);
+}
+
+/* Nomornya digelapkan, bukan dibuat pink. Pink situs ini (#ffacdf)
+   dipilih untuk latar dan aksen besar; sebagai teks 0,69rem di atas
+   kartu putih kontrasnya cuma 1,8:1 dan praktis tidak terbaca. Pink-nya
+   tetap muncul di panel ini, tapi di tempat yang memang aman: kapsul
+   halaman aktif di sidebar dan <em> di judul halaman. */
+.admin-kicker b {
+  font-weight: 500;
+  color: var(--black);
+}
+
+.admin-judul .admin-kicker {
+  margin-bottom: 14px;
+}
+
+.admin-card h2 {
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-bottom: 6px;
+}
+
+/* Kartu tidak diangkat waktu disentuh kursor, beda dari .value-card di
+   beranda. Kartu beranda isinya bacaan; kartu di sini isinya kolom yang
+   sedang diketik, dan kartu yang melompat naik waktu kursor lewat akan
+   menggeser kolom yang sedang dituju persis sebelum diklik.
+
+   Gantinya penanda yang lebih berguna dan tidak menggeser apa pun: kartu
+   yang sedang berisi kolom aktif diberi garis pink. Di halaman sepanjang
+   ini, itu menjawab "aku tadi lagi di mana" tanpa perlu dicari. */
+.admin-card {
+  transition: border-color 220ms var(--ease-out), box-shadow 220ms var(--ease-out);
+}
+
+.admin-card:focus-within {
+  border-color: var(--pink);
+  box-shadow: 0 0 0 3px rgba(255, 172, 223, 0.3);
+}
+
+/* ---- Tombol yang sedang bekerja ---- */
+
+.admin-btn[data-sibuk] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  /* Tombol mati biasanya diredupkan sampai 0,5. Yang ini bukan "tidak
+     bisa dipakai", tapi "sedang mengerjakan permintaanmu", dan itu justru
+     harus tetap terbaca jelas. */
+  opacity: 1;
+  cursor: progress;
+}
+
+.admin-spinner-tombol {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+  border-color: rgba(0, 0, 0, 0.25);
+  border-top-color: var(--black);
+}
+
+/* ---- Tombol setelah berhasil menyimpan ---- */
+
+/* Hijau yang sama dengan .admin-save-status[data-state='ok'], bukan hijau
+   baru. Putih di atasnya terukur 4,7:1, jadi aman dibaca.
+
+   Warnanya bukan satu-satunya penanda: ada centang dan ada kata
+   "Tersimpan", dan pesan lengkapnya tetap ditulis di teks sebelah
+   tombol. */
+.admin-btn[data-berhasil] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #1a7f37;
+  border-color: #1a7f37;
+  color: var(--white);
+  animation: admin-btn-berhasil 320ms var(--ease-out);
+}
+
+.admin-btn-ikon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+@keyframes admin-btn-berhasil {
+  from {
+    /* Denyut sekali, dari sedikit mengecil. Skala, bukan lebar atau
+       padding, supaya tidak ada yang perlu ditata ulang browser. */
+    transform: scale(0.94);
+  }
+}
+
+/* ---- Toast ---- */
+
+@keyframes admin-toast-masuk {
+  from {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+}
+
+.admin-toast {
+  animation: admin-toast-masuk 260ms var(--ease-out);
+}
+
+/* Reveal beranda memakai `translate`, dan kalau elemennya masih diamati
+   waktu halaman dicetak isinya tidak ikut tercetak. Untuk panel admin
+   ini nyata: daftar pendaftar memang kadang dicetak. */
+@media print {
+  [data-reveal],
+  [data-reveal-stagger] > * {
+    opacity: 1 !important;
+    translate: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-btn[data-berhasil],
+  .admin-toast {
+    animation: none;
+  }
+}

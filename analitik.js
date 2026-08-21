@@ -71,6 +71,12 @@ async function muatStatistik() {
     dataTerakhir = data;
     render(data);
     el('stat-isi').hidden = false;
+
+    // Tiga angka besar sengaja dihitung naik SETELAH wadahnya dibuka.
+    // Dijalankan sebelum itu, animasinya habis di balik elemen yang
+    // masih hidden dan yang terlihat cuma angka akhirnya -- gerak yang
+    // dibayar ongkosnya tapi tidak pernah dilihat siapa pun.
+    hitungAngkaUtama(data.sepanjangWaktu);
   } catch (err) {
     el('stat-memuat').hidden = true;
     el('stat-gagal').textContent = 'Gagal memuat angka: ' + err.message;
@@ -78,12 +84,19 @@ async function muatStatistik() {
   }
 }
 
+/* Angka "Sepanjang Waktu" menghitung naik dari nol, sama seperti angka
+   statistik di beranda. Cuma tiga angka ini, dan cuma sekali waktu
+   halaman selesai memuat: angka yang berubah-ubah kalau dianimasikan
+   tiap kali nilainya berganti akan terbaca seperti halaman memuat
+   ulang, bukan seperti data yang diperbarui. */
+function hitungAngkaUtama(semua) {
+  hitungNaik(el('all-pendaftaran'), Number(semua.totalPendaftaran) || 0);
+  hitungNaik(el('all-siswa'), Number(semua.totalOrang) || 0);
+  hitungNaik(el('all-pendapatan'), Number(semua.totalPendapatan) || 0, rupiah);
+}
+
 function render(data) {
   var semua = data.sepanjangWaktu;
-
-  el('all-pendaftaran').textContent = semua.totalPendaftaran;
-  el('all-siswa').textContent = semua.totalOrang;
-  el('all-pendapatan').textContent = rupiah(semua.totalPendapatan);
 
   gambarBatch(data);
 
@@ -342,7 +355,8 @@ async function simpanDasar() {
     return;
   }
 
-  btn.disabled = true;
+  var berhasil = false;
+  tombolSibuk(btn, true);
   status.removeAttribute('data-state');
   status.textContent = 'Menyimpan…';
 
@@ -357,6 +371,7 @@ async function simpanDasar() {
     if (res.status === 401) return handleUnauthorized(data.reason);
 
     if (res.ok && data.ok) {
+      berhasil = true;
       status.dataset.state = 'ok';
       status.textContent = 'Tersimpan. Beranda akan memakai angka baru ini.';
       // Penjumlahan di layar ikut diperbarui supaya yang terlihat sama
@@ -375,7 +390,8 @@ async function simpanDasar() {
     status.dataset.state = 'error';
     status.textContent = 'Gagal menyimpan: ' + err.message;
   } finally {
-    btn.disabled = false;
+    tombolSibuk(btn, false);
+    if (berhasil) tombolBerhasil(btn);
   }
 }
 

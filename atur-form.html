@@ -7,6 +7,19 @@
     <title>Atur Formulir · EQUAL English</title>
     <link rel="icon" type="image/png" href="/EDITS/favicon.png" />
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+      /* Dipasang sebelum CSS dibaca supaya kartu ber-data-reveal tidak
+         sempat terlihat lalu menghilang. Fallback 2,5 detik: kalau
+         admin-motion.js gagal dimuat, semua isi tetap muncul dan panel
+         ini tidak pernah berakhir kosong. Pola yang sama dipakai
+         home-template.html. */
+      document.documentElement.classList.add('js');
+      setTimeout(function () {
+        if (!window.__equalRevealReady) {
+          document.documentElement.classList.add('reveal-fallback');
+        }
+      }, 2500);
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -104,12 +117,13 @@
       </section>
 
       <main id="admin-panel-dashboard" class="admin-panel" tabindex="-1" hidden>
-        <header class="admin-judul">
+        <header class="admin-judul" data-reveal>
           <h1>Formulir</h1>
           <p>Pertanyaan, mode buka/tutup, dan pengaturan formulir pendaftaran di /daftar.</p>
         </header>
 
-        <section class="admin-card">
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>01</b> / KESAN PERTAMA</p>
           <h2>Judul Halaman <span class="admin-card-note">/daftar</span></h2>
           <label class="admin-field">
             <span>Judul</span>
@@ -121,7 +135,8 @@
           </label>
         </section>
 
-        <section class="admin-card">
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>02</b> / SEDANG BUKA ATAU TIDAK</p>
           <h2>Buka / Tutup Pendaftaran</h2>
 
           <div class="form-mode">
@@ -172,7 +187,8 @@
           <p id="form-status-pratinjau" class="form-status-pratinjau"></p>
         </section>
 
-        <section class="admin-card">
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>03</b> / YANG DITANYAKAN</p>
           <h2>Pertanyaan <span class="admin-card-note" id="form-jumlah"></span></h2>
           <p class="admin-hint">
             Yang bertanda <strong>kunci</strong> tidak bisa dihapus: email dan
@@ -201,7 +217,8 @@
           </div>
         </section>
 
-        <section class="admin-card">
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>04</b> / SAMPAI KAPAN BERLAKU</p>
           <h2>Masa Berlaku Akses <span class="admin-card-note">pendaftar dari situs</span></h2>
           <p class="admin-hint">
             Dicatat di baris orang itu waktu kamu menekan Setujui.
@@ -226,7 +243,8 @@
           </p>
         </section>
 
-        <section class="admin-card">
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>05</b> / KABAR BALIK KE PENDAFTAR</p>
           <h2>Email ke Pendaftar</h2>
           <p class="admin-hint">
             Dikirim otomatis dari akun Google kamu. Tulis <code>{nama}</code>
@@ -309,7 +327,8 @@
           </div>
         </section>
 
-        <section class="admin-card">
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>06</b> / TEMPAT BERKASNYA JATUH</p>
           <h2>Folder Google Drive <span class="admin-card-note">tempat unggahan disimpan</span></h2>
           <p class="admin-hint">
             Unggahan pendaftar masuk ke sini, privat, dibuat otomatis kalau
@@ -321,7 +340,7 @@
           </label>
         </section>
 
-        <div class="admin-save-bar">
+        <div class="admin-save-bar" data-reveal>
           <button type="button" id="form-save" class="admin-btn admin-btn-primary">
             Simpan Formulir
           </button>
@@ -330,6 +349,7 @@
       </main>
     </div>
 
+    <script src="/admin-motion.js"></script>
     <script src="/admin-auth.js"></script>
     <script src="/admin-nav.js"></script>
     <script src="/atur-form.js"></script>

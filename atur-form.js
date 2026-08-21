@@ -348,7 +348,8 @@ async function simpan() {
   }
 
   var btn = document.getElementById('form-save');
-  btn.disabled = true;
+  var berhasil = false;
+  tombolSibuk(btn, true);
   setStatus(null, 'Menyimpan…');
 
   // Urutan dikirim sesuai posisi di layar. Kolom spreadsheet TIDAK ikut
@@ -389,6 +390,7 @@ async function simpan() {
     var data = await res.json();
 
     if (res.ok && data.ok) {
+      berhasil = true;
       setStatus('ok', 'Tersimpan. Buka /daftar untuk melihat hasilnya.');
       // Dimuat ulang dari server supaya yang tampil di layar persis yang
       // benar-benar tersimpan setelah dibersihkan server -- termasuk kalau
@@ -402,7 +404,8 @@ async function simpan() {
   } catch (err) {
     setStatus('error', 'Gagal menyimpan: ' + err.message);
   } finally {
-    btn.disabled = false;
+    tombolSibuk(btn, false);
+    if (berhasil) tombolBerhasil(btn);
   }
 }
 

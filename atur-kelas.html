@@ -7,6 +7,19 @@
     <title>Atur Ruang Kelas · EQUAL English</title>
     <link rel="icon" type="image/png" href="/EDITS/favicon.png" />
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+      /* Dipasang sebelum CSS dibaca supaya kartu ber-data-reveal tidak
+         sempat terlihat lalu menghilang. Fallback 2,5 detik: kalau
+         admin-motion.js gagal dimuat, semua isi tetap muncul dan panel
+         ini tidak pernah berakhir kosong. Pola yang sama dipakai
+         home-template.html. */
+      document.documentElement.classList.add('js');
+      setTimeout(function () {
+        if (!window.__equalRevealReady) {
+          document.documentElement.classList.add('reveal-fallback');
+        }
+      }, 2500);
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -104,7 +117,7 @@
       </section>
 
       <main id="admin-panel-dashboard" class="admin-panel" tabindex="-1" hidden>
-        <header class="admin-judul">
+        <header class="admin-judul" data-reveal>
           <h1>Ruang Kelas</h1>
           <p>
             Link, jadwal sesi, materi, dan Final Test yang dibuka siswa di
@@ -117,7 +130,8 @@
           dulu, jadi kamu bisa memindahkannya sedikit demi sedikit.
         </p>
 
-        <section class="admin-card">
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>01</b> / PINTU MASUK KELAS</p>
           <h2>Link Utama <span class="admin-card-note">tiga kartu besar di ruang kelas</span></h2>
           <label class="admin-field">
             <span>Link Zoom</span>
@@ -145,7 +159,8 @@
           </label>
         </section>
 
-        <section class="admin-card">
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>02</b> / LATIHAN MANDIRI</p>
           <h2>Latihan Soal <span class="admin-card-note">Wayground</span></h2>
           <p class="admin-hint">
             Tiap kuis bisa dikunci sampai tanggal tertentu. Tanggal yang
@@ -177,7 +192,8 @@
           </div>
         </section>
 
-        <section class="admin-card">
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>03</b> / KAPAN KETEMU</p>
           <h2>Jadwal Sesi <span class="admin-card-note" id="jadwal-jumlah"></span></h2>
           <p class="admin-hint">
             Jadwal ini menggerakkan tiga hal sekaligus: kartu sesi berikutnya,
@@ -204,7 +220,8 @@
         <!-- Final Test. Terkunci sampai DUA syarat terpenuhi: waktunya
              lewat, dan siswanya sudah mengisi testimoni. Link-nya tidak
              pernah dikirim ke browser siswa sebelum keduanya terpenuhi. -->
-        <section class="admin-card">
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>04</b> / UJIAN AKHIR</p>
           <h2>Final Test <span class="admin-card-note">ujian akhir di ruang kelas</span></h2>
           <p class="admin-hint">
             Kartu terakhir di ruang kelas. Terbuka kalau <strong>waktunya sudah
@@ -233,7 +250,7 @@
           </label>
           <p id="final-pratinjau" class="form-status-pratinjau"></p>
         </section>
-        <div class="admin-save-bar">
+        <div class="admin-save-bar" data-reveal>
           <button type="button" id="kelas-simpan" class="admin-btn admin-btn-primary">
             Simpan Isi Ruang Kelas
           </button>
@@ -243,6 +260,7 @@
       </main>
     </div>
 
+    <script src="/admin-motion.js"></script>
     <script src="/admin-auth.js"></script>
     <script src="/admin-nav.js"></script>
     <script src="/admin-foto.js"></script>

@@ -7,6 +7,19 @@
     <title>Analitik · EQUAL English</title>
     <link rel="icon" type="image/png" href="/EDITS/favicon.png" />
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+      /* Dipasang sebelum CSS dibaca supaya kartu ber-data-reveal tidak
+         sempat terlihat lalu menghilang. Fallback 2,5 detik: kalau
+         admin-motion.js gagal dimuat, semua isi tetap muncul dan panel
+         ini tidak pernah berakhir kosong. Pola yang sama dipakai
+         home-template.html. */
+      document.documentElement.classList.add('js');
+      setTimeout(function () {
+        if (!window.__equalRevealReady) {
+          document.documentElement.classList.add('reveal-fallback');
+        }
+      }, 2500);
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -104,7 +117,7 @@
       </section>
 
       <main id="admin-panel-dashboard" class="admin-panel" tabindex="-1" hidden>
-        <header class="admin-judul">
+        <header class="admin-judul" data-reveal>
           <h1>Analitik</h1>
           <p>Jumlah pendaftar dan pendapatan, per batch maupun sepanjang waktu.</p>
         </header>
@@ -118,7 +131,8 @@
         <div id="stat-isi" hidden>
           <!-- Angka kumulatif, tidak pernah di-reset. Ditaruh paling atas
                karena ini angka yang paling sering dicari. -->
-          <section class="admin-card stat-kartu-total">
+          <section class="admin-card stat-kartu-total" data-reveal>
+            <p class="admin-kicker"><b>01</b> / ANGKA UTAMA</p>
             <h2>Sepanjang Waktu <span class="admin-card-note">seluruh pendaftar, semua batch</span></h2>
             <div class="stat-angka">
               <div class="stat-angka-item">
@@ -139,7 +153,8 @@
             </div>
           </section>
 
-          <section class="admin-card">
+          <section class="admin-card" data-reveal>
+            <p class="admin-kicker"><b>02</b> / PER BATCH</p>
             <h2>Catatan Batch <span class="admin-card-note" id="batch-jumlah"></span></h2>
             <p class="admin-hint">
               Yang disimpan cuma <strong>rentang waktunya</strong>, bukan angkanya.
@@ -164,7 +179,7 @@
 
             <div id="batch-list" class="batch-list"></div>
 
-            <div class="admin-save-bar">
+            <div class="admin-save-bar" data-reveal>
               <button type="button" id="batch-mulai" class="admin-btn admin-btn-primary" hidden>
                 Mulai Batch Pertama
               </button>
@@ -175,7 +190,8 @@
             </div>
           </section>
 
-          <section class="admin-card">
+          <section class="admin-card" data-reveal>
+            <p class="admin-kicker"><b>03</b> / PAKET MANA YANG LAKU</p>
             <h2>Komposisi Paket <span class="admin-card-note" id="komposisi-periode"></span></h2>
             <div class="stat-chart-grid">
               <figure class="stat-donut-wrap">
@@ -225,7 +241,8 @@
             <p id="stat-harga-catatan" class="admin-hint stat-harga-catatan" hidden></p>
           </section>
 
-          <section class="admin-card">
+          <section class="admin-card" data-reveal>
+            <p class="admin-kicker"><b>04</b> / YANG TAMPIL DI BERANDA</p>
             <h2>Angka di Beranda <span class="admin-card-note">sudah dibantu N siswa</span></h2>
             <p class="admin-hint">
               Yang tampil di beranda adalah angka dasar ditambah jumlah siswa
@@ -253,7 +270,7 @@
               </small>
             </label>
 
-            <div class="admin-save-bar">
+            <div class="admin-save-bar" data-reveal>
               <button type="button" id="stat-simpan" class="admin-btn admin-btn-primary">
                 Simpan Angka Dasar
               </button>
@@ -261,7 +278,8 @@
             </div>
           </section>
 
-          <section class="admin-card admin-card-muted">
+          <section class="admin-card admin-card-muted" data-reveal>
+            <p class="admin-kicker"><b>05</b> / YANG PERLU DIRAPIKAN</p>
             <h2>Catatan Data</h2>
             <p class="admin-hint">
               Baris yang tidak bisa dihitung ditampilkan di sini, bukan dibuang
@@ -275,6 +293,7 @@
       </main>
     </div>
 
+    <script src="/admin-motion.js"></script>
     <script src="/admin-auth.js"></script>
     <script src="/admin-nav.js"></script>
     <script src="/analitik.js"></script>

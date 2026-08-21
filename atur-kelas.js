@@ -245,7 +245,8 @@ async function simpanKelas() {
     return;
   }
 
-  btn.disabled = true;
+  var berhasil = false;
+  tombolSibuk(btn, true);
   status.removeAttribute('data-state');
   status.textContent = 'Menyimpan…';
 
@@ -266,6 +267,7 @@ async function simpanKelas() {
     if (res.status === 401) return handleUnauthorized(data.reason);
 
     if (res.ok && data.ok) {
+      berhasil = true;
       status.dataset.state = 'ok';
       status.textContent = 'Tersimpan. Siswa yang masuk setelah ini langsung melihat isi baru.';
     } else {
@@ -277,7 +279,8 @@ async function simpanKelas() {
     status.dataset.state = 'error';
     status.textContent = 'Gagal menyimpan: ' + err.message;
   } finally {
-    btn.disabled = false;
+    tombolSibuk(btn, false);
+    if (berhasil) tombolBerhasil(btn);
   }
 }
 

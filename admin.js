@@ -64,7 +64,8 @@ function setSaveStatus(state, text) {
 
 async function saveForm() {
   const btn = document.getElementById('admin-save-btn');
-  btn.disabled = true;
+  let berhasil = false;
+  tombolSibuk(btn, true);
   setSaveStatus(null, 'Menyimpan…');
 
   try {
@@ -76,6 +77,7 @@ async function saveForm() {
     const data = await res.json();
 
     if (res.ok && data.ok) {
+      berhasil = true;
       setSaveStatus('ok', 'Tersimpan. Biasanya tayang di situs dalam ~10 detik.');
     } else if (res.status === 401) {
       handleUnauthorized(data.reason);
@@ -85,7 +87,8 @@ async function saveForm() {
   } catch (err) {
     setSaveStatus('error', 'Gagal menyimpan: ' + err.message);
   } finally {
-    btn.disabled = false;
+    tombolSibuk(btn, false);
+    if (berhasil) tombolBerhasil(btn);
   }
 }
 
@@ -230,7 +233,8 @@ function setTestiStatus(state, text) {
 
 async function saveTestimonials() {
   const btn = document.getElementById('admin-testi-save');
-  btn.disabled = true;
+  let berhasil = false;
+  tombolSibuk(btn, true);
   setTestiStatus(null, 'Menyimpan…');
 
   try {
@@ -248,6 +252,7 @@ async function saveTestimonials() {
     const data = await res.json();
 
     if (res.ok && data.ok) {
+      berhasil = true;
       const tampil = testimonials.filter(
         (t) => String(t.nama || '').trim() && String(t.pesan || '').trim()
       ).length;
@@ -265,7 +270,8 @@ async function saveTestimonials() {
   } catch (err) {
     setTestiStatus('error', 'Gagal menyimpan: ' + err.message);
   } finally {
-    btn.disabled = false;
+    tombolSibuk(btn, false);
+    if (berhasil) tombolBerhasil(btn);
   }
 }
 
@@ -277,7 +283,10 @@ async function runDiagnose() {
   const btn = document.getElementById('admin-diagnose-btn');
   const out = document.getElementById('admin-diagnose-output');
 
-  btn.disabled = true;
+  // Tanpa label "Tersimpan" di akhir: hasil cek koneksi keluar di kotak
+  // hitam di bawahnya, dan "berhasil dijalankan" belum tentu berarti
+  // hasilnya bagus.
+  tombolSibuk(btn, true, 'Mengecek…');
   out.hidden = false;
   out.textContent = 'Mengecek…';
 
@@ -297,7 +306,7 @@ async function runDiagnose() {
   } catch (err) {
     out.textContent = 'Cek koneksi gagal dijalankan: ' + err.message;
   } finally {
-    btn.disabled = false;
+    tombolSibuk(btn, false);
   }
 }
 

@@ -8,6 +8,19 @@
     <title>Pendaftar · EQUAL English</title>
     <link rel="icon" type="image/png" href="/EDITS/favicon.png" />
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+      /* Dipasang sebelum CSS dibaca supaya kartu ber-data-reveal tidak
+         sempat terlihat lalu menghilang. Fallback 2,5 detik: kalau
+         admin-motion.js gagal dimuat, semua isi tetap muncul dan panel
+         ini tidak pernah berakhir kosong. Pola yang sama dipakai
+         home-template.html. */
+      document.documentElement.classList.add('js');
+      setTimeout(function () {
+        if (!window.__equalRevealReady) {
+          document.documentElement.classList.add('reveal-fallback');
+        }
+      }, 2500);
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -108,12 +121,13 @@
       </section>
 
       <main id="admin-panel-dashboard" class="admin-panel" tabindex="-1" hidden>
-        <header class="admin-judul">
+        <header class="admin-judul" data-reveal>
           <h1>Pendaftar</h1>
           <p>Pendaftar yang menunggu persetujuan, dan semua yang sudah disetujui.</p>
         </header>
 
-        <section class="admin-card">
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>01</b> / MENUNGGU PERSETUJUANMU</p>
           <div class="admin-pendaftar-topbar">
             <div>
               <h2>Pendaftar Baru <span class="admin-card-note" id="admin-pendaftar-jumlah"></span></h2>
@@ -141,6 +155,7 @@
       </main>
     </div>
 
+    <script src="/admin-motion.js"></script>
     <script src="/admin-auth.js"></script>
     <script src="/admin-nav.js"></script>
     <script src="/pendaftar.js"></script>

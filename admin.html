@@ -9,6 +9,19 @@
     <title>Admin · EQUAL English</title>
     <link rel="icon" type="image/png" href="/EDITS/favicon.png" />
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+      /* Dipasang sebelum CSS dibaca supaya kartu ber-data-reveal tidak
+         sempat terlihat lalu menghilang. Fallback 2,5 detik: kalau
+         admin-motion.js gagal dimuat, semua isi tetap muncul dan panel
+         ini tidak pernah berakhir kosong. Pola yang sama dipakai
+         home-template.html. */
+      document.documentElement.classList.add('js');
+      setTimeout(function () {
+        if (!window.__equalRevealReady) {
+          document.documentElement.classList.add('reveal-fallback');
+        }
+      }, 2500);
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -117,14 +130,15 @@
 
       <!-- STATE 5: dashboard -->
       <main id="admin-panel-dashboard" class="admin-panel" tabindex="-1" hidden>
-        <header class="admin-judul">
+        <header class="admin-judul" data-reveal>
           <h1>Beranda</h1>
           <p>Teks, harga, foto, dan testimoni yang tampil di halaman depan equalenglish.vercel.app.</p>
         </header>
 
         <div id="admin-toast" class="admin-toast" role="status" hidden></div>
 
-        <section class="admin-card">
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>01</b> / YANG DIBACA CALON SISWA</p>
           <h2>Program Intensif <span class="admin-card-note">section 06</span></h2>
           <label class="admin-field">
             <span>Judul</span>
@@ -152,7 +166,8 @@
           </label>
         </section>
 
-        <section class="admin-card">
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>02</b> / YANG DIBAYAR</p>
           <h2>Pilihan Paket <span class="admin-card-note">section 07</span></h2>
           <p class="admin-hint">
             Badge "Hemat RpX.000 per orang" di Pair &amp; Group dihitung otomatis
@@ -180,7 +195,8 @@
           </div>
         </section>
 
-        <section class="admin-card">
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>03</b> / SIAPA YANG MENGAJAR</p>
           <h2>Mentor <span class="admin-card-note">section 05</span></h2>
           <label class="admin-field">
             <span>Judul</span>
@@ -208,14 +224,15 @@
           </div>
         </section>
 
-        <div class="admin-save-bar">
+        <div class="admin-save-bar" data-reveal>
           <button type="button" id="admin-save-btn" class="admin-btn admin-btn-primary">
             Simpan Teks &amp; Harga
           </button>
           <span id="admin-save-status" class="admin-save-status"></span>
         </div>
 
-        <section class="admin-card">
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>04</b> / YANG DILIHAT</p>
           <h2>Foto &amp; Logo</h2>
           <p class="admin-hint">
             Langsung tayang begitu diupload, tidak perlu tombol Simpan.
@@ -249,7 +266,8 @@
           </div>
         </section>
 
-        <section class="admin-card">
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>05</b> / KATA MEREKA YANG SUDAH IKUT</p>
           <h2>Testimoni <span class="admin-card-note">beranda</span></h2>
           <p class="admin-hint">
             Selama daftarnya kosong, section testimoni tidak muncul sama
@@ -273,7 +291,7 @@
             + Tambah Testimoni
           </button>
 
-          <div class="admin-save-bar admin-save-bar-testi">
+          <div class="admin-save-bar admin-save-bar-testi" data-reveal>
             <button type="button" id="admin-testi-save" class="admin-btn admin-btn-primary">
               Simpan Testimoni
             </button>
@@ -285,7 +303,8 @@
              tayang sendiri: tersimpan di tab Testimoni di spreadsheet,
              lalu disalin ke daftar di atas hanya kalau kamu menekan
              Tayangkan. Lihat api/admin-testimoni.js. -->
-        <section class="admin-card">
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>06</b> / MENUNGGU DITAYANGKAN</p>
           <h2>Kiriman Siswa <span class="admin-card-note">testimoni dari /kelas</span></h2>
           <p class="admin-hint">
             Siswa mengisi ini untuk membuka Final Test-nya. Tidak ada
@@ -301,7 +320,8 @@
         <!-- Alat bantu kalau menyimpan gagal. Sengaja ditaruh paling bawah
              dan tidak mencolok -- ini bukan fitur sehari-hari, cuma dipakai
              waktu ada yang error. -->
-        <section class="admin-card admin-card-muted">
+        <section class="admin-card admin-card-muted" data-reveal>
+          <p class="admin-kicker"><b>07</b> / KALAU ADA YANG ERROR</p>
           <h2>Cek Koneksi <span class="admin-card-note">buat kalau ada error</span></h2>
           <p class="admin-hint">
             Menguji apakah server bisa menyambung ke tempat penyimpanan teks
@@ -316,6 +336,7 @@
       </main>
     </div>
 
+    <script src="/admin-motion.js"></script>
     <script src="/admin-auth.js"></script>
     <script src="/admin-nav.js"></script>
     <script src="/admin-foto.js"></script>

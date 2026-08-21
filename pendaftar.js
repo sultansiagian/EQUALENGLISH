@@ -142,7 +142,10 @@ function renderPendaftar(daftar) {
 
 async function muatPendaftar() {
   const btn = document.getElementById('admin-pendaftar-refresh');
-  btn.disabled = true;
+  // Tanpa keadaan "berhasil": ini memuat, bukan menyimpan. Hasilnya
+  // adalah daftar yang tergambar ulang di bawahnya, dan itu sudah
+  // terlihat sendiri.
+  tombolSibuk(btn, true, 'Memuat…');
   pendaftarStatus('Memuat…');
 
   try {
@@ -164,7 +167,7 @@ async function muatPendaftar() {
   } catch (err) {
     pendaftarStatus('Gagal memuat: ' + err.message, 'error');
   } finally {
-    btn.disabled = false;
+    tombolSibuk(btn, false);
   }
 }
 
