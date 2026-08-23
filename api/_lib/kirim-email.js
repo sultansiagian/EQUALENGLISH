@@ -77,7 +77,7 @@ async function kirim(overrides, jenis, tujuan, nilai) {
     html = bungkusEmail({
       subjek: subjekJadi,
       teks: isiJadi,
-      logoUrl: ambil(overrides, 'logoUrl'),
+      logoUrl: ambil(overrides, 'emailLogoUrl'),
       asal: asalDari(ambil(overrides, 'linkRuangKelas')),
       waUrl: linkWhatsApp(ambil(overrides, 'waNomor')),
     });

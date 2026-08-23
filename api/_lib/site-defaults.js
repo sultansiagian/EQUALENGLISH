@@ -303,6 +303,18 @@ module.exports = {
   // Alamat yang disisipkan lewat penanda {link} di email persetujuan.
   linkRuangKelas: 'https://equalenglish.vercel.app/kelas',
 
+  // Logo KHUSUS EMAIL, sengaja terpisah dari logoUrl di atas.
+  //
+  // logoUrl dipakai di header situs yang berlatar gelap, jadi isinya
+  // versi terang. Email duduk di atas kartu putih, dan logo terang di
+  // atas putih praktis hilang. Menyatukan keduanya berarti salah satu
+  // tempat pasti salah.
+  //
+  // Harus berupa berkas yang IKUT TER-DEPLOY (terlacak git). Berkas asli
+  // bernama spasi seperti "Logo EQUAL BLACK.png" tidak terlacak dan akan
+  // 404 di email orang.
+  emailLogoUrl: '/EDITS/logo-equal-black.png',
+
   // Nomor untuk tombol WhatsApp di email tanda terima. Email itu tidak
   // punya tautan lain: pendaftarnya belum bisa masuk ruang kelas, jadi
   // satu-satunya tindakan yang masuk akal di tahap itu adalah bertanya.

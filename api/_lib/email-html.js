@@ -104,8 +104,12 @@ function tombol(url, label) {
   // Tombol "antipeluru": warnanya dipasang di <td>, bukan di <a>. Outlook
   // mengabaikan background pada <a>, dan tanpa cara ini tombolnya muncul
   // sebagai tautan biru polos di sana.
+  // align="center" ditulis sebagai ATRIBUT, bukan margin:0 auto.
+  // Outlook mengabaikan margin pada tabel, dan tombolnya akan menempel
+  // ke kiri di sana sementara di tempat lain terlihat di tengah.
   return (
-    '<table role="presentation" cellpadding="0" cellspacing="0" border="0">' +
+    '<table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" ' +
+    'style="margin:0 auto;">' +
     '<tr><td align="center" bgcolor="' + WARNA.pink + '" ' +
     'style="border-radius:999px;">' +
     '<a href="' + escapeHtml(url) + '" ' +
@@ -160,7 +164,10 @@ function bungkusEmail(opsi) {
       // sekarang:"), jadi memindahkan tombolnya ke bawah tanda tangan
       // membuat kalimat itu menunjuk ke tempat kosong dan tombolnya
       // muncul entah dari mana. Ketahuan waktu hasilnya dirender.
-      isiHtml += '<div style="padding:4px 0 22px;">' + tombol(sendiri, 'Buka Ruang Kelas') + '</div>';
+      isiHtml +=
+        '<div style="padding:4px 0 22px;text-align:center;">' +
+        tombol(sendiri, 'Buka Ruang Kelas') +
+        '</div>';
       adaTombol = true;
       return;
     }
@@ -178,16 +185,20 @@ function bungkusEmail(opsi) {
 
   const barisLogo = logo
     ? '<tr><td style="padding:32px 32px 0;">' +
-      '<img src="' + escapeHtml(logo) + '" alt="EQUAL English" width="140" ' +
+      // 120x56 mengikuti rasio berkasnya (562x262). Kalau logonya
+      // diganti dengan berkas berasio lain, angka ini ikut diubah --
+      // ukuran yang tidak sesuai membuat logonya gepeng, dan email tidak
+      // punya object-fit untuk menyelamatkannya.
+      '<img src="' + escapeHtml(logo) + '" alt="EQUAL English" width="120" ' +
       // width/height ditulis sebagai atribut DAN di gaya inline: sebagian
       // klien mengabaikan salah satunya, dan tanpa ukuran yang pasti
       // logonya melar sepenuh amplop sebelum gambarnya selesai dimuat.
-      'height="39" style="display:block;width:140px;height:39px;border:0;" />' +
+      'height="56" style="display:block;width:120px;height:56px;border:0;" />' +
       '</td></tr>'
     : '';
 
   const barisTombol = tombolBawah
-    ? '<tr><td style="padding:8px 32px 0;">' + tombolBawah + '</td></tr>'
+    ? '<tr><td align="center" style="padding:8px 32px 0;text-align:center;">' + tombolBawah + '</td></tr>'
     : '';
 
   return (
