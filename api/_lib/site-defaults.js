@@ -302,4 +302,13 @@ module.exports = {
 
   // Alamat yang disisipkan lewat penanda {link} di email persetujuan.
   linkRuangKelas: 'https://equalenglish.vercel.app/kelas',
+
+  // Nomor untuk tombol WhatsApp di email tanda terima. Email itu tidak
+  // punya tautan lain: pendaftarnya belum bisa masuk ruang kelas, jadi
+  // satu-satunya tindakan yang masuk akal di tahap itu adalah bertanya.
+  //
+  // Boleh ditulis dengan format apa pun ("0858-8834-5058", "+62 858 ..."),
+  // linkWhatsApp() di _lib/email-html.js yang merapikannya. Dikosongkan
+  // berarti email tanda terima tampil tanpa tombol sama sekali.
+  waNomor: '0858-8834-5058',
 };

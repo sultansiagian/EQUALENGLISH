@@ -1,5 +1,6 @@
 const DEFAULTS = require('./site-defaults');
 const { panggilAppsScript } = require('./apps-script');
+const { bungkusEmail, linkWhatsApp, asalDari } = require('./email-html');
 
 /**
  * Email otomatis ke pendaftar, dikirim lewat Apps Script di spreadsheet
@@ -59,11 +60,39 @@ async function kirim(overrides, jenis, tujuan, nilai) {
   if (aktif === false || !subjek || !isi) return { ok: false, alasan: 'dimatikan' };
   if (!emailSah(tujuan)) return { ok: false, alasan: 'alamat_tidak_sah' };
 
+  const subjekJadi = isiPenanda(subjek, nilai).slice(0, MAKS_SUBJEK);
+  const isiJadi = isiPenanda(isi, nilai).slice(0, MAKS_ISI);
+
+  /* Versi HTML dibuat DARI teks yang sama, bukan dari templat terpisah.
+     Jadi tidak ada dua naskah yang harus dijaga tetap sama, dan tidak ada
+     kemungkinan admin mengubah kalimat di satu tempat lalu lupa yang
+     satunya.
+
+     Dua-duanya tetap dikirim. Yang teks bukan sisa-sisa: sebagian orang
+     memakai aplikasi email yang menampilkannya, dan email yang cuma
+     berisi HTML tanpa pasangan teks justru lebih gampang disaring
+     sebagai spam. */
+  let html = '';
+  try {
+    html = bungkusEmail({
+      subjek: subjekJadi,
+      teks: isiJadi,
+      logoUrl: ambil(overrides, 'logoUrl'),
+      asal: asalDari(ambil(overrides, 'linkRuangKelas')),
+      waUrl: linkWhatsApp(ambil(overrides, 'waNomor')),
+    });
+  } catch (err) {
+    // Gagal menyusun tampilannya bukan alasan untuk tidak mengirim apa
+    // pun. Tanpa html, Apps Script jatuh ke versi teksnya.
+    console.error('kirim-email: gagal menyusun HTML, dikirim sebagai teks. ' + err.message);
+  }
+
   try {
     const hasil = await panggilAppsScript('email', {
       ke: String(tujuan).trim(),
-      subjek: isiPenanda(subjek, nilai).slice(0, MAKS_SUBJEK),
-      isi: isiPenanda(isi, nilai).slice(0, MAKS_ISI),
+      subjek: subjekJadi,
+      isi: isiJadi,
+      html: html,
     });
 
     // Apps Script mengembalikan sisa kuota Gmail hari itu. Diperhatikan

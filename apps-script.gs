@@ -82,7 +82,7 @@ function doPost(e) {
     if (body.action === 'list') return handleList();
     if (body.action === 'approve') return handleApprove(body.id, body.isiTambahan);
     if (body.action === 'reject') return handleReject(body.id);
-    if (body.action === 'email') return handleEmail(body.ke, body.subjek, body.isi);
+    if (body.action === 'email') return handleEmail(body.ke, body.subjek, body.isi, body.html);
     if (body.action === 'testimoni') return handleTestimoni(body.isi);
     if (body.action === 'listTestimoni') return handleListTestimoni();
     if (body.action === 'tayangkanTestimoni') return handleTayangkanTestimoni(body.id, body.tayang);
@@ -269,7 +269,7 @@ function handleApprove(id, isiTambahan) {
  * memperlakukan kegagalan kirim sebagai hal yang TIDAK menggagalkan
  * pendaftaran maupun persetujuan.
  */
-function handleEmail(ke, subjek, isi) {
+function handleEmail(ke, subjek, isi, html) {
   var alamat = String(ke || '').trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(alamat)) {
     return jsonOut({ ok: false, reason: 'alamat_tidak_sah' });
@@ -279,12 +279,25 @@ function handleEmail(ke, subjek, isi) {
   }
 
   try {
-    MailApp.sendEmail({
+    var pesan = {
       to: alamat,
       subject: String(subjek),
       body: String(isi),
       name: 'EQUAL English',
-    });
+    };
+
+    // htmlBody dipasang hanya kalau situs mengirimkannya. Kalau tidak,
+    // yang terkirim tetap versi teksnya seperti dulu -- jadi versi lama
+    // skrip ini dan versi barunya sama-sama jalan, dan situs tidak pernah
+    // berhenti mengirim email cuma karena skrip di spreadsheet belum
+    // sempat di-deploy ulang.
+    //
+    // body TETAP diisi walau ada htmlBody. Itu bukan sisa: Gmail
+    // mengirim keduanya sebagai satu email multipart, dan aplikasi yang
+    // tidak menggambar HTML menampilkan versi teksnya.
+    if (String(html || '').trim()) pesan.htmlBody = String(html);
+
+    MailApp.sendEmail(pesan);
     return jsonOut({ ok: true, sisaKuota: MailApp.getRemainingDailyQuota() });
   } catch (err) {
     return jsonOut({ ok: false, reason: 'gagal_kirim', pesan: String(err) });

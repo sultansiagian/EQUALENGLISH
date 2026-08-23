@@ -35,7 +35,8 @@ window.onAdminReady = function (data) {
   perbaruiAkses();
 
   // Pengaturan email. Centangnya pakai .checked, bukan .value.
-  ['emailTerimaSubjek', 'emailTerimaIsi', 'emailSetujuSubjek', 'emailSetujuIsi', 'linkRuangKelas'].forEach(function (k) {
+  ['emailTerimaSubjek', 'emailTerimaIsi', 'emailSetujuSubjek', 'emailSetujuIsi',
+   'linkRuangKelas', 'waNomor'].forEach(function (k) {
     document.querySelector('[data-key="' + k + '"]').value = data.values[k] || '';
   });
   ['emailTerimaAktif', 'emailSetujuAktif'].forEach(function (k) {
@@ -384,6 +385,7 @@ async function simpan() {
           emailSetujuSubjek: document.querySelector('[data-key="emailSetujuSubjek"]').value,
           emailSetujuIsi: document.querySelector('[data-key="emailSetujuIsi"]').value,
           linkRuangKelas: document.querySelector('[data-key="linkRuangKelas"]').value,
+          waNomor: document.querySelector('[data-key="waNomor"]').value,
         },
       }),
     });
