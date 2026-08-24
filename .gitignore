@@ -45,4 +45,11 @@ node_modules/
 # baris ke spreadsheet pendaftaran, menyimpan berkas ke Drive, dan
 # mengirim email dari akun Gmail pemilik sheet. Berkasnya tetap ada di
 # komputer, cuma tidak pernah ikut ter-push.
-PW APPSRIPT.txt
+#
+# POLANYA SENGAJA BERTANDA BINTANG, JANGAN DIKEMBALIKAN JADI NAMA PERSIS.
+# Sebelumnya baris ini berbunyi "PW APPSRIPT.txt" saja, lalu waktu secret
+# dirotasi lahir "PW APPSRIPT BARU.txt" yang tidak tercakup dan diam-diam
+# muncul sebagai untracked di repo publik ini. Rotasi berikutnya pasti
+# melahirkan nama baru lagi, jadi yang diabaikan adalah polanya.
+PW APPSRIPT*.txt
+*.secret.txt

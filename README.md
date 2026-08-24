@@ -35,6 +35,7 @@ Untuk menguji hasil penyisipannya, panggil `renderHtml()` dari
 | `api/_lib/kirim-email.js` | Email otomatis ke pendaftar, lewat Apps Script. Semua kegagalannya sengaja ditelan supaya tidak ikut membatalkan pendaftaran. |
 | `api/admin-data.js` | SATU rute untuk beberapa endpoint admin (statistik, moderasi testimoni, kirim email uji). Digabung karena Vercel Hobby membatasi 12 Serverless Function per deployment, dan melampauinya membuat SELURUH build gagal tanpa gejala di situs. Handler-nya ada di `api/_lib/handler-*.js`. |
 | `api/_lib/kerja-latar.js` | Menitipkan pekerjaan yang selesai setelah balasan dikirim (mis. email) ke `waitUntil`, supaya tidak ikut hilang waktu fungsi Vercel dibekukan. |
+| `api/_lib/rem-laju.js` | Rem laju untuk `/api/daftar`, satu-satunya endpoint publik. Tiga lapisan: per IP (longgar, karena wifi kampus membuat banyak orang terlihat sebagai satu IP), per alamat email tujuan, dan jatah total tanda terima per jam. Yang dilindungi terutama kuota Gmail, bukan baris sheet -- lihat penjelasan di dalam filenya. |
 | `analitik.html` / `analitik.js` | Halaman `/analitik`: jumlah pendaftar, komposisi paket, dan pendapatan per batch. Chart digambar sendiri dengan SVG, tanpa library. |
 | `api/_lib/statistik.js` | Perhitungan angka analitik. Membaca sheet yang sama dengan gerbang login siswa, jadi tidak mungkin ada dua angka berbeda untuk hal yang sama. |
 | `api/_lib/csv.js` | Parser CSV bersama, plus penebak format tanggal kolom Timestamp (sheet bisa berisi `bulan/tanggal` dan `tanggal/bulan` sekaligus). |
@@ -100,6 +101,40 @@ melayani file itu duluan (Vercel mengecek file statis SEBELUM `rewrites`).
   tetap muncul setelah 2,5 detik, sehingga halaman tidak pernah kosong.
 - **Foto sudah dioptimalkan.** Versi asli dari Unsplash (~9 MB) tidak disertakan;
   yang dipakai adalah versi 1600px (total ~366 KB).
+- **Isian `/daftar` tersimpan otomatis.** Jawaban teks disimpan ke
+  `localStorage` sambil diketik, lalu ditawarkan kembali kalau halamannya
+  dibuka lagi dalam 24 jam. **Foto sengaja tidak ikut** (satu bukti transfer
+  masih ratusan KB, sementara jatah `localStorage` cuma sekitar 5 MB untuk
+  seluruh domain, dan kalau penuh justru jawaban teksnya yang ikut gagal
+  tersimpan). Drafnya dihapus hanya setelah server mengonfirmasi barisnya
+  masuk, tidak lebih awal. Lihat catatan `hapusDraf()` di `daftar.js` soal
+  kenapa simpanan tertunda harus ikut dibatalkan di situ.
+
+## Security header
+
+Diatur di blok `headers` pada `vercel.json`, bukan di kode. Lima di antaranya
+sudah berlaku penuh (`X-Frame-Options`, `X-Content-Type-Options`,
+`Referrer-Policy`, `Permissions-Policy`, `Strict-Transport-Security`), plus
+`X-Robots-Tag: noindex` khusus halaman pengelola supaya `/admin`, `/analitik`,
+dan `/pendaftar` tidak ikut terindeks (`robots.txt` mengizinkan semuanya).
+
+**CSP-nya masih `Content-Security-Policy-Report-Only`, dan itu disengaja.**
+Mode ini melaporkan pelanggaran tanpa memblokir apa pun, jadi tidak ada risiko
+halaman rusak diam-diam. Cara menaikkannya jadi penjagaan sungguhan:
+
+1. Buka situs yang sudah live, lalu telusuri **semua** halaman sambil membuka
+   Console di DevTools: beranda, `/daftar` (sampai unggah foto), `/kelas`
+   (sampai login Google), dan `/admin`.
+2. Catat setiap baris `Report Only` yang muncul di Console. Yang paling mungkin
+   muncul: `docs.google.com` (dipakai `content-sheet.js` langsung dari browser)
+   dan domain Vercel Blob untuk foto yang diunggah lewat `/admin`.
+3. Tambahkan sumber yang memang sah ke direktif yang sesuai.
+4. Setelah beberapa hari tanpa laporan baru, ganti nama header-nya jadi
+   `Content-Security-Policy` (buang `-Report-Only`).
+
+Jangan dibalik urutannya. Menyalakan CSP penuh sebelum langkah 1 sampai 3
+selesai bisa mematikan login Google atau unggahan foto tanpa pesan error yang
+jelas bagi pemakainya.
 
 ## Sebelum dipublikasikan
 

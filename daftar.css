@@ -277,6 +277,87 @@
   overflow: hidden;
 }
 
+/* Tawaran melanjutkan draf.
+
+   PUNYA BACKGROUND SENDIRI, DAN ITU WAJIB. Halaman ini berlatar foto
+   gelap (lihat body.daftar-body::before di bawah), jadi kotak apa pun
+   yang isinya berwarna gelap harus membawa alasnya sendiri. Ini persis
+   kesalahan yang dulu terjadi pada .daftar-upload.
+
+   Pink tipis, bukan putih polos seperti .daftar-group: blok ini menyela
+   dan meminta keputusan, jadi boleh terlihat beda dari kotak isian biasa.
+   Tapi tetap lebih kalem daripada .daftar-error, karena ini kabar baik,
+   bukan peringatan. */
+.daftar-draf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 26px 0 0;
+  padding: 18px 20px;
+  border: 1px solid var(--pink);
+  border-radius: 16px;
+  background: var(--pink-light);
+  color: var(--black);
+}
+
+.daftar-draf-teks {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 15rem;
+  flex: 1;
+}
+
+.daftar-draf-teks strong {
+  font-family: var(--display);
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+/* Usia draf ditulis dengan huruf mono, sama seperti label data lain di
+   situs ini, supaya terbaca sebagai keterangan waktu dan bukan kalimat. */
+#daftar-draf-usia {
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  color: #7a4463;
+}
+
+.daftar-draf-teks small {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #6b4159;
+}
+
+.daftar-draf-aksi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Lebih kecil dari tombol kirim. Melanjutkan draf itu kemudahan, bukan
+   tujuan halaman ini, jadi tidak boleh bersaing dengan tombol utama. */
+.daftar-draf .button {
+  padding: 0.62rem 1rem;
+  font-size: 0.8rem;
+}
+
+.daftar-draf .button-outline {
+  border-color: rgba(0, 0, 0, 0.45);
+}
+
+@media (max-width: 620px) {
+  .daftar-draf-aksi {
+    width: 100%;
+  }
+
+  .daftar-draf-aksi .button {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
 .daftar-error {
   margin: 22px 0 0;
   padding: 13px 16px;

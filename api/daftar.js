@@ -5,6 +5,7 @@ const { fieldAktif, validasiJawaban, susunBaris } = require('./_lib/form-schema'
 const { statusForm } = require('./_lib/form-status');
 const { kirimTandaTerima } = require('./_lib/kirim-email');
 const { kerjakanDiLatar } = require('./_lib/kerja-latar');
+const { bolehKirimForm, bolehKirimTandaTerima } = require('./_lib/rem-laju');
 
 /**
  * Endpoint form pendaftaran di /daftar. INI SATU-SATUNYA endpoint di
@@ -38,6 +39,25 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, reason: 'method_not_allowed' });
+  }
+
+  // Rem laju DIPASANG PALING DEPAN, sebelum membaca body, memanggil
+  // Global Config, atau menyentuh Apps Script. Gunanya justru supaya
+  // permintaan yang berlebihan berhenti sebelum menghabiskan apa pun.
+  // Perangkap bot di bawah juga ikut terhitung di sini, karena bot yang
+  // mengirim JSON langsung ke endpoint ini tidak pernah melihat
+  // perangkapnya sama sekali. Alasan angkanya ada di _lib/rem-laju.js.
+  const laju = bolehKirimForm(req);
+  if (!laju.boleh) {
+    res.setHeader('Retry-After', String(laju.tungguDetik));
+    return res.status(429).json({
+      ok: false,
+      reason: 'terlalu_sering',
+      pesan:
+        'Terlalu banyak percobaan pendaftaran dari jaringan ini. Tunggu beberapa menit, ' +
+        'lalu coba lagi. Kalau kamu sedang memakai wifi kampus dan buru-buru, daftar ' +
+        'lewat WhatsApp saja supaya tidak tertunda.',
+    });
   }
 
   const body = req.body || {};
@@ -141,10 +161,19 @@ module.exports = async function handler(req, res) {
     // fungsi Vercel dibekukan begitu balasan terkirim, dan panggilan yang
     // masih di tengah jalan saat itu bisa hilang tanpa jejak. Penjelasan
     // lengkapnya di _lib/kerja-latar.js.
-    await kerjakanDiLatar(
-      () => kirimTandaTerima(overrides, jawaban.emailDiri, jawaban.nama),
-      'tanda terima /daftar'
-    );
+    // Rem kedua, khusus email, dan dipasang DI SINI bukan di atas: pada
+    // titik ini barisnya SUDAH tersimpan. Jadi kalau jatah email habis,
+    // yang batal cuma tanda terimanya, bukan pendaftarannya. Membedakan
+    // dua hal itu penting, karena orang yang sudah transfer uang tidak
+    // boleh gagal terdaftar gara-gara rem yang dipasang untuk melindungi
+    // kuota Gmail. Alasan angkanya ada di _lib/rem-laju.js.
+    const lajuEmail = bolehKirimTandaTerima(jawaban.emailDiri);
+    if (lajuEmail.boleh) {
+      await kerjakanDiLatar(
+        () => kirimTandaTerima(overrides, jawaban.emailDiri, jawaban.nama),
+        'tanda terima /daftar'
+      );
+    }
 
     return res.status(200).json({ ok: true, id: hasil.id });
   } catch (err) {

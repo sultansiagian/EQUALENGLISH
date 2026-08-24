@@ -307,6 +307,263 @@ async function tanganiUpload(kotak, file) {
 }
 
 // ============================================================
+// ANALYTICS
+// ============================================================
+
+/**
+ * Pageview sudah dicatat skrip Vercel di daftar.html. Yang ditambah di
+ * sini kejadian di DALAM halaman, karena selisih antara "membuka
+ * formulir" dan "mengirimnya" itulah angka yang paling berguna, dan
+ * pageview saja tidak bisa menunjukkannya.
+ *
+ * Shim window.va di bawah adalah cara resmi memanggil custom event tanpa
+ * bundler: panggilan ditumpuk di antrean sampai skripnya selesai dimuat.
+ * Catatan: custom event butuh paket Vercel berbayar. Di paket Hobby,
+ * panggilan ini aman-aman saja, cuma tidak muncul di dashboard.
+ *
+ * Dibungkus try/catch karena analytics TIDAK PERNAH boleh jadi alasan
+ * sebuah formulir pendaftaran gagal jalan.
+ */
+function lacak(nama, data) {
+  try {
+    window.va =
+      window.va ||
+      function () {
+        (window.vaq = window.vaq || []).push(arguments);
+      };
+    window.va('event', { name: nama, data: data || {} });
+  } catch (err) {
+    /* diam saja, memang tidak penting */
+  }
+}
+
+// ============================================================
+// DRAF: menyimpan isian yang belum selesai
+// ============================================================
+
+/**
+ * Formulir ini panjang. Pada paket Group, satu orang mengisi datanya
+ * sendiri, data tiga teman, lalu mengunggah tiga foto. Sebagian besar
+ * mengerjakannya di HP, dan HP membuang tab di latar belakang begitu
+ * memorinya sempit. Sebelum ini, satu telepon masuk cukup untuk
+ * menghapus semuanya tanpa jejak.
+ *
+ * FOTO SENGAJA TIDAK IKUT DISIMPAN. Satu bukti transfer hasil kompresi
+ * masih ratusan KB, dan localStorage cuma sekitar 5 MB untuk seluruh
+ * domain. Menyimpan tiga foto berisiko membuat penyimpanan penuh, dan
+ * waktu itu terjadi, yang gagal tersimpan justru jawaban teksnya juga.
+ * Jadi teksnya saja yang disimpan, dan pemakainya diberi tahu dengan
+ * jelas bahwa fotonya perlu diunggah ulang.
+ */
+var KUNCI_DRAF = 'equal:draf-daftar';
+
+// Lebih tua dari sehari, isinya kemungkinan besar sudah tidak relevan
+// (harga bisa berubah, batch bisa berganti), dan menawarkannya malah
+// membingungkan.
+var UMUR_DRAF_MS = 24 * 60 * 60 * 1000;
+
+var jedaSimpan = null;
+var sudahLacakMulai = false;
+
+// Dinyalakan sekali saja, setelah pendaftaran benar-benar terkirim.
+// Sesudah titik itu tidak ada lagi isian yang layak disimpan, dan
+// menyimpannya justru berbahaya: draf yang bangkit lagi akan menawarkan
+// "lanjutkan isian" untuk pendaftaran yang sudah selesai, dan sebagian
+// orang akan menurutinya lalu mendaftar dua kali.
+var drafDimatikan = false;
+
+function kumpulkanDraf() {
+  var data = {};
+  document.querySelectorAll('#daftar-form [name]').forEach(function (input) {
+    // Perangkap bot tidak pernah ikut disimpan. Kalau ikut, isian
+    // kosongnya akan dipulihkan sebagai string kosong, yang tidak
+    // berbahaya, tapi menyimpan nilai perangkap ke penyimpanan pemakai
+    // itu tetap tidak ada gunanya.
+    if (input.name === 'website') return;
+    if (input.type === 'file') return;
+    if (input.type === 'radio') {
+      if (input.checked) data[input.name] = input.value;
+      return;
+    }
+    if (String(input.value || '').trim()) data[input.name] = input.value;
+  });
+  return data;
+}
+
+function simpanDraf() {
+  if (drafDimatikan) return;
+  try {
+    var jawaban = kumpulkanDraf();
+    // Form yang dikosongkan lagi berarti draf lamanya sudah tidak
+    // diinginkan. Menyimpan objek kosong akan memunculkan tawaran
+    // "lanjutkan" yang isinya tidak ada apa-apa.
+    if (Object.keys(jawaban).length === 0) {
+      hapusDraf();
+      return;
+    }
+    localStorage.setItem(KUNCI_DRAF, JSON.stringify({ waktu: Date.now(), jawaban: jawaban }));
+  } catch (err) {
+    // Mode penyamaran, penyimpanan penuh, atau localStorage dimatikan.
+    // Draf memang jadi tidak tersimpan, dan itu tidak boleh menghentikan
+    // apa pun. Formulirnya tetap bisa diisi dan dikirim seperti biasa.
+  }
+}
+
+function hapusDraf() {
+  // Simpanan yang masih menunggu jedanya DIBATALKAN lebih dulu, dan
+  // urutan ini bukan formalitas.
+  //
+  // Pola paling lumrah di formulir ini: mengetik isian terakhir, lalu
+  // langsung menekan Kirim. Ketikan itu menjadwalkan simpanan 400 ms ke
+  // depan; pengirimannya selesai lebih cepat, drafnya dihapus, dan
+  // jadwal tadi baru jalan sesudahnya lalu MENULIS ULANG draf yang baru
+  // saja dihapus dari isian yang masih terpampang di layar. Akibatnya
+  // pendaftar yang sudah selesai tetap ditawari "lanjutkan isian" waktu
+  // membuka /daftar lagi.
+  clearTimeout(jedaSimpan);
+  try {
+    localStorage.removeItem(KUNCI_DRAF);
+  } catch (err) {
+    /* lihat alasan di simpanDraf */
+  }
+}
+
+/**
+ * Dipakai setelah pendaftaran terkirim. Beda dari hapusDraf biasa: ini
+ * juga menutup pintunya, supaya pendengar visibilitychange dan pagehide
+ * yang masih terpasang tidak menyimpan apa pun waktu pemakainya menutup
+ * tab dari layar "Pendaftaran kamu masuk".
+ */
+function matikanDraf() {
+  drafDimatikan = true;
+  hapusDraf();
+}
+
+function bacaDraf() {
+  try {
+    var mentah = localStorage.getItem(KUNCI_DRAF);
+    if (!mentah) return null;
+    var draf = JSON.parse(mentah);
+    if (!draf || !draf.jawaban || typeof draf.jawaban !== 'object') return null;
+    if (!draf.waktu || Date.now() - draf.waktu > UMUR_DRAF_MS) {
+      hapusDraf();
+      return null;
+    }
+    if (Object.keys(draf.jawaban).length === 0) {
+      hapusDraf();
+      return null;
+    }
+    return draf;
+  } catch (err) {
+    // Isi yang rusak (mis. sisa versi lama) tidak boleh membuat formulir
+    // gagal dimuat. Dibuang diam-diam, lalu lanjut seperti tidak ada draf.
+    hapusDraf();
+    return null;
+  }
+}
+
+/**
+ * Nilai dipasang dengan MENELUSURI elemen yang ada, bukan dengan mencari
+ * lewat selector yang memuat nilainya. Nilai draf datang dari isian yang
+ * diketik orang, dan menyusunnya jadi selector akan pecah begitu ada
+ * tanda kutip di dalamnya.
+ *
+ * Kunci draf yang tidak punya pasangan elemen (mis. pertanyaan yang
+ * dihapus admin sejak draf dibuat) diabaikan sendirinya, karena yang
+ * ditelusuri adalah elemennya, bukan kuncinya.
+ */
+function terapkanDraf(draf) {
+  document.querySelectorAll('#daftar-form [name]').forEach(function (input) {
+    if (input.type === 'file') return;
+    var nilaiDraf = draf.jawaban[input.name];
+    if (nilaiDraf === undefined) return;
+    if (input.type === 'radio') {
+      input.checked = input.value === nilaiDraf;
+      return;
+    }
+    input.value = nilaiDraf;
+  });
+
+  // Wajib dipanggil setelah nilai terpasang: blok data teman muncul atau
+  // tersembunyi mengikuti paket yang barusan dipulihkan. Kalau paketnya
+  // ternyata Individual, fungsi ini juga yang membersihkan data teman
+  // yang mungkin tertinggal di draf.
+  perbaruiPaket();
+}
+
+function usiaTeks(waktu) {
+  var menit = Math.round((Date.now() - waktu) / 60000);
+  if (menit < 1) return 'Disimpan barusan';
+  if (menit < 60) return 'Disimpan ' + menit + ' menit lalu';
+  var jam = Math.round(menit / 60);
+  if (jam < 24) return 'Disimpan ' + jam + ' jam lalu';
+  return 'Disimpan kemarin';
+}
+
+function tawarkanDraf() {
+  var draf = bacaDraf();
+  if (!draf) return;
+
+  var kotak = el('daftar-draf');
+  if (!kotak) return;
+
+  el('daftar-draf-usia').textContent = usiaTeks(draf.waktu);
+  kotak.hidden = false;
+  lacak('daftar_draf_ditawarkan');
+
+  el('daftar-draf-lanjut').addEventListener('click', function () {
+    terapkanDraf(draf);
+    kotak.hidden = true;
+    lacak('daftar_draf_dilanjutkan');
+  });
+
+  el('daftar-draf-baru').addEventListener('click', function () {
+    hapusDraf();
+    kotak.hidden = true;
+    lacak('daftar_draf_dibuang');
+  });
+}
+
+function pasangAutosave() {
+  var form = el('daftar-form');
+  if (!form) return;
+
+  // Didengarkan di form-nya, bukan di tiap isian. Pertanyaan digambar
+  // ulang dari skema dan bisa berubah kapan saja, jadi pendengar yang
+  // dipasang per elemen akan ketinggalan setiap kali susunannya berubah.
+  function tandai() {
+    if (!sudahLacakMulai) {
+      sudahLacakMulai = true;
+      lacak('daftar_mulai_isi');
+    }
+    // Diberi jeda supaya mengetik satu kalimat tidak berarti puluhan kali
+    // menulis ke penyimpanan.
+    clearTimeout(jedaSimpan);
+    jedaSimpan = setTimeout(simpanDraf, 400);
+  }
+
+  form.addEventListener('input', tandai);
+  form.addEventListener('change', tandai);
+
+  // Inilah yang paling penting di HP. Waktu tab ditinggalkan, sistem
+  // boleh membuangnya kapan saja tanpa memberi kesempatan apa pun
+  // sesudahnya, jadi jeda 400 ms di atas tidak boleh ditunggu di sini.
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') {
+      clearTimeout(jedaSimpan);
+      simpanDraf();
+    }
+  });
+
+  // pagehide menangkap yang tidak tertangkap visibilitychange, terutama
+  // waktu halaman ditinggalkan lewat tombol back di Safari iOS.
+  window.addEventListener('pagehide', function () {
+    clearTimeout(jedaSimpan);
+    simpanDraf();
+  });
+}
+
+// ============================================================
 // VALIDASI & KIRIM
 // ============================================================
 
@@ -427,12 +684,20 @@ async function kirim(e) {
     var data = await res.json();
 
     if (res.ok && data.ok) {
+      // Draf dihapus HANYA di sini, setelah server benar-benar
+      // mengonfirmasi barisnya tersimpan. Menghapusnya lebih awal (mis.
+      // begitu tombol ditekan) berarti isian hilang justru pada saat
+      // pengirimannya gagal, yaitu saat draf itu paling dibutuhkan.
+      matikanDraf();
       tampilkanPanel('sukses');
+      lacak('daftar_terkirim');
       window.scrollTo(0, 0);
       return;
     }
+    lacak('daftar_ditolak', { reason: data.reason || 'tidak_diketahui' });
     tampilkanError(data.pesan || 'Pendaftaran gagal terkirim. Coba lagi sebentar lagi.');
   } catch (err) {
+    lacak('daftar_gagal_jaringan');
     tampilkanError('Tidak bisa menghubungi server. Cek koneksi internet kamu, lalu coba lagi.');
   } finally {
     tombol.disabled = false;
@@ -466,6 +731,14 @@ async function muatSkema() {
     }
 
     gambarForm();
+
+    // Urutannya penting. Autosave dipasang DULU supaya isian apa pun
+    // sesudah titik ini ikut tersimpan, lalu draf lama ditawarkan.
+    // Dibalik pun tetap jalan, tapi ada celah beberapa milidetik tempat
+    // ketikan pertama tidak terekam.
+    pasangAutosave();
+    tawarkanDraf();
+    lacak('daftar_form_tampil');
 
     // Kalau ada tanggal tutupnya, disebut di pengantar supaya calon
     // pendaftar tahu batasnya dan tidak menunda.

@@ -71,6 +71,30 @@
         <h1 id="daftar-judul"></h1>
         <p class="daftar-lede" id="daftar-deskripsi"></p>
 
+        <!-- Tawaran melanjutkan isian yang belum selesai. Tetap tersembunyi
+             sampai daftar.js benar-benar menemukan draf yang masih segar di
+             localStorage, jadi pendaftar baru tidak pernah melihat blok ini.
+             Punya background sendiri karena halaman ini berlatar foto gelap;
+             lihat catatan di daftar.css soal kotak yang jadi hitam di atas
+             hitam. -->
+        <div id="daftar-draf" class="daftar-draf" hidden>
+          <div class="daftar-draf-teks">
+            <strong>Isian kamu yang belum selesai masih tersimpan.</strong>
+            <span id="daftar-draf-usia"></span>
+            <small>
+              Foto tidak ikut tersimpan, jadi bukti pembayaran perlu diunggah ulang.
+            </small>
+          </div>
+          <div class="daftar-draf-aksi">
+            <button type="button" id="daftar-draf-lanjut" class="button button-dark">
+              Lanjutkan isian tadi
+            </button>
+            <button type="button" id="daftar-draf-baru" class="button button-outline">
+              Mulai dari awal
+            </button>
+          </div>
+        </div>
+
         <form id="daftar-form" novalidate>
           <div id="daftar-pertanyaan"></div>
 
