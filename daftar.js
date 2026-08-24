@@ -300,7 +300,11 @@ function perbaruiKemajuan() {
   }
   kotak.hidden = false;
   var persen = Math.round((k.terisi / k.total) * 100);
-  el('daftar-kemajuan-isi').style.width = persen + '%';
+  // scaleX, bukan width. Fungsi ini jalan pada setiap ketikan, dan
+  // mengubah width pada tiap huruf memicu perhitungan tata letak yang
+  // terasa di HP kelas menengah. Lihat catatan di .daftar-kemajuan-isi
+  // pada daftar.css.
+  el('daftar-kemajuan-isi').style.transform = 'scaleX(' + k.terisi / k.total + ')';
 
   var teks = el('daftar-kemajuan-teks');
   var sisa = k.total - k.terisi;

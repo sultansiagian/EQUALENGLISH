@@ -402,13 +402,26 @@
   overflow: hidden;
 }
 
+/* Lebarnya TETAP 100%, yang berubah skalanya.
+
+   Bukan sekadar selera: perbaruiKemajuan() dipanggil pada SETIAP ketikan,
+   bukan cuma waktu isian selesai. Menganimasikan width berarti setiap
+   huruf yang diketik memicu perhitungan tata letak, dan itu terasa persis
+   di perangkat yang paling banyak dipakai mengisi formulir ini, yaitu HP
+   kelas menengah. transform dikerjakan compositor dan tidak menyentuh
+   tata letak sama sekali.
+
+   Sudut membulatnya datang dari .daftar-kemajuan-bar yang sudah punya
+   border-radius plus overflow:hidden. Kalau radiusnya dipasang di sini
+   juga, scaleX akan memencetnya jadi lonjong. */
 .daftar-kemajuan-isi {
   display: block;
-  width: 0;
+  width: 100%;
   height: 100%;
-  border-radius: 999px;
   background: var(--pink);
-  transition: width 260ms var(--ease-out);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 260ms var(--ease-out);
 }
 
 .daftar-kemajuan-teks {
@@ -547,6 +560,21 @@
 @media (prefers-reduced-motion: reduce) {
   .daftar-kemajuan-isi {
     transition: none;
+  }
+}
+
+/* Layar sempit: penanda kemajuan ditumpuk supaya teks "N isian wajib
+   lagi" tidak menyempitkan batangnya sampai tidak terbaca sebagai
+   batang. */
+@media (max-width: 400px) {
+  .daftar-kemajuan {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .daftar-kemajuan-teks {
+    text-align: right;
   }
 }
 
