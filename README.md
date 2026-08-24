@@ -35,6 +35,8 @@ Untuk menguji hasil penyisipannya, panggil `renderHtml()` dari
 | `api/_lib/kirim-email.js` | Email otomatis ke pendaftar, lewat Apps Script. Semua kegagalannya sengaja ditelan supaya tidak ikut membatalkan pendaftaran. |
 | `api/admin-data.js` | SATU rute untuk beberapa endpoint admin (statistik, moderasi testimoni, kirim email uji). Digabung karena Vercel Hobby membatasi 12 Serverless Function per deployment, dan melampauinya membuat SELURUH build gagal tanpa gejala di situs. Handler-nya ada di `api/_lib/handler-*.js`. |
 | `api/_lib/kerja-latar.js` | Menitipkan pekerjaan yang selesai setelah balasan dikirim (mis. email) ke `waitUntil`, supaya tidak ikut hilang waktu fungsi Vercel dibekukan. |
+| `status.html` / `status.js` | Halaman `/status`, tempat pendaftar mengecek sendiri apakah datanya sudah masuk dan sudah disetujui. Login Google, TIDAK menerima email yang diketik. Endpointnya menumpang `/api/verify-access` dengan `mode:'status'` supaya tidak menghabiskan slot Serverless Function terakhir (lihat catatan batas 12 di bawah). |
+| `api/_lib/status-pendaftar.js` | Pencarian satu orang di antrean "Pendaftar Web". Bentuk balasannya sengaja dikunci ke status plus nama paket saja, tidak pernah nama/HP/email siapa pun, karena mencari satu baris menuntut seluruh antrean ditarik dulu. |
 | `api/_lib/rem-laju.js` | Rem laju untuk `/api/daftar`, satu-satunya endpoint publik. Tiga lapisan: per IP (longgar, karena wifi kampus membuat banyak orang terlihat sebagai satu IP), per alamat email tujuan, dan jatah total tanda terima per jam. Yang dilindungi terutama kuota Gmail, bukan baris sheet -- lihat penjelasan di dalam filenya. |
 | `analitik.html` / `analitik.js` | Halaman `/analitik`: jumlah pendaftar, komposisi paket, dan pendapatan per batch. Chart digambar sendiri dengan SVG, tanpa library. |
 | `api/_lib/statistik.js` | Perhitungan angka analitik. Membaca sheet yang sama dengan gerbang login siswa, jadi tidak mungkin ada dua angka berbeda untuk hal yang sama. |
@@ -109,6 +111,22 @@ melayani file itu duluan (Vercel mengecek file statis SEBELUM `rewrites`).
   tersimpan). Drafnya dihapus hanya setelah server mengonfirmasi barisnya
   masuk, tidak lebih awal. Lihat catatan `hapusDraf()` di `daftar.js` soal
   kenapa simpanan tertunda harus ikut dibatalkan di situ.
+
+## Batas 12 Serverless Function
+
+Vercel Hobby membatasi **12 Serverless Function per deployment**, dan
+melampauinya membuat SELURUH build gagal tanpa gejala apa pun di situs.
+Sekarang ada **11** berkas di `api/` (berkas di `api/_lib/` tidak dihitung
+karena namanya berawalan garis bawah).
+
+Karena itu `/status` tidak berdiri sebagai `api/status.js` sendiri,
+melainkan menumpang `api/verify-access.js` lewat `mode:'status'` di badan
+permintaan. Selain menghemat slot, di sanalah verifikasi token Google dan
+pembacaan roster sudah ada, jadi tidak perlu disalin ulang.
+
+**Kalau nanti butuh endpoint baru**, gabungkan dulu yang sudah ada
+daripada menambah berkas. Kandidat paling wajar: `atur-form.js` dan
+`daftar-schema.js` masuk ke `admin-data.js`.
 
 ## Security header
 

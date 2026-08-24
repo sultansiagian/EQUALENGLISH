@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Cek status pendaftaran Bootcamp EPT UI dari EQUAL English."
+    />
+    <title>Cek Status Pendaftaran · EQUAL English</title>
+    <link rel="canonical" href="https://equalenglish.vercel.app/status" />
+
+    <!-- Halaman ini tidak untuk dicari di Google: isinya cuma berguna buat
+         orang yang sudah mendaftar dan datang lewat email tanda terima atau
+         layar setelah kirim. -->
+    <meta name="robots" content="noindex, follow" />
+
+    <link rel="icon" type="image/png" href="/EDITS/favicon.png" />
+    <link rel="apple-touch-icon" href="/EDITS/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Syne:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Memakai daftar.css apa adanya: halaman ini kelanjutan langsung dari
+         /daftar, jadi kepala hitam, latar foto, dan kotak terangnya memang
+         harus sama persis. Yang khusus halaman ini cuma .status-* di bawah. -->
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/daftar.css" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </head>
+  <body class="daftar-body">
+    <header class="daftar-topbar">
+      <a class="daftar-brand" href="/" aria-label="EQUAL English, kembali ke beranda">
+        <img src="/EDITS/Vector.png" alt="EQUAL" />
+        <span>English</span>
+      </a>
+    </header>
+
+    <main class="daftar-shell">
+      <!-- STATE 1: belum login -->
+      <section id="status-masuk">
+        <p class="section-kicker">CEK STATUS</p>
+        <h1>Pendaftaran kamu sampai mana?</h1>
+        <p class="daftar-lede">
+          Masuk pakai akun Google dengan email yang sama seperti yang kamu isi
+          waktu mendaftar. Kami cuma memakainya untuk memastikan yang bertanya
+          memang orangnya, bukan orang lain.
+        </p>
+
+        <div class="status-masuk-kotak">
+          <div
+            id="g_id_onload"
+            data-client_id="367439644430-4t8r204v4h6ufouinpd2ctdftgndbehf.apps.googleusercontent.com"
+            data-callback="handleCredentialResponse"
+            data-auto_prompt="false"
+          ></div>
+          <div class="g_id_signin" data-type="standard" data-shape="pill" data-size="large"></div>
+        </div>
+
+        <p class="status-catatan">
+          Belum mendaftar sama sekali? <a href="/daftar">Buka formulir pendaftaran</a>.
+        </p>
+      </section>
+
+      <!-- STATE 2: sedang mengecek -->
+      <section id="status-memuat" hidden>
+        <p class="daftar-status">
+          <span class="daftar-spinner" aria-hidden="true"></span> Mengecek pendaftaran kamu…
+        </p>
+      </section>
+
+      <!-- STATE 3: hasilnya.
+           Judul, penjelasan, dan tombolnya diisi status.js sesuai keadaan,
+           karena ketiga keadaan itu butuh kalimat yang berbeda-beda dan
+           menaruh ketiganya sebagai markup tetap berarti tiga blok yang
+           harus dijaga tetap sinkron. -->
+      <section id="status-hasil" hidden aria-live="polite">
+        <p class="section-kicker" id="status-kicker"></p>
+        <h1 id="status-judul"></h1>
+        <p class="daftar-lede" id="status-detail"></p>
+        <dl class="status-rincian" id="status-rincian" hidden>
+          <div>
+            <dt>Email</dt>
+            <dd id="status-email"></dd>
+          </div>
+          <div id="status-paket-baris" hidden>
+            <dt>Paket</dt>
+            <dd id="status-paket"></dd>
+          </div>
+        </dl>
+        <div class="daftar-sukses-aksi" id="status-aksi"></div>
+      </section>
+
+      <!-- STATE 4: gagal mengecek -->
+      <section id="status-gagal" hidden>
+        <p class="section-kicker">GAGAL</p>
+        <h1>Statusnya belum bisa dicek.</h1>
+        <p class="daftar-lede" id="status-gagal-detail"></p>
+        <div class="daftar-sukses-aksi">
+          <button type="button" class="button button-dark" onclick="location.reload()">
+            Coba lagi
+          </button>
+          <a
+            class="button button-outline"
+            href="https://wa.me/6285888345058"
+            target="_blank"
+            rel="noopener"
+          >
+            Tanya lewat WhatsApp <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <script src="/status.js"></script>
+    <script defer src="/_vercel/insights/script.js"></script>
+  </body>
+</html>

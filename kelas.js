@@ -91,7 +91,11 @@ function renderMaterials(materials) {
   practiceWritingLink.href = materials.practiceWritingUrl || '#';
   announcement.textContent = materials.announcement || '';
 
-  renderSchedule(materials.schedule || []);
+  // progres ikut dikirim ke renderSchedule karena dialah satu-satunya yang
+  // tahu jumlah sesi SELURUHNYA. materials.schedule cuma memuat sesi yang
+  // belum lewat, jadi daftar kosong bisa berarti dua hal yang sangat
+  // berbeda bagi siswa, dan keduanya butuh kalimat yang berbeda pula.
+  renderSchedule(materials.schedule || [], materials.progres);
   renderProgres(materials.progres);
   renderFinalTest(materials);
 
@@ -277,7 +281,49 @@ function renderProgres(progres) {
   kotak.hidden = false;
 }
 
-function renderSchedule(sessions) {
+/**
+ * Kalimat untuk keadaan kosong, DIPILIH menurut sebabnya.
+ *
+ * Siswa yang baru disetujui hampir selalu langsung membuka halaman ini,
+ * sering di hari yang sama, dan sering sebelum batchnya dijadwalkan.
+ * Yang mereka lihat waktu itu adalah halaman yang berhasil dibuka tapi
+ * isinya kosong, dan kosong yang tidak dijelaskan terbaca sebagai rusak.
+ * Pesan pertama yang masuk ke WhatsApp biasanya "kok kosong ya kak".
+ *
+ * Tiga sebabnya beda, jadi kalimatnya juga beda:
+ *   - belum ada jadwal sama sekali  -> batchnya memang belum dipasang
+ *   - semua sesi sudah lewat        -> batchnya sudah selesai
+ *   - sisanya                       -> keadaan tak terduga, jangan
+ *                                      mengarang sebab yang belum tentu
+ *                                      benar
+ */
+function pesanJadwalKosong(progres) {
+  const total = progres && progres.total ? progres.total : 0;
+  const selesai = progres && progres.selesai ? progres.selesai : 0;
+
+  if (!total) {
+    return (
+      'Jadwal batch kamu belum dipasang. Begitu tanggalnya ditentukan, semua ' +
+      'sesi muncul di sini dan diumumkan juga di grup WhatsApp. Akses kamu ' +
+      'sendiri sudah aktif, jadi tidak ada yang perlu dilakukan sekarang.'
+    );
+  }
+
+  if (selesai >= total) {
+    return (
+      'Semua ' + total + ' sesi batch ini sudah selesai. Rekaman dan materinya ' +
+      'tetap bisa kamu buka dari kartu di bawah selama masa aksesmu masih ' +
+      'berlaku.'
+    );
+  }
+
+  return (
+    'Belum ada jadwal terbaru di sini. Cek pengumuman atau tanya lewat grup ' +
+    'WhatsApp kalau kamu butuh kepastian jadwal.'
+  );
+}
+
+function renderSchedule(sessions, progres) {
   const list = document.getElementById('kelas-schedule-list');
   const empty = document.getElementById('kelas-schedule-empty');
   if (!list) return;
@@ -286,7 +332,10 @@ function renderSchedule(sessions) {
 
   if (!sessions.length) {
     list.hidden = true;
-    if (empty) empty.hidden = false;
+    if (empty) {
+      empty.textContent = pesanJadwalKosong(progres);
+      empty.hidden = false;
+    }
     return;
   }
 

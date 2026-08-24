@@ -72,13 +72,23 @@ async function kirim(overrides, jenis, tujuan, nilai) {
      memakai aplikasi email yang menampilkannya, dan email yang cuma
      berisi HTML tanpa pasangan teks justru lebih gampang disaring
      sebagai spam. */
+  // Tombol "Cek Status" cuma dipasang di email TANDA TERIMA.
+  //
+  // Di email "akses dibuka" dia tidak ada gunanya: orangnya sudah
+  // disetujui, dan email itu sudah membawa tautan ruang kelas sendiri.
+  // Menambahkannya di sana justru menyodorkan pertanyaan yang sudah
+  // terjawab.
+  const asalSitus = asalDari(ambil(overrides, 'linkRuangKelas'));
+  const statusUrl = jenis === 'emailTerima' && asalSitus ? asalSitus + '/status' : '';
+
   let html = '';
   try {
     html = bungkusEmail({
       subjek: subjekJadi,
       teks: isiJadi,
+      statusUrl: statusUrl,
       logoUrl: ambil(overrides, 'emailLogoUrl'),
-      asal: asalDari(ambil(overrides, 'linkRuangKelas')),
+      asal: asalSitus,
       waUrl: linkWhatsApp(ambil(overrides, 'waNomor')),
     });
   } catch (err) {

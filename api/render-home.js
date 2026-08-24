@@ -334,6 +334,11 @@ function renderHtml(raw, overrides) {
     (Number.isFinite(siswaDasar) ? siswaDasar : 0) +
     (Number.isFinite(siswaOtomatis) ? siswaOtomatis : 0);
   html = replaceCounter(html, 'hero-siswa', totalSiswa);
+  // Angka yang SAMA, dipasang lagi di bawah tombol daftar (section
+  // #mulai). Sengaja memakai nilai yang sama persis, bukan dihitung
+  // ulang: dua angka berbeda untuk hal yang sama di satu halaman merusak
+  // justru kepercayaan yang mau dibangun bukti itu.
+  html = replaceCounter(html, 'cta-siswa', totalSiswa);
 
   html = applyPackages(html, overrides);
   html = applyImages(html, overrides);

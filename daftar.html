@@ -95,6 +95,24 @@
           </div>
         </div>
 
+        <!-- Penanda kemajuan. Menempel di atas layar selama formulirnya
+             digulir, karena gunanya justru waktu orangnya sudah jauh ke
+             bawah dan mulai bertanya-tanya masih berapa lama lagi.
+             Angkanya dihitung dari isian WAJIB saja, lihat hitungKemajuan()
+             di daftar.js. -->
+        <div id="daftar-kemajuan" class="daftar-kemajuan" hidden>
+          <div
+            id="daftar-kemajuan-bar"
+            class="daftar-kemajuan-bar"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-label="Kemajuan pengisian formulir"
+          >
+            <span id="daftar-kemajuan-isi" class="daftar-kemajuan-isi"></span>
+          </div>
+          <span id="daftar-kemajuan-teks" class="daftar-kemajuan-teks"></span>
+        </div>
+
         <form id="daftar-form" novalidate>
           <div id="daftar-pertanyaan"></div>
 
@@ -150,14 +168,21 @@
           kamu isi.
         </p>
         <p class="daftar-lede">
-          Kalau lebih dari sehari belum ada kabar, hubungi kami lewat WhatsApp
-          supaya dicek manual.
+          Kalau emailnya tidak masuk, atau kamu cuma ingin memastikan, status
+          pendaftaran bisa dicek kapan saja di halaman cek status pakai akun
+          Google yang emailnya sama.
         </p>
         <div class="daftar-sukses-aksi">
-          <a class="button button-dark" href="https://wa.me/6285888345058" target="_blank" rel="noopener">
+          <!-- Cek status jadi tombol utama di sini, mendahului WhatsApp.
+               Yang paling dibutuhkan orang tepat setelah mengirim adalah
+               kepastian datanya sampai, dan halaman itu menjawabnya sendiri
+               tanpa perlu ada yang membalas chat. -->
+          <a class="button button-dark" href="/status">
+            Cek status pendaftaran <span aria-hidden="true">→</span>
+          </a>
+          <a class="button button-outline" href="https://wa.me/6285888345058" target="_blank" rel="noopener">
             Hubungi lewat WhatsApp <span aria-hidden="true">↗</span>
           </a>
-          <a class="button button-outline" href="/">Kembali ke beranda</a>
         </div>
       </section>
     </main>

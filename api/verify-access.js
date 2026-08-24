@@ -14,6 +14,10 @@ const { readOverrides } = require('./_lib/global-config-store');
 // Pembaca waktu WIB yang sama dengan yang dipakai jadwal buka/tutup
 // formulir, supaya "2026-09-09T19:00" berarti hal yang sama di keduanya.
 const { waktuWibKeEpoch } = require('./_lib/form-status');
+// Dipakai HANYA oleh mode status (halaman /status), lihat tanganiStatus().
+const { cariStatus } = require('./_lib/status-pendaftar');
+const { bolehKirimForm } = require('./_lib/rem-laju');
+const DEFAULTS = require('./_lib/site-defaults');
 
 /**
  * Endpoint terlindungi untuk halaman kelas EQUAL English.
@@ -1130,6 +1134,69 @@ async function verifyGoogleToken(idToken, expectedClientId) {
 // CommonJS (module.exports), bukan `export default`: proyek ini tidak
 // punya package.json, jadi Vercel menjalankan file .js sebagai CommonJS
 // secara default. Sintaks ES Module di sini akan gagal saat runtime.
+/**
+ * Penangan mode status. Dipisah dari handler utama supaya alur login
+ * ruang kelas yang sudah jalan tidak ikut bertambah cabang.
+ */
+async function tanganiStatus(req, res, idToken, clientId, rosterUrls, validCutoff) {
+  // Rem laju dipasang di sini, bukan cuma di /api/daftar. Setiap
+  // panggilan yang lolos bisa memicu pembacaan SELURUH antrean lewat
+  // Apps Script, jadi tanpa rem, halaman ini jadi cara paling murah
+  // untuk menguras kuota Apps Script milik pemilik sheet.
+  const laju = bolehKirimForm(req);
+  if (!laju.boleh) {
+    res.setHeader('Retry-After', String(laju.tungguDetik));
+    return res.status(429).json({
+      ok: false,
+      reason: 'terlalu_sering',
+      pesan: 'Terlalu banyak pengecekan dari jaringan ini. Tunggu beberapa menit, lalu coba lagi.',
+    });
+  }
+
+  try {
+    const verified = await verifyGoogleToken(idToken, clientId);
+    if (!verified.valid) {
+      return res.status(401).json({ ok: false, reason: verified.reason });
+    }
+
+    const [overrides, enrolledEmails] = await Promise.all([
+      readOverrides().catch(() => ({})),
+      // Kegagalan roster tidak boleh membuat halaman ini menjawab "tidak
+      // ditemukan". Dianggap "belum ada di roster" saja, lalu antrean
+      // yang menentukan -- salah paling parah dari sini cuma peserta yang
+      // sudah disetujui terbaca sebagai masih menunggu, dan itu jauh
+      // lebih baik daripada memberi tahu orang yang sudah membayar bahwa
+      // pendaftarannya tidak ada.
+      fetchEnrolledEmails(rosterUrls, validCutoff).catch((err) => {
+        console.error('status: roster gagal dibaca: ' + err.message);
+        return new Set();
+      }),
+    ]);
+
+    const adaDiRoster = enrolledEmails.has(normalisasiEmail(verified.email));
+    const hasil = await cariStatus(verified.email, adaDiRoster, overrides);
+
+    return res.status(200).json({
+      ok: true,
+      email: verified.email,
+      status: hasil.status,
+      paket: hasil.paket || null,
+      // Dipakai halaman buat menampilkan tombol "Buka Ruang Kelas" hanya
+      // waktu aksesnya memang sudah terbuka.
+      linkRuangKelas:
+        hasil.status === 'disetujui'
+          ? String(overrides.linkRuangKelas || DEFAULTS.linkRuangKelas || '').trim()
+          : '',
+    });
+  } catch (err) {
+    if (err && err.kode === 'antrean_tidak_terbaca') {
+      return res.status(502).json({ ok: false, reason: 'antrean_tidak_terbaca' });
+    }
+    console.error('status error:', err.message);
+    return res.status(502).json({ ok: false, reason: 'upstream_error' });
+  }
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -1171,6 +1238,31 @@ module.exports = async function handler(req, res) {
   const idToken = req.body && req.body.credential;
   if (!idToken) {
     return res.status(400).json({ ok: false, reason: 'missing_credential' });
+  }
+
+  // ============================================================
+  // MODE STATUS (halaman /status)
+  // ============================================================
+  //
+  // Menumpang endpoint ini, BUKAN berdiri sebagai api/status.js sendiri.
+  // Dua alasannya:
+  //
+  //   1. Vercel Hobby membatasi 12 Serverless Function per deployment,
+  //      dan melampauinya membuat SELURUH build gagal tanpa gejala di
+  //      situs (lihat catatan admin-data.js di README). Sekarang ada 11.
+  //      Slot terakhir lebih baik disimpan untuk kebutuhan yang benar-
+  //      benar tidak bisa menumpang.
+  //   2. Yang dibutuhkan mode ini persis yang sudah ada di file ini:
+  //      verifikasi token Google dan pembacaan roster. Menaruhnya di
+  //      berkas lain berarti menyalin ulang keduanya, dan proyek ini
+  //      sudah punya satu salinan verifikasi token yang harus dijaga
+  //      (lihat _lib/google-verify.js).
+  //
+  // Dicabang SEBELUM pengambilan jadwal dan materi di bawah: halaman
+  // status tidak butuh keduanya, dan orang yang membukanya justru
+  // kemungkinan besar BELUM ada di roster.
+  if (req.body && req.body.mode === 'status') {
+    return tanganiStatus(req, res, idToken, clientId, rosterUrls, validCutoff);
   }
 
   try {

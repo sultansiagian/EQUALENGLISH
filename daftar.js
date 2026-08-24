@@ -49,8 +49,39 @@ function tandaWajib(wajib) {
   return wajib ? ' <em>*</em>' : '';
 }
 
-function bantuanHtml(teks) {
-  return teks ? '<small>' + escapeHtml(teks) + '</small>' : '';
+/**
+ * Teks bantuan diberi id supaya isian di atasnya bisa menunjuknya lewat
+ * aria-describedby. Tanpa itu, pembaca layar membacakan labelnya saja dan
+ * keterangan seperti "Pakai email Google yang aktif" tidak pernah sampai
+ * ke orang yang paling butuh mendengarnya.
+ */
+function idBantuan(f) {
+  return 'bantuan-' + String(f.id).replace(/[^a-zA-Z0-9_-]/g, '');
+}
+
+function bantuanHtml(teks, f) {
+  if (!teks) return '';
+  var id = f ? ' id="' + idBantuan(f) + '"' : '';
+  return '<small' + id + '>' + escapeHtml(teks) + '</small>';
+}
+
+/**
+ * inputmode menentukan papan ketik apa yang muncul di HP. Tanpa ini,
+ * isian nomor HP memunculkan papan ketik huruf penuh dan pengisinya harus
+ * berpindah tata letak dulu -- kecil, tapi terjadi berkali-kali dalam
+ * formulir yang sudah panjang.
+ *
+ * enterkeyhint membuat tombol Enter berbunyi "Berikutnya", bukan
+ * "Kirim". Di formulir sepanjang ini, Enter yang mengirim formulir
+ * setengah jadi adalah kesalahan yang mahal.
+ */
+function atributInput(f) {
+  var mode =
+    f.tipe === 'email' ? 'email' : f.tipe === 'telepon' ? 'tel' : 'text';
+  var attr = ' inputmode="' + mode + '" enterkeyhint="next"';
+  if (f.wajib) attr += ' aria-required="true"';
+  if (f.bantuan) attr += ' aria-describedby="' + idBantuan(f) + '"';
+  return attr;
 }
 
 function gambarField(f) {
@@ -61,7 +92,7 @@ function gambarField(f) {
     wrap.className = 'daftar-group daftar-group-paket';
     wrap.innerHTML =
       '<span class="daftar-legend">' + label + tandaWajib(f.wajib) + '</span>' +
-      bantuanHtml(f.bantuan) +
+      bantuanHtml(f.bantuan, f) +
       '<div class="daftar-plans">' +
       skema.pilihanPaket
         .map(function (p) {
@@ -89,7 +120,7 @@ function gambarField(f) {
     wrap.hidden = true;
     wrap.innerHTML =
       '<span class="daftar-legend">' + label + '</span>' +
-      bantuanHtml(f.bantuan) +
+      bantuanHtml(f.bantuan, f) +
       [2, 3]
         .map(function (n) {
           return (
@@ -114,7 +145,7 @@ function gambarField(f) {
     wrap.dataset.upload = f.id;
     wrap.innerHTML =
       '<span class="daftar-upload-label">' + label + tandaWajib(f.wajib) + '</span>' +
-      bantuanHtml(f.bantuan) +
+      bantuanHtml(f.bantuan, f) +
       '<input type="file" accept="image/*" />' +
       '<img class="daftar-upload-preview" alt="" hidden />' +
       '<span class="daftar-upload-status"></span>';
@@ -133,7 +164,7 @@ function gambarField(f) {
         })
         .join('') +
       '</select>' +
-      bantuanHtml(f.bantuan);
+      bantuanHtml(f.bantuan, f);
     return wrap;
   }
 
@@ -142,7 +173,7 @@ function gambarField(f) {
     wrap.innerHTML =
       '<span>' + label + tandaWajib(f.wajib) + '</span>' +
       '<textarea name="' + escapeHtml(f.id) + '" rows="3"></textarea>' +
-      bantuanHtml(f.bantuan);
+      bantuanHtml(f.bantuan, f);
     return wrap;
   }
 
@@ -153,9 +184,135 @@ function gambarField(f) {
   wrap.className = 'daftar-field';
   wrap.innerHTML =
     '<span>' + label + tandaWajib(f.wajib) + '</span>' +
-    '<input type="' + tipeInput + '" name="' + escapeHtml(f.id) + '" autocomplete="' + autocomplete + '" />' +
-    bantuanHtml(f.bantuan);
+    '<input type="' + tipeInput + '" name="' + escapeHtml(f.id) + '" autocomplete="' +
+    autocomplete + '"' + atributInput(f) + ' />' +
+    bantuanHtml(f.bantuan, f);
   return wrap;
+}
+
+// ============================================================
+// BAGIAN FORMULIR
+// ============================================================
+
+/**
+ * Formulir ini dipecah jadi tiga bagian bernomor. Bukan tiga halaman:
+ * pengirimannya tetap sekali, dan tidak ada state antar-langkah yang
+ * bisa hilang di tengah jalan. Yang ditambahkan cuma judul dan penanda
+ * kemajuan, karena masalahnya memang bukan isiannya sulit, melainkan
+ * pengisinya tidak tahu kapan selesainya.
+ *
+ * BATASNYA DIHITUNG DARI SUSUNAN, BUKAN DIPAKU PER FIELD.
+ * Admin bebas memindah pertanyaan lewat /admin, jadi menempelkan nomor
+ * bagian ke tiap field akan membuat urutan di layar melompat-lompat
+ * begitu ada satu pertanyaan yang digeser. Yang dipakai di sini: bagian 2
+ * dimulai di field paket, bagian 3 dimulai di unggahan pertama. Pindahkan
+ * pertanyaannya, batasnya ikut pindah dengan sendirinya, dan urutan yang
+ * disetel admin tetap dihormati apa adanya.
+ */
+var JUDUL_BAGIAN = [
+  { judul: 'Data kamu', ringkas: 'Data' },
+  { judul: 'Paket dan teman', ringkas: 'Paket' },
+  { judul: 'Bukti dan kirim', ringkas: 'Bukti' },
+];
+
+function batasBagian(fields) {
+  var mulaiPaket = -1;
+  var mulaiUpload = -1;
+  fields.forEach(function (f, i) {
+    if (mulaiPaket === -1 && (f.tipe === 'paket' || f.tipe === 'peserta')) mulaiPaket = i;
+    if (mulaiUpload === -1 && f.tipe === 'upload') mulaiUpload = i;
+  });
+  return { paket: mulaiPaket, upload: mulaiUpload };
+}
+
+function bagianKe(i, batas) {
+  if (batas.upload !== -1 && i >= batas.upload) return 2;
+  if (batas.paket !== -1 && i >= batas.paket) return 1;
+  return 0;
+}
+
+function gambarJudulBagian(n) {
+  var b = JUDUL_BAGIAN[n] || { judul: 'Lainnya' };
+  var wrap = document.createElement('div');
+  wrap.className = 'daftar-bagian';
+  wrap.innerHTML =
+    '<span class="daftar-bagian-no">' + (n + 1) + ' dari ' + JUDUL_BAGIAN.length + '</span>' +
+    '<h2>' + escapeHtml(b.judul) + '</h2>';
+  return wrap;
+}
+
+// ============================================================
+// PENANDA KEMAJUAN
+// ============================================================
+
+/**
+ * Menghitung isian WAJIB yang sudah terisi, bukan seluruh isian.
+ *
+ * Bedanya penting buat orangnya: kalau isian opsional ikut dihitung,
+ * batangnya tidak pernah penuh walau formulirnya sebenarnya sudah siap
+ * dikirim, dan itu justru menambah keraguan yang mau dihilangkan.
+ *
+ * Isian teman ikut dihitung HANYA kalau paketnya menuntutnya, jadi
+ * pendaftar Individual melihat batang yang penuh lebih cepat, sesuai
+ * kenyataan bahwa formulirnya memang lebih pendek.
+ */
+function hitungKemajuan() {
+  if (!skema) return { terisi: 0, total: 0 };
+  var dipilih = document.querySelector('input[name="paket"]:checked');
+  var paket = dipilih ? dipilih.value : '';
+  var terisi = 0;
+  var total = 0;
+
+  function nilaiWajib(ada) {
+    total++;
+    if (ada) terisi++;
+  }
+
+  skema.fields.forEach(function (f) {
+    if (f.tipe === 'paket') return nilaiWajib(Boolean(paket));
+    if (f.tipe === 'peserta') {
+      if (/pair|group/i.test(paket)) {
+        nilaiWajib(Boolean(nilai('p2Nama')));
+        nilaiWajib(emailSah(nilai('p2Email')));
+      }
+      if (/group/i.test(paket)) {
+        nilaiWajib(Boolean(nilai('p3Nama')));
+        nilaiWajib(emailSah(nilai('p3Email')));
+      }
+      return;
+    }
+    if (!f.wajib) return;
+    if (f.tipe === 'upload') return nilaiWajib(Boolean(unggahan[f.id]));
+    if (f.tipe === 'email') return nilaiWajib(emailSah(nilai(f.id)));
+    nilaiWajib(Boolean(nilai(f.id)));
+  });
+
+  return { terisi: terisi, total: total };
+}
+
+function perbaruiKemajuan() {
+  var kotak = el('daftar-kemajuan');
+  if (!kotak) return;
+  var k = hitungKemajuan();
+  if (k.total === 0) {
+    kotak.hidden = true;
+    return;
+  }
+  kotak.hidden = false;
+  var persen = Math.round((k.terisi / k.total) * 100);
+  el('daftar-kemajuan-isi').style.width = persen + '%';
+
+  var teks = el('daftar-kemajuan-teks');
+  var sisa = k.total - k.terisi;
+  teks.textContent = sisa === 0 ? 'Semua terisi, tinggal kirim' : sisa + ' isian wajib lagi';
+
+  // Nilai ARIA dipasang di elemen batangnya, bukan cuma di teksnya,
+  // supaya pembaca layar bisa melaporkan kemajuannya waktu diminta tanpa
+  // harus menyapu seluruh halaman.
+  var bar = el('daftar-kemajuan-bar');
+  bar.setAttribute('aria-valuenow', String(k.terisi));
+  bar.setAttribute('aria-valuemax', String(k.total));
+  bar.setAttribute('aria-valuetext', k.terisi + ' dari ' + k.total + ' isian wajib terisi');
 }
 
 function gambarForm() {
@@ -168,8 +325,18 @@ function gambarForm() {
   // Field teks berurutan dikelompokkan ke satu kotak supaya tidak jadi
   // deretan kotak tipis satu-satu. Field yang punya bingkai sendiri
   // (paket, peserta, upload) memutus kelompok itu.
+  var batas = batasBagian(skema.fields);
   var grup = null;
-  skema.fields.forEach(function (f) {
+  var bagianSekarang = -1;
+
+  skema.fields.forEach(function (f, i) {
+    var bagian = bagianKe(i, batas);
+    if (bagian !== bagianSekarang) {
+      bagianSekarang = bagian;
+      grup = null; // judul bagian selalu memutus kelompok kotak teks
+      wadah.appendChild(gambarJudulBagian(bagian));
+    }
+
     var berdiriSendiri = f.tipe === 'paket' || f.tipe === 'peserta' || f.tipe === 'upload';
     if (berdiriSendiri) {
       grup = null;
@@ -219,6 +386,12 @@ function perbaruiPaket() {
   // data teman yang sudah terlanjur diketik.
   if (!butuhTeman) kosongkan(['p2Nama', 'p2Telepon', 'p2Email']);
   if (!butuhTiga) kosongkan(['p3Nama', 'p3Telepon', 'p3Email']);
+
+  // Ganti paket mengubah JUMLAH isian wajib, bukan cuma yang terisi, jadi
+  // penanda kemajuan harus dihitung ulang di sini. Tanpa ini, memilih
+  // Individual setelah Group menyisakan batang yang menghitung isian
+  // teman yang sudah tidak diminta lagi.
+  perbaruiKemajuan();
 }
 
 function kosongkan(nama) {
@@ -303,6 +476,11 @@ async function tanganiUpload(kotak, file) {
     setStatusUpload(kotak, 'error', err.message);
   } finally {
     input.disabled = false;
+    // Unggahan tidak memicu event 'input' pada formulir, jadi kemajuannya
+    // harus dihitung ulang dari sini. Dipanggil di finally supaya batang
+    // juga MUNDUR waktu unggahan gagal, bukan diam di posisi lama yang
+    // memberi kesan berkasnya sudah aman.
+    perbaruiKemajuan();
   }
 }
 
@@ -536,6 +714,7 @@ function pasangAutosave() {
       sudahLacakMulai = true;
       lacak('daftar_mulai_isi');
     }
+    perbaruiKemajuan();
     // Diberi jeda supaya mengetik satu kalimat tidak berarti puluhan kali
     // menulis ke penyimpanan.
     clearTimeout(jedaSimpan);
@@ -618,7 +797,16 @@ function validasi() {
     }
 
     if (f.tipe === 'upload') {
-      if (f.wajib && !unggahan[f.id]) kurang.push(f.label.toLowerCase());
+      var belumAda = Boolean(f.wajib) && !unggahan[f.id];
+      // Ditandai di kotaknya supaya fokuskanYangSalah() bisa menemukannya.
+      // Isian file-nya sendiri tidak diberi aria-invalid: yang kosong
+      // bukan nilai isiannya, melainkan berkas yang belum dipilih.
+      var kotak = document.querySelector('.daftar-upload[data-upload="' + f.id + '"]');
+      if (kotak) {
+        if (belumAda) kotak.dataset.kurang = 'true';
+        else delete kotak.dataset.kurang;
+      }
+      if (belumAda) kurang.push(f.label.toLowerCase());
       return;
     }
 
@@ -645,6 +833,44 @@ function tampilkanError(pesan) {
   box.scrollIntoView({ block: 'center' });
 }
 
+/**
+ * Pindahkan fokus ke isian bermasalah yang paling atas.
+ *
+ * Di formulir sepanjang ini, ringkasan kesalahan saja tidak cukup:
+ * isian yang dimaksud bisa berada jauh di luar layar, dan orangnya harus
+ * menebak sendiri yang mana. Memindahkan fokus menyelesaikan dua hal
+ * sekaligus -- layar ikut menggulir ke sana, dan pembaca layar
+ * membacakan label isian itu berikut keterangan yang menempel padanya
+ * lewat aria-describedby.
+ *
+ * Dipanggil SETELAH tampilkanError, bukan sebelum: ringkasan yang
+ * ber-role="alert" perlu tampil lebih dulu supaya ikut terbacakan, baru
+ * fokusnya berpindah.
+ */
+function fokuskanYangSalah() {
+  var salah = document.querySelector('#daftar-form [aria-invalid="true"]');
+
+  // Unggahan tidak pernah bertanda aria-invalid (yang ditandai kotaknya,
+  // bukan isiannya), jadi dicari terpisah supaya bukti pembayaran yang
+  // belum diisi tidak luput dari perpindahan fokus.
+  if (!salah) {
+    var kotak = document.querySelector('.daftar-upload[data-kurang="true"]');
+    if (kotak) salah = kotak.querySelector('input[type="file"]');
+  }
+  if (!salah) return;
+
+  // preventScroll lalu scrollIntoView sendiri: fokus bawaan menggulir
+  // isian ke tepi layar, sementara di sini yang perlu terlihat justru
+  // labelnya yang ada di atas isian itu.
+  try {
+    salah.focus({ preventScroll: true });
+  } catch (err) {
+    salah.focus();
+  }
+  var terlihat = salah.closest('.daftar-field, .daftar-upload, .daftar-person') || salah;
+  terlihat.scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
+
 async function kirim(e) {
   e.preventDefault();
   var tombol = el('daftar-submit');
@@ -653,6 +879,8 @@ async function kirim(e) {
   var kurang = validasi();
   if (kurang.length > 0) {
     tampilkanError('Masih ada yang belum diisi: ' + kurang.join(', ') + '.');
+    fokuskanYangSalah();
+    lacak('daftar_validasi_gagal', { jumlah: kurang.length });
     return;
   }
 

@@ -100,7 +100,56 @@ function asalDari(url) {
   return cocok ? cocok[1] : '';
 }
 
-function tombol(url, label) {
+/**
+ * Dua tombol bersebelahan dalam SATU baris tabel.
+ *
+ * Catatan di bawah (di tombolBawah) menjelaskan kenapa dulu dibatasi satu
+ * tombol per email: dua tombol besar bertumpuk membuat email terbaca
+ * seperti brosur. Yang dihindari itu tumpukannya, bukan jumlahnya. Satu
+ * baris berisi dua tombol berukuran sedang adalah bentuk yang lazim di
+ * email transaksi ("lihat pesanan" / "hubungi kami"), dan tetap terbaca
+ * sebagai tindak lanjut, bukan iklan.
+ *
+ * Ditulis sebagai <td> bersebelahan, bukan dua tabel yang di-float:
+ * Outlook mengabaikan float, dan tombolnya akan menumpuk di sana persis
+ * seperti bentuk yang mau dihindari.
+ */
+function barisTombolGanda(utama, kedua) {
+  return (
+    '<table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" ' +
+    'style="margin:0 auto;"><tr>' +
+    '<td style="padding:0 6px;">' + utama + '</td>' +
+    '<td style="padding:0 6px;">' + kedua + '</td>' +
+    '</tr></table>'
+  );
+}
+
+/**
+ * @param {string} url
+ * @param {string} label
+ * @param {boolean} sekunder  Tombol kedua: latar putih bergaris, supaya
+ *                            yang pink tetap terbaca sebagai tindakan
+ *                            utama waktu keduanya bersebelahan.
+ */
+function tombol(url, label, sekunder) {
+  if (sekunder) {
+    return (
+      '<table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" ' +
+      'style="margin:0 auto;">' +
+      '<tr><td align="center" bgcolor="' + WARNA.kartu + '" ' +
+      'style="border-radius:999px;border:1px solid ' + WARNA.garis + ';">' +
+      '<a href="' + escapeHtml(url) + '" ' +
+      'style="display:inline-block;padding:13px 24px;font-family:Arial,Helvetica,sans-serif;' +
+      'font-size:14px;font-weight:bold;color:' + WARNA.teks + ';text-decoration:none;' +
+      'border-radius:999px;">' +
+      escapeHtml(label) +
+      '</a></td></tr></table>'
+    );
+  }
+  return tombolUtama(url, label);
+}
+
+function tombolUtama(url, label) {
   // Tombol "antipeluru": warnanya dipasang di <td>, bukan di <a>. Outlook
   // mengabaikan background pada <a>, dan tanpa cara ini tombolnya muncul
   // sebagai tautan biru polos di sana.
@@ -174,14 +223,35 @@ function bungkusEmail(opsi) {
     isiHtml += paragraf(p);
   });
 
-  // Cuma satu tombol per email. Kalau isinya sudah punya tautan sendiri,
-  // WhatsApp tidak ikut ditawarkan: dua tombol besar membuat email
-  // terbaca seperti brosur, dan itu yang paling gampang disaring spam.
+  // Kalau isi emailnya SUDAH punya tautan sendiri (mis. templat akses
+  // yang berisi {link}), tidak ada tombol tambahan sama sekali. Aturan itu
+  // tidak berubah: email yang sudah punya satu ajakan jelas tidak boleh
+  // dibebani ajakan kedua yang bersaing dengannya.
   //
-  // Tombol WhatsApp memang ditaruh di bawah, dan itu benar: dia bukan
+  // Yang berubah: kalau BELUM ada tautan di isinya (yaitu email tanda
+  // terima), tombol bawahnya boleh dua dan bersebelahan. "Cek status"
+  // jadi yang utama karena itu yang paling dibutuhkan orang setelah
+  // mengirim formulir, dan ia menjawab sendiri tanpa perlu ada yang
+  // membalas chat. WhatsApp jadi tombol kedua.
+  //
+  // Tombol bawah memang ditaruh di bawah, dan itu benar: keduanya bukan
   // lanjutan dari kalimat mana pun, melainkan tawaran bantuan setelah
   // seluruh isinya dibaca.
-  const tombolBawah = !adaTombol && urlAman(o.waUrl) ? tombol(o.waUrl, 'Chat WhatsApp') : '';
+  const waUrl = urlAman(o.waUrl);
+  const statusUrl = urlAman(o.statusUrl);
+  let tombolBawah = '';
+  if (!adaTombol) {
+    if (statusUrl && waUrl) {
+      tombolBawah = barisTombolGanda(
+        tombol(statusUrl, 'Cek Status'),
+        tombol(waUrl, 'Chat WhatsApp', true)
+      );
+    } else if (statusUrl) {
+      tombolBawah = tombol(statusUrl, 'Cek Status');
+    } else if (waUrl) {
+      tombolBawah = tombol(waUrl, 'Chat WhatsApp');
+    }
+  }
 
   const barisLogo = logo
     ? '<tr><td style="padding:32px 32px 0;">' +
