@@ -24,6 +24,82 @@ function konfigurasi() {
  * ditangkap di sini dan diubah jadi pesan yang bisa dibaca manusia,
  * bukan dilempar sebagai "Unexpected token < in JSON".
  */
+/**
+ * ============================================================
+ * KENAPA BALASANNYA HTML, BUKAN JSON
+ * ============================================================
+ *
+ * Kalau Apps Script membalas HTML dengan status 200, hampir selalu yang
+ * terjadi adalah SKRIPNYA TIDAK PERNAH JALAN: Google yang menyajikan
+ * halamannya sendiri (halaman masuk akun, halaman minta izin, atau
+ * halaman error), dan halaman itu tetap berstatus 200.
+ *
+ * Pesan lama di sini cuma menyebut dua kemungkinan (URL salah, atau belum
+ * di-Deploy ulang) dan tidak pernah menyebut dua penyebab yang justru
+ * paling sering: URL /dev, dan "Who has access" yang bukan Anyone.
+ * Akibatnya orang mengecek dua hal yang sudah benar berulang kali.
+ *
+ * Fungsi ini membaca ciri balasannya lalu menyebut penyebab yang cocok.
+ */
+function jelaskanBalasanBukanJson(teks, status, url) {
+  const cuplikan = String(teks || '').slice(0, 200);
+  const rendah = cuplikan.toLowerCase();
+  const bukanHtml = !rendah.includes('<!doctype html') && !rendah.includes('<html');
+
+  // Bukan HTML sama sekali: biarkan cuplikannya bicara sendiri.
+  if (bukanHtml) {
+    return (
+      'Apps Script membalas sesuatu yang bukan JSON (status ' + status + '). ' +
+      'Cuplikan balasan: ' + cuplikan
+    );
+  }
+
+  const dasar =
+    'Apps Script membalas halaman HTML, bukan JSON (status ' + status + '). Artinya ' +
+    'skripnya TIDAK jalan sama sekali -- yang menjawab Google, bukan skrip kamu. ';
+
+  // URL /dev tidak pernah bisa dipanggil server. Dia selalu menuntut
+  // pemilik skrip sedang login di peramban, jadi dari Vercel hasilnya
+  // selalu halaman masuk akun. Ini dicek dari URL-nya langsung, bukan dari
+  // isi balasan, jadi paling bisa dipercaya.
+  if (/\/dev\/?$/.test(String(url || '').trim())) {
+    return (
+      dasar +
+      'PENYEBABNYA KETAHUAN: APPS_SCRIPT_URL di Vercel berakhiran "/dev". URL itu ' +
+      'cuma bisa dibuka pemilik skrip lewat peramban dan tidak pernah bisa dipanggil ' +
+      'server. Yang dibutuhkan URL berakhiran "/exec", yang muncul setelah ' +
+      'Deploy > New deployment (bukan yang tertera di editor sebagai Test deployment).'
+    );
+  }
+
+  const halamanLogin =
+    rendah.includes('accounts.google.com') ||
+    rendah.includes('servicelogin') ||
+    rendah.includes('ppconfig') ||
+    rendah.includes('signin');
+
+  if (halamanLogin) {
+    return (
+      dasar +
+      'Balasannya berupa halaman akun Google, jadi permintaannya ditolak sebelum ' +
+      'sampai ke skrip. Dua hal yang perlu dicek, berurutan: ' +
+      '(1) Di Apps Script, Deploy > Manage deployments > ikon pensil, pastikan ' +
+      '"Who has access" = Anyone. Kalau isinya "Anyone with Google account" atau ' +
+      '"Only myself", server situs tidak akan pernah bisa memanggilnya. ' +
+      '(2) Pastikan APPS_SCRIPT_URL di Vercel berakhiran "/exec", bukan "/dev". ' +
+      'Setelah salah satunya diubah, Deploy ulang sebagai Version: New version, lalu ' +
+      'salin ulang URL-nya ke Vercel dan redeploy project-nya.'
+    );
+  }
+
+  return (
+    dasar +
+    'Penyebab tersering: URL-nya salah atau deployment-nya sudah dihapus, "Who has ' +
+    'access" bukan Anyone, atau skrip sudah diubah tapi belum di-Deploy ulang sebagai ' +
+    'versi baru. Cuplikan balasan: ' + cuplikan
+  );
+}
+
 async function panggilAppsScript(action, payload) {
   const { url, secret, siap } = konfigurasi();
   if (!siap) {
@@ -44,11 +120,7 @@ async function panggilAppsScript(action, payload) {
   try {
     data = JSON.parse(teks);
   } catch (err) {
-    throw new Error(
-      'Apps Script tidak membalas JSON (status ' + res.status + '). Penyebab tersering: ' +
-        'URL-nya salah, atau skrip sudah diubah tapi belum di-Deploy ulang sebagai ' +
-        'versi baru. Cuplikan balasan: ' + teks.slice(0, 120)
-    );
+    throw new Error(jelaskanBalasanBukanJson(teks, res.status, url));
   }
 
   if (!data.ok) {

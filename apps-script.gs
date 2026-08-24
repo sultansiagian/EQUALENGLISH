@@ -19,7 +19,12 @@
  *        Who has access: Anyone
  *      ("Anyone" wajib supaya server situs bisa memanggilnya. Yang
  *      menjaga keamanannya adalah SECRET, bukan pengaturan ini.)
- *   5. Copy "Web app URL"
+ *   5. Copy "Web app URL". HARUS yang berakhiran "/exec".
+ *      Editor Apps Script juga menampilkan URL berakhiran "/dev" dan
+ *      letaknya lebih menonjol. URL itu SALAH untuk keperluan ini: dia
+ *      cuma bisa dibuka pemilik skrip yang sedang login di peramban, dan
+ *      kalau dipanggil server situs, Google membalas halaman masuk akun
+ *      berstatus 200 -- bukan error, jadi gejalanya membingungkan.
  *   6. Di Vercel > Settings > Environment Variables, isi:
  *        APPS_SCRIPT_URL     = URL dari langkah 5
  *        APPS_SCRIPT_SECRET  = SECRET dari langkah 3
