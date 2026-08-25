@@ -7,6 +7,7 @@ const { kirimTandaTerima } = require('./_lib/kirim-email');
 const { kerjakanDiLatar } = require('./_lib/kerja-latar');
 const { bolehKirimForm, bolehKirimTandaTerima } = require('./_lib/rem-laju');
 const { laporMasalah } = require('./_lib/lapor-masalah');
+const { periksaGambar } = require('./_lib/periksa-gambar');
 
 /**
  * Endpoint form pendaftaran di /daftar. INI SATU-SATUNYA endpoint di
@@ -34,7 +35,11 @@ const { laporMasalah } = require('./_lib/lapor-masalah');
 // dikompres di browser (lihat daftar.js), jadi normalnya jauh di bawah ini.
 const MAKS_BODY_BYTES = 3.5 * 1024 * 1024;
 
-const POLA_DATA_URL = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/;
+// Batas per berkas SETELAH decode. Angkanya lebih longgar dari batas di
+// browser (lihat MAKS_PER_BERKAS_KB di daftar.js), karena yang di sini
+// adalah pagar terakhir untuk kiriman yang tidak lewat browser sama
+// sekali, bukan aturan yang dilihat pendaftar biasa.
+const MAKS_BERKAS_KB = 2500;
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -122,12 +127,53 @@ module.exports = async function handler(req, res) {
   // Pisahkan berkas unggahan dari jawaban teks. Cuma field bertipe
   // 'upload' yang boleh membawa data URL; kalau ada yang menyelipkan data
   // URL raksasa ke field teks biasa, itu tidak ikut diproses sebagai file.
+  //
+  // Tipe berkasnya diperiksa dari BYTE PERTAMA isinya, bukan dari label
+  // "image/png" di depan data URL -- label itu diketik pengirim dan bisa
+  // berisi apa saja. Lihat _lib/periksa-gambar.js.
   const berkas = [];
+  const berkasDitolak = [];
   fields.forEach((f) => {
-    if (f.tipe !== 'upload') return;
     const dataUrl = String(jawaban[f.id] || '');
-    if (!POLA_DATA_URL.test(dataUrl)) return;
+    if (f.tipe !== 'upload') {
+      // Field teks yang membawa data URL raksasa tidak pernah diproses
+      // sebagai berkas, tapi sekarang ikut dicatat: satu-satunya alasan
+      // orang melakukannya adalah mencoba-coba.
+      if (/^data:/.test(dataUrl)) {
+        console.log('daftar: data URL di field non-upload "' + f.id + '", diabaikan.');
+      }
+      return;
+    }
+    if (!dataUrl) return;
+
+    const periksa = periksaGambar(dataUrl, MAKS_BERKAS_KB);
+    if (!periksa.ok) {
+      berkasDitolak.push({ id: f.id, label: f.label, alasan: periksa.alasan, kb: periksa.kb });
+      return;
+    }
     berkas.push({ id: f.id, dataUrl: dataUrl });
+  });
+
+  // Berkas WAJIB yang ditolak menggagalkan pendaftaran dengan pesan yang
+  // menyebut sebabnya. Yang OPSIONAL cukup dilewati: menolak seluruh
+  // pendaftaran karena bukti follow Instagram-nya bermasalah jauh lebih
+  // merugikan daripada kolom yang kosong.
+  const wajibDitolak = berkasDitolak.filter((b) =>
+    fields.some((f) => f.id === b.id && f.wajib)
+  );
+  if (wajibDitolak.length > 0) {
+    const b = wajibDitolak[0];
+    const pesan =
+      b.alasan === 'terlalu_besar'
+        ? 'Berkas "' + b.label + '" berukuran ' + b.kb + ' KB, terlalu besar. ' +
+          'Coba unggah ulang lewat halaman pendaftaran supaya otomatis dikecilkan.'
+        : 'Berkas "' + b.label + '" sepertinya bukan gambar. Unggah tangkapan layar ' +
+          'atau foto dalam format JPG, PNG, atau WebP.';
+    console.log('daftar: berkas wajib ditolak, alasan=' + b.alasan);
+    return res.status(400).json({ ok: false, reason: 'berkas_tidak_sah', pesan: pesan });
+  }
+  berkasDitolak.forEach((b) => {
+    console.log('daftar: berkas opsional "' + b.id + '" dilewati, alasan=' + b.alasan);
   });
 
   const folder =

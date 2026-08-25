@@ -96,6 +96,7 @@ function renderMaterials(materials) {
   // belum lewat, jadi daftar kosong bisa berarti dua hal yang sangat
   // berbeda bagi siswa, dan keduanya butuh kalimat yang berbeda pula.
   renderSchedule(materials.schedule || [], materials.progres);
+  pasangUnduhKalender(materials.schedule || [], materials);
   renderProgres(materials.progres);
   renderFinalTest(materials);
 

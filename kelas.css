@@ -1094,3 +1094,28 @@
   font-size: 0.85rem;
   color: var(--ink-muted);
 }
+
+/* Tombol simpan ke kalender di kartu jadwal (UX-07). Sengaja lebih kalem
+   dari tautan aksi lain di kartu: ini kemudahan, bukan tujuan kartunya. */
+.kelas-kalender-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 14px;
+  padding: 0.55rem 0.95rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pil);
+  background: transparent;
+  color: var(--black);
+  font-family: var(--body);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.kelas-kalender-btn:hover,
+.kelas-kalender-btn:focus-visible {
+  background: var(--black);
+  color: var(--white);
+  border-color: var(--black);
+}

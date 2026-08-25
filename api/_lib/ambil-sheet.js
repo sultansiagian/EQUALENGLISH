@@ -94,4 +94,4 @@ async function fetchTextWithRetry(url, attempts = 2) {
 // "@" ganda, dan domainnya harus punya titik. Cukup ketat untuk tidak
 // salah menganggap nomor telepon atau nama sebagai email.
 
-module.exports = { cachedFetch, sleep, fetchDenganBatas, fetchTextWithRetry, CSV_CACHE_TTL_MS, ISI_KELAS_CACHE_TTL_MS, JWKS_CACHE_TTL_MS };
+module.exports = { cachedFetch, sleep, fetchDenganBatas, fetchTextWithRetry, CSV_CACHE_TTL_MS, ISI_KELAS_CACHE_TTL_MS, JWKS_CACHE_TTL_MS , fetchCache };

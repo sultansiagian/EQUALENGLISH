@@ -1,0 +1,19 @@
+{
+  "name": "EQUAL English",
+  "short_name": "EQUAL",
+  "description": "Ruang kelas Bootcamp EPT UI dari EQUAL English.",
+  "lang": "id",
+  "start_url": "/kelas",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f5f2",
+  "theme_color": "#ffacdf",
+  "icons": [
+    {
+      "src": "/EDITS/favicon.png",
+      "sizes": "320x320",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

@@ -174,6 +174,33 @@ describe('hitungFinalTest', () => {
   });
 });
 
+describe('verifikasi token tidak boleh bercabang lagi', () => {
+  const gv = require('../api/_lib/google-verify');
+
+  test('verify-access memakai fungsi yang SAMA PERSIS dengan google-verify', () => {
+    // Bukan "mirip", tapi objek fungsi yang identik. Sampai 2026-08-25 ada
+    // dua salinan terpisah, dan komentar di google-verify.js mengakuinya
+    // sendiri. Bahayanya khas: tambalan keamanan yang cuma terpasang di
+    // satu sisi meninggalkan gerbang satunya terbuka, tanpa error di mana
+    // pun. Tes ini gagal begitu ada yang menyalinnya lagi.
+    assert.strictEqual(va.verifyGoogleToken, gv.verifyGoogleIdToken);
+  });
+
+  test('token cacat ditolak tanpa menyentuh jaringan', () => {
+    // Ketiganya gagal pada pemeriksaan bentuk, sebelum ada fetch ke
+    // Google, jadi aman dijalankan di tes tanpa token sungguhan.
+    const cacat = ['', 'bukan.token', 'a.b.c.d', 'satu-bagian-saja'];
+    return Promise.all(
+      cacat.map((t) =>
+        va.verifyGoogleToken(t, 'client-id-apa-saja').then((h) => {
+          assert.strictEqual(h.valid, false, 'token "' + t + '" malah diterima');
+          assert.strictEqual(h.reason, 'token_invalid');
+        })
+      )
+    );
+  });
+});
+
 describe('permukaan modul', () => {
   test('semua fungsi yang dipakai berkas lain tetap terekspor', () => {
     // api/kelas-testimoni.js dan api/render-home.js mengimpor dari sini.

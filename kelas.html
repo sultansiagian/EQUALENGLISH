@@ -11,6 +11,8 @@
     <title>Ruang Kelas · EQUAL English</title>
     <link rel="canonical" href="https://equalenglish.vercel.app/kelas" />
     <link rel="icon" type="image/png" href="/EDITS/favicon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#ffacdf" />
     <link rel="apple-touch-icon" href="/EDITS/favicon.png" />
     <script>
       /* Sama seperti index.html: ditambahkan sebelum render supaya elemen
@@ -273,6 +275,10 @@
               lewat grup WhatsApp kalau kamu butuh kepastian jadwal.
             </p>
             <ul id="kelas-schedule-list" class="kelas-schedule-list"></ul>
+            <!-- Tombol simpan ke kalender. Disembunyikan sampai ada sesi
+                 yang benar-benar bisa disimpan; lihat pasangUnduhKalender()
+                 di kelas-kalender.js. -->
+            <button type="button" id="kelas-kalender" class="kelas-kalender-btn" hidden></button>
           </article>
 
           <!-- Final Test. Syaratnya ditentukan SERVER (hitungFinalTest di
@@ -438,6 +444,7 @@
     </svg>
 
     <script src="/shader-background.js"></script>
+    <script src="/kelas-kalender.js"></script>
     <script src="/kelas.js"></script>
     <script src="/morphic-background.js"></script>
     <!-- Analytics, sama seperti di beranda dan /daftar. Tanpa cookie, jadi

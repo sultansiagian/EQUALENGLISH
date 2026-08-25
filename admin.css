@@ -2212,3 +2212,25 @@ a.admin-nav-item:focus-visible {
     animation: none;
   }
 }
+
+/* Tawaran mengembalikan nilai sebelum simpan terakhir (UX-11).
+   Warnanya kalem, bukan merah: ini bukan peringatan bahwa ada yang salah,
+   melainkan jalan keluar kalau ternyata salah. */
+.admin-kembalikan {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--paper);
+  font-size: 0.85rem;
+}
+
+#admin-kembalikan-jumlah {
+  flex: 1;
+  min-width: 12rem;
+  color: var(--ink-muted);
+}

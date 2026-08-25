@@ -13,6 +13,10 @@
 
 window.onAdminReady = function (data) {
   fillForm(data.values);
+  // Potret nilai yang SEDANG tersimpan di server, jadi acuan tombol
+  // Kembalikan. Diambil setelah fillForm supaya bentuknya sama persis
+  // dengan yang nanti dikirim collectFormItems().
+  nilaiTersimpan = collectFormItems();
   loadPhotoPreviews(data.values);
   faq = Array.isArray(data.values.faq)
     ? data.values.faq.map(function (f) {
@@ -69,9 +73,71 @@ function setSaveStatus(state, text) {
   else el.removeAttribute('data-state');
 }
 
+// ============================================================
+// KEMBALIKAN NILAI SEBELUMNYA (undo satu langkah)
+// ============================================================
+//
+// Yang belum tertutup sebelum ini bukan penghapusan (itu sudah ada
+// konfirmasinya), melainkan SIMPAN yang keliru: teks paket tertimpa,
+// harga salah ketik satu angka nol. Perubahan itu tayang di beranda dalam
+// hitungan detik dan nilai lamanya tidak tersimpan di mana pun yang bisa
+// dijangkau dari sini.
+//
+// Sengaja TIDAK membaca tab "Riwayat Ubah" di spreadsheet, walaupun
+// sekarang tab itu ada. Alasannya: menariknya kembali berarti satu
+// perjalanan lagi ke Apps Script pada jalur yang sedang dipakai orang,
+// dan yang dibutuhkan cuma satu langkah ke belakang -- itu sudah ada di
+// memori halaman ini. Riwayat di spreadsheet untuk menelusuri jauh ke
+// belakang; ini untuk membatalkan yang barusan.
+let nilaiTersimpan = null;
+let jedaKembalikan = null;
+
+// Setelah lewat ini, tombolnya hilang. Batas waktu ada supaya tombol
+// "Kembalikan" tidak menggantung berjam-jam lalu ditekan orang yang sudah
+// lupa nilai lamanya apa.
+const UMUR_KEMBALIKAN_MS = 5 * 60 * 1000;
+
+function tawarkanKembalikan(sebelum) {
+  const kotak = document.getElementById('admin-kembalikan');
+  if (!kotak) return;
+  clearTimeout(jedaKembalikan);
+
+  const berubah = Object.keys(sebelum).filter(
+    (k) => String(sebelum[k]) !== String((collectFormItems() || {})[k])
+  );
+  if (berubah.length === 0) {
+    kotak.hidden = true;
+    return;
+  }
+
+  document.getElementById('admin-kembalikan-jumlah').textContent =
+    berubah.length === 1
+      ? 'Satu isian baru saja berubah.'
+      : berubah.length + ' isian baru saja berubah.';
+  kotak.hidden = false;
+
+  jedaKembalikan = setTimeout(function () {
+    kotak.hidden = true;
+  }, UMUR_KEMBALIKAN_MS);
+
+  const tombol = document.getElementById('admin-kembalikan-btn');
+  tombol.onclick = async function () {
+    const pesan =
+      'Kembalikan ' + berubah.length + ' isian ke nilai sebelum simpan terakhir? ' +
+      'Yang kamu ketik sesudahnya akan tertimpa.';
+    if (!window.confirm(pesan)) return;
+    fillForm(sebelum);
+    kotak.hidden = true;
+    await saveForm();
+  };
+}
+
 async function saveForm() {
   const btn = document.getElementById('admin-save-btn');
   let berhasil = false;
+  // Diambil SEBELUM permintaan dikirim: begitu server membalas berhasil,
+  // isian di layar sudah jadi nilai barunya.
+  const sebelum = nilaiTersimpan;
   tombolSibuk(btn, true);
   setSaveStatus(null, 'Menyimpan…');
 
@@ -87,6 +153,12 @@ async function saveForm() {
       berhasil = true;
       tandaiAdminTersimpan();
       setSaveStatus('ok', 'Tersimpan. Biasanya tayang di situs dalam ~10 detik.');
+      // Urutannya penting: tawarkan dulu memakai potret LAMA, baru
+      // potretnya dimajukan. Dibalik, tombolnya akan menawarkan
+      // pengembalian ke nilai yang barusan disimpan, yaitu tidak
+      // mengembalikan apa pun.
+      if (sebelum) tawarkanKembalikan(sebelum);
+      nilaiTersimpan = collectFormItems();
     } else if (res.status === 401) {
       handleUnauthorized(data.reason);
     } else {

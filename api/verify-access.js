@@ -1,7 +1,6 @@
 // Modul bawaan Node, bukan dependency tambahan (proyek ini sengaja
 // zero-dependency) -- dipakai buat verifikasi signature JWT secara
-// lokal, lihat verifyGoogleTokenLocal() di bawah.
-const crypto = require('crypto');
+// lokal, lihat _lib/google-verify.js.
 
 // Parser CSV dipisah ke _lib/csv.js karena halaman analitik membaca
 // sheet yang sama persis. Perilakunya sudah dibuktikan identik dengan
@@ -32,7 +31,25 @@ const DEFAULTS = require('./_lib/site-defaults');
 // yang diketik ulang. Tesnya (test/verify-access.test.js) ditulis lebih
 // dulu dan sudah lulus melawan versi utuh, jadi kalau nanti ada yang
 // gagal, yang berubah pasti perilakunya.
-const { cachedFetch, JWKS_CACHE_TTL_MS } = require('./_lib/ambil-sheet');
+// Verifikasi token Google. SATU implementasi untuk seluruh proyek, ada
+// di _lib/google-verify.js.
+//
+// Sebelum 2026-08-25 ada DUA salinan: satu di sini, satu di sana, dan
+// komentar di berkas itu mengakuinya sendiri ("disalin, bukan diimpor").
+// Utang itu berbunyi justru pada kode yang memutuskan siapa boleh masuk:
+// tambalan yang cuma terpasang di satu sisi meninggalkan gerbang satunya
+// terbuka, tanpa gejala apa pun.
+//
+// Waktu digabung, keduanya ternyata TIDAK identik. Yang di sini juga
+// mengembalikan `nama` dari token, dipakai /kelas untuk menyapa siswa dan
+// oleh kelas-testimoni.js sebagai nama cadangan. Jadi yang digabung ke
+// arah sebaliknya: google-verify.js yang dilengkapi, bukan `nama` yang
+// dibuang.
+const { verifyGoogleIdToken } = require('./_lib/google-verify');
+
+// Nama lamanya dipertahankan karena api/kelas-testimoni.js mengimpornya
+// lewat nama ini, dan bentuk balasannya sama persis.
+const verifyGoogleToken = verifyGoogleIdToken;
 const { normalisasiEmail, fetchEnrolledEmails } = require('./_lib/roster');
 const {
   hitungProgres,
@@ -198,150 +215,7 @@ function hitungFinalTest(overrides, email) {
   };
 }
 
-function base64UrlDecode(str) {
-  const padded = str.replace(/-/g, '+').replace(/_/g, '/');
-  const withPadding = padded + '='.repeat((4 - (padded.length % 4)) % 4);
-  return Buffer.from(withPadding, 'base64');
-}
 
-async function getGoogleJwks() {
-  // Dicache lewat cachedFetch yang sama dipakai buat sheet -- kunci
-  // publik Google jarang rotasi (dalam hitungan hari/minggu), jadi TTL
-  // 1 jam (JWKS_CACHE_TTL_MS) jauh lebih dari cukup dan sangat
-  // memangkas jumlah request ke endpoint ini.
-  const text = await cachedFetch('google-jwks', JWKS_CACHE_TTL_MS, async () => {
-    const res = await fetch('https://www.googleapis.com/oauth2/v3/certs');
-    if (!res.ok) throw new Error('status ' + res.status);
-    return res.text();
-  });
-  const data = JSON.parse(text);
-  return Array.isArray(data.keys) ? data.keys : [];
-}
-
-// Verifikasi ID token TANPA nge-hit server Google tiap kali ada yang
-// login (beda dari cara lama, verifyGoogleTokenRemote di bawah, yang
-// manggil endpoint tokeninfo Google setiap request) -- signature JWT-nya
-// dicek langsung pakai kunci publik Google yang di-cache (getGoogleJwks),
-// pakai modul crypto bawaan Node. Ini persis cara kerja library resmi
-// Google (google-auth-library) di balik layar, ditulis ulang manual di
-// sini supaya proyek ini tetap zero-dependency.
-//
-// PENTING: fungsi ini SENGAJA bisa throw kalau ada yang gagal secara
-// TEKNIS (JWKS gak bisa diambil, format token gak terduga, dll) --
-// BUKAN kalau tokennya memang tidak valid (itu balik
-// { valid:false, reason: ... } seperti biasa, tanpa throw). Pemanggil
-// (verifyGoogleToken) menangkap exception ini dan fallback ke
-// verifyGoogleTokenRemote kalau ini gagal, supaya bug atau gangguan di
-// sini tidak langsung mengunci semua siswa keluar dari kelasnya.
-async function verifyGoogleTokenLocal(idToken, expectedClientId) {
-  const parts = idToken.split('.');
-  if (parts.length !== 3) return { valid: false, reason: 'token_invalid' };
-  const [headerB64, payloadB64, sigB64] = parts;
-
-  const header = JSON.parse(base64UrlDecode(headerB64).toString('utf8'));
-  const payload = JSON.parse(base64UrlDecode(payloadB64).toString('utf8'));
-
-  if (header.alg !== 'RS256' || !header.kid) {
-    return { valid: false, reason: 'token_invalid' };
-  }
-
-  let keys = await getGoogleJwks();
-  let jwk = keys.find((k) => k.kid === header.kid);
-  if (!jwk) {
-    // Kunci belum ketemu di cache -- kemungkinan Google baru rotasi
-    // kunci sejak terakhir kita ambil. Coba ambil ULANG sekali (lewati
-    // cache lama), BUKAN langsung anggap tokennya invalid, karena ini
-    // kejadian normal, bukan tanda ada yang salah.
-    fetchCache.delete('google-jwks');
-    keys = await getGoogleJwks();
-    jwk = keys.find((k) => k.kid === header.kid);
-  }
-  if (!jwk) return { valid: false, reason: 'token_invalid' };
-
-  const publicKey = crypto.createPublicKey({ key: jwk, format: 'jwk' });
-  const signedData = Buffer.from(headerB64 + '.' + payloadB64);
-  const signature = base64UrlDecode(sigB64);
-  const signatureValid = crypto.verify('RSA-SHA256', signedData, publicKey, signature);
-  if (!signatureValid) return { valid: false, reason: 'token_invalid' };
-
-  if (payload.iss !== 'https://accounts.google.com' && payload.iss !== 'accounts.google.com') {
-    return { valid: false, reason: 'token_invalid' };
-  }
-  if (payload.aud !== expectedClientId) {
-    return { valid: false, reason: 'wrong_audience' };
-  }
-  if (payload.email_verified !== true && payload.email_verified !== 'true') {
-    return { valid: false, reason: 'email_unverified' };
-  }
-  const expiresAt = Number(payload.exp) * 1000;
-  if (!expiresAt || Date.now() > expiresAt) {
-    return { valid: false, reason: 'token_expired' };
-  }
-
-  return {
-    valid: true,
-    email: String(payload.email || '').toLowerCase(),
-    // Dipakai sebagai nama bawaan waktu siswa mengirim testimoni.
-    // Diambil dari token yang sudah diverifikasi, bukan dari yang dikirim
-    // browser.
-    nama: String(payload.name || '').trim(),
-  };
-}
-
-// Jalur CADANGAN -- ini cara verifikasi yang dipakai SEBELUM ada
-// verifyGoogleTokenLocal di atas. Sekarang cuma dipakai kalau
-// verifikasi lokal gagal karena alasan TEKNIS, bukan dipakai tiap
-// request seperti sebelumnya -- itu justru yang berisiko kena
-// rate-limit dari Google kalau banyak siswa login bersamaan.
-async function verifyGoogleTokenRemote(idToken, expectedClientId) {
-  const res = await fetch(
-    'https://oauth2.googleapis.com/tokeninfo?id_token=' +
-      encodeURIComponent(idToken)
-  );
-  if (!res.ok) return { valid: false, reason: 'token_invalid' };
-
-  const payload = await res.json();
-
-  if (payload.aud !== expectedClientId) {
-    return { valid: false, reason: 'wrong_audience' };
-  }
-  if (payload.email_verified !== 'true' && payload.email_verified !== true) {
-    return { valid: false, reason: 'email_unverified' };
-  }
-  const expiresAt = Number(payload.exp) * 1000;
-  if (!expiresAt || Date.now() > expiresAt) {
-    return { valid: false, reason: 'token_expired' };
-  }
-
-  return {
-    valid: true,
-    email: String(payload.email || '').toLowerCase(),
-    // Dipakai sebagai nama bawaan waktu siswa mengirim testimoni.
-    // Diambil dari token yang sudah diverifikasi, bukan dari yang dikirim
-    // browser.
-    nama: String(payload.name || '').trim(),
-  };
-}
-
-async function verifyGoogleToken(idToken, expectedClientId) {
-  try {
-    return await verifyGoogleTokenLocal(idToken, expectedClientId);
-  } catch (err) {
-    // Ini jalur yang HARUSNYA jarang kepakai. Kalau ini sering muncul di
-    // Vercel Functions log, ada yang perlu dicek di verifyGoogleTokenLocal
-    // atau ketersediaan endpoint kunci publik Google.
-    console.error(
-      'Verifikasi token lokal gagal (' + err.message + '), fallback ke endpoint ' +
-        'tokeninfo Google.'
-    );
-    try {
-      return await verifyGoogleTokenRemote(idToken, expectedClientId);
-    } catch (err2) {
-      console.error('Verifikasi token via fallback juga gagal: ' + err2.message);
-      return { valid: false, reason: 'token_invalid' };
-    }
-  }
-}
 
 // CommonJS (module.exports), bukan `export default`: proyek ini tidak
 // punya package.json, jadi Vercel menjalankan file .js sebagai CommonJS

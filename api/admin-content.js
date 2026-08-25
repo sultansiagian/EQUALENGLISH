@@ -2,6 +2,8 @@ const DEFAULTS = require('./_lib/site-defaults');
 const { requireAdmin } = require('./_lib/admin-guard');
 const { readOverrides, writeOverrides } = require('./_lib/global-config-store');
 const { normalisasiFields } = require('./_lib/form-schema');
+const { panggilAppsScript } = require('./_lib/apps-script');
+const { kerjakanDiLatar } = require('./_lib/kerja-latar');
 
 // Batas jumlah testimoni & panjang tiap field. Angkanya dipilih longgar
 // (jauh di atas kebutuhan wajar) tapi tetap terbatas, semata supaya satu
@@ -25,6 +27,28 @@ const MAKS_BATCH = 60;
 // Batas jumlah catatan perubahan harga. Harga jarang berubah, jadi 40
 // entri sudah sangat longgar.
 const MAKS_RIWAYAT_HARGA = 40;
+
+/**
+ * Ubah nilai apa pun jadi teks untuk dicatat di riwayat.
+ *
+ * Array dan objek (susunan formulir, daftar testimoni, jadwal) di-JSON-kan
+ * supaya perbandingan "berubah atau tidak" bisa dilakukan dengan satu
+ * perbandingan teks, bukan penelusuran isi. Perbandingan itulah yang
+ * menentukan baris mana yang layak dicatat: /admin selalu mengirim SEMUA
+ * field yang ada di halamannya, jadi tanpa penyaringan ini satu klik
+ * Simpan akan menghasilkan puluhan baris riwayat yang isinya sama semua.
+ */
+function ringkasNilai(v) {
+  if (v === undefined || v === null) return '';
+  if (typeof v === 'object') {
+    try {
+      return JSON.stringify(v);
+    } catch (err) {
+      return '(tidak bisa dibaca)';
+    }
+  }
+  return String(v);
+}
 
 function trimTo(value, maxLen) {
   return String(value === undefined || value === null ? '' : value)
@@ -221,8 +245,32 @@ module.exports = async function handler(req, res) {
     }
 
     try {
+      // Nilai LAMA dibaca sebelum ditimpa, supaya bisa dicatat berikut
+      // nilai barunya. Ini juga yang membuat tombol "Kembalikan" di
+      // /admin bisa ada tanpa menyimpan salinan penuh di mana pun.
+      const sebelum = await readOverrides().catch(() => ({}));
+
       await writeOverrides(filtered);
-      return res.status(200).json({ ok: true });
+
+      // Dicatat SETELAH penyimpanan berhasil, dan TIDAK ditunggu.
+      // Gagal mencatat riwayat tidak boleh membuat penyimpanan yang sudah
+      // berhasil terlihat gagal di layar admin.
+      const perubahan = Object.keys(filtered)
+        .map((k) => ({
+          kunci: k,
+          lama: ringkasNilai(sebelum[k] !== undefined ? sebelum[k] : DEFAULTS[k]),
+          baru: ringkasNilai(filtered[k]),
+        }))
+        .filter((p) => p.lama !== p.baru);
+
+      if (perubahan.length > 0) {
+        await kerjakanDiLatar(
+          () => panggilAppsScript('riwayat', { perubahan, oleh: admin.email }),
+          'catat riwayat /admin'
+        ).catch(() => {});
+      }
+
+      return res.status(200).json({ ok: true, tercatat: perubahan.length });
     } catch (err) {
       console.error('admin-content POST error:', err.message);
       return res.status(502).json({ ok: false, reason: 'write_failed', message: err.message });
@@ -232,3 +280,8 @@ module.exports = async function handler(req, res) {
   res.setHeader('Allow', 'GET, POST, PUT');
   return res.status(405).json({ ok: false, reason: 'method_not_allowed' });
 };
+
+// Diekspor untuk diuji. Vercel tetap memanggil module.exports sebagai
+// fungsi handler; properti tambahan di atasnya tidak mengganggu -- pola
+// yang sama dipakai api/verify-access.js.
+module.exports.ringkasNilai = ringkasNilai;

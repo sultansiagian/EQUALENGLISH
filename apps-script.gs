@@ -91,6 +91,7 @@ function doPost(e) {
     if (body.action === 'testimoni') return handleTestimoni(body.isi);
     if (body.action === 'listTestimoni') return handleListTestimoni();
     if (body.action === 'tayangkanTestimoni') return handleTayangkanTestimoni(body.id, body.tayang);
+    if (body.action === 'riwayat') return handleRiwayat(body.perubahan, body.oleh);
     if (body.action === 'ping') return jsonOut({ ok: true, pesan: 'terhubung' });
 
     return jsonOut({ ok: false, reason: 'action_tidak_dikenal' });
@@ -480,4 +481,70 @@ function buangBackupLama(folder) {
     // dikembalikan dari Trash selama 30 hari berikutnya.
     if (f.getDateCreated().getTime() < batas) f.setTrashed(true);
   }
+}
+
+/**
+ * ============================================================
+ * CATATAN PERUBAHAN DARI PANEL ADMIN
+ * ============================================================
+ *
+ * Tiap kali ada yang disimpan lewat /admin, satu baris ditulis ke tab
+ * "Riwayat Ubah": waktu, siapa, kunci apa, nilai lama, nilai baru.
+ *
+ * Gunanya BUKAN curiga. Gunanya bisa menelusuri kesalahan sendiri:
+ * kalau harga tiba-tiba salah atau teks paket berubah, tanpa catatan ini
+ * tidak ada cara tahu itu kapan dan dari mana. Nilai lamanya juga yang
+ * membuat tombol "Kembalikan" di /admin bisa ada.
+ *
+ * Tabnya dibuat otomatis pada penulisan pertama, tidak perlu disiapkan
+ * manual.
+ */
+
+var TAB_RIWAYAT = 'Riwayat Ubah';
+
+// Riwayat yang tumbuh tanpa batas akan memperlambat spreadsheet-nya
+// sendiri. Yang lebih tua dari ini dibuang tiap kali ada penulisan baru.
+var SIMPAN_RIWAYAT = 500;
+
+function sheetRiwayat() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(TAB_RIWAYAT);
+  if (!sh) {
+    sh = ss.insertSheet(TAB_RIWAYAT);
+    sh.appendRow(['Waktu', 'Oleh', 'Kunci', 'Nilai lama', 'Nilai baru']);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function handleRiwayat(perubahan, oleh) {
+  if (!perubahan || !perubahan.length) return jsonOut({ ok: true, dicatat: 0 });
+
+  var sh = sheetRiwayat();
+  var stempel = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyy-MM-dd HH:mm:ss');
+  var baris = [];
+
+  for (var i = 0; i < perubahan.length; i++) {
+    var p = perubahan[i];
+    baris.push([
+      stempel,
+      String(oleh || 'tidak diketahui'),
+      String(p.kunci || ''),
+      // Dipotong: nilai seperti susunan formulir atau daftar testimoni
+      // bisa sangat panjang, dan satu sel raksasa membuat seluruh
+      // spreadsheet berat dibuka.
+      String(p.lama === undefined || p.lama === null ? '' : p.lama).slice(0, 2000),
+      String(p.baru === undefined || p.baru === null ? '' : p.baru).slice(0, 2000),
+    ]);
+  }
+
+  // Ditulis sekaligus, bukan satu per satu. appendRow per baris memanggil
+  // layanan Spreadsheet berkali-kali dan itu bagian paling lambat di
+  // Apps Script.
+  sh.getRange(sh.getLastRow() + 1, 1, baris.length, 5).setValues(baris);
+
+  var lebih = sh.getLastRow() - 1 - SIMPAN_RIWAYAT;
+  if (lebih > 0) sh.deleteRows(2, lebih); // baris 1 header, yang tertua di atas
+
+  return jsonOut({ ok: true, dicatat: baris.length });
 }

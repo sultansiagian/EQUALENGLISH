@@ -232,6 +232,16 @@
           <span id="admin-save-status" class="admin-save-status"></span>
         </div>
 
+        <!-- Tawaran mengembalikan nilai sebelum simpan terakhir. Muncul
+             hanya setelah ada yang benar-benar berubah, dan hilang sendiri
+             setelah lima menit. Lihat tawarkanKembalikan() di admin.js. -->
+        <div id="admin-kembalikan" class="admin-kembalikan" hidden>
+          <span id="admin-kembalikan-jumlah"></span>
+          <button type="button" id="admin-kembalikan-btn" class="admin-btn admin-btn-ghost">
+            Kembalikan nilai sebelumnya
+          </button>
+        </div>
+
         <section class="admin-card" data-reveal>
           <p class="admin-kicker"><b>04</b> / YANG DILIHAT</p>
           <h2>Foto &amp; Logo</h2>

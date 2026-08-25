@@ -1,5 +1,6 @@
 const { requireAdmin } = require('./_lib/admin-guard');
 const { getGlobalConfigId } = require('./_lib/global-config-store');
+const { panggilAppsScript, konfigurasi: konfigAppsScript } = require('./_lib/apps-script');
 
 /**
  * Endpoint diagnosa: melaporkan apa yang SERVER benar-benar lihat soal
@@ -19,6 +20,53 @@ const { getGlobalConfigId } = require('./_lib/global-config-store');
  * Config ID dan Team ID bukan kredensial (tidak bisa dipakai apa-apa tanpa
  * token), jadi ditampilkan utuh supaya bisa dicocokkan dengan dashboard.
  */
+
+/**
+ * ============================================================
+ * PEMERIKSAAN APPS SCRIPT
+ * ============================================================
+ *
+ * Endpoint ini dulu cuma memeriksa Global Config, padahal jalur yang
+ * paling sering rusak justru Apps Script: dia hidup di luar Vercel,
+ * URL-nya berubah tiap kali deployment BARU dibuat (bukan versi baru),
+ * dan kegagalannya membalas HTTP 200 berisi halaman Google, bukan error.
+ *
+ * Diperiksa dengan action 'ping' yang sudah ada di skripnya, jadi tidak
+ * ada baris yang ditulis ke spreadsheet hanya karena diagnosa dijalankan.
+ */
+async function periksaAppsScript() {
+  const { url, secret, siap } = konfigAppsScript();
+
+  if (!siap) {
+    return {
+      berhasil: false,
+      pesan:
+        'APPS_SCRIPT_URL dan/atau APPS_SCRIPT_SECRET belum diisi di Vercel. ' +
+        'Selama itu, pendaftaran tidak bisa tersimpan dan email tidak bisa terkirim.',
+      urlTerisi: Boolean(url),
+      secretTerisi: Boolean(secret),
+    };
+  }
+
+  // Dicek sebelum memanggil: URL /dev tidak akan pernah bisa dipanggil
+  // server, dan ini ketahuan tanpa perlu satu permintaan jaringan pun.
+  if (/\/dev\/?$/.test(url)) {
+    return {
+      berhasil: false,
+      pesan:
+        'APPS_SCRIPT_URL berakhiran "/dev". URL itu cuma bisa dibuka pemilik skrip ' +
+        'lewat peramban dan tidak pernah bisa dipanggil server. Yang dibutuhkan URL ' +
+        'berakhiran "/exec" dari Deploy > New deployment.',
+    };
+  }
+
+  try {
+    await panggilAppsScript('ping');
+    return { berhasil: true, pesan: 'Apps Script menjawab. Pendaftaran dan email aman.' };
+  } catch (err) {
+    return { berhasil: false, pesan: err.message };
+  }
+}
 
 function maskConnectionString(conn) {
   if (!conn) return '(kosong)';
@@ -87,6 +135,7 @@ module.exports = async function handler(req, res) {
       'Config ID tidak berhasil dibaca dari connection string. Bentuk yang ' +
         'diharapkan: https://global-config.vercel.com/ecfg_xxx?token=yyy'
     );
+    report.appsScript = await periksaAppsScript();
     return res.status(200).json({ ok: true, report });
   }
 
@@ -100,6 +149,7 @@ module.exports = async function handler(req, res) {
 
   if (!apiToken) {
     report.catatan.push('VERCEL_API_TOKEN kosong, tes koneksi di bawah dilewati.');
+    report.appsScript = await periksaAppsScript();
     return res.status(200).json({ ok: true, report });
   }
 
@@ -125,6 +175,7 @@ module.exports = async function handler(req, res) {
       'KESIMPULAN: koneksi berhasil TANPA teamId. Hapus env var VERCEL_TEAM_ID ' +
         'dari project (atau kosongkan), lalu redeploy.'
     );
+    report.appsScript = await periksaAppsScript();
     return res.status(200).json({ ok: true, report });
   }
   if (denganTeam && denganTeam.berhasil && !tanpaTeam.berhasil) {
@@ -132,10 +183,12 @@ module.exports = async function handler(req, res) {
       'KESIMPULAN: koneksi berhasil DENGAN teamId, jadi VERCEL_TEAM_ID sudah benar. ' +
         'Kalau menyimpan masih gagal, masalahnya bukan di sini.'
     );
+    report.appsScript = await periksaAppsScript();
     return res.status(200).json({ ok: true, report });
   }
   if (tanpaTeam.berhasil && denganTeam && denganTeam.berhasil) {
     report.catatan.push('KESIMPULAN: dua-duanya berhasil, koneksi baik-baik saja.');
+    report.appsScript = await periksaAppsScript();
     return res.status(200).json({ ok: true, report });
   }
 
@@ -241,5 +294,6 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  report.appsScript = await periksaAppsScript();
   return res.status(200).json({ ok: true, report });
 };

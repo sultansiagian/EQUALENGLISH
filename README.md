@@ -150,6 +150,52 @@ dari luar akun Google pemiliknya:
 Untuk memastikan sekarang tanpa menunggu besok: pilih `backupHarian` di
 editor lalu tekan Run, dan cek folder `Backup EQUAL` di Drive.
 
+## Kalau ada yang perlu dicabut atau diganti cepat
+
+### Mencabut akses admin (SEC-09)
+
+**Hapus emailnya dari `ADMIN_EMAILS` di Vercel, lalu redeploy.** Efeknya
+langsung, karena `requireAdmin` membaca ulang env var itu pada SETIAP
+permintaan; tidak ada sesi tersimpan yang perlu ditunggu kedaluwarsa.
+
+Yang perlu diketahui: panel admin sengaja tidak memakai cookie sesi
+(alasannya di `api/_lib/admin-guard.js`). Konsekuensinya, ID token Google
+yang sudah terlanjur tersalin dari devtools tetap sah sampai sekitar satu
+jam, dan satu-satunya cara memotongnya lebih cepat adalah langkah di atas.
+Untuk skala sekarang itu konsekuensi yang diterima dengan sadar, bukan
+yang terlewat.
+
+### Mengganti secret Apps Script (SEC-10)
+
+**Urutannya penting.** Membalik dua langkah pertama membuat pendaftaran
+gagal sampai Vercel selesai redeploy:
+
+1. Ubah nilai `SECRET` di editor Apps Script
+2. **Deploy > Manage deployments > ikon pensil > Version: New version.**
+   JANGAN "New deployment" -- itu membuat URL baru, dan URL lama di Vercel
+   akan menunjuk ke skrip versi lama yang secret-nya belum berubah
+3. Ubah `APPS_SCRIPT_SECRET` di Vercel > Settings > Environment Variables
+4. Redeploy project di Vercel
+5. Buka `/atur-form`, tekan "Uji tanda terima". Kalau emailnya sampai,
+   selesai
+6. Baru hapus catatan secret yang lama
+
+Berkas catatan secret di komputer diabaikan Git lewat pola
+`PW APPSRIPT*.txt`, jadi nama apa pun yang lahir dari rotasi berikutnya
+ikut tertangkap.
+
+### Memastikan semuanya masih terhubung (SYS-10)
+
+Buka `/api/admin-diagnose` sambil login sebagai admin. Selain Global
+Config, sekarang **Apps Script juga ikut diperiksa** lewat action `ping`,
+jadi tidak ada baris yang ditulis ke spreadsheet hanya karena diagnosa
+dijalankan.
+
+Yang paling sering rusak memang jalur itu: dia hidup di luar Vercel,
+URL-nya berubah setiap kali deployment BARU dibuat, dan kegagalannya
+membalas HTTP 200 berisi halaman Google, bukan error. Pemeriksaan ini
+menyebut penyebabnya langsung, termasuk kalau URL-nya berakhiran `/dev`.
+
 ## Batas 12 Serverless Function
 
 Vercel Hobby membatasi **12 Serverless Function per deployment**, dan

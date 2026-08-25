@@ -14,19 +14,14 @@ const crypto = require('crypto');
  * dan /api/admin-upload.
  */
 
-const JWKS_CACHE_TTL_MS = 60 * 60 * 1000; // kunci publik Google jarang rotasi
-let jwksCache = null; // { promise, expiresAt }
+// Cache JWKS memakai cachedFetch BERSAMA dari ambil-sheet.js, bukan
+// cache sendiri. Sebelum penggabungan ini ada DUA cache kunci publik
+// Google di proses yang sama -- satu di sini, satu di verify-access.js --
+// jadi kunci yang sama diambil dua kali dan dua-duanya kedaluwarsa pada
+// waktu yang berbeda.
+const { cachedFetch, JWKS_CACHE_TTL_MS, fetchCache } = require('./ambil-sheet');
 
-function cachedJwksFetch(fetcher) {
-  const now = Date.now();
-  if (jwksCache && jwksCache.expiresAt > now) return jwksCache.promise;
-  const promise = fetcher().catch((err) => {
-    jwksCache = null;
-    throw err;
-  });
-  jwksCache = { promise, expiresAt: now + JWKS_CACHE_TTL_MS };
-  return promise;
-}
+const KUNCI_JWKS = 'google-jwks';
 
 function base64UrlDecode(str) {
   const padded = str.replace(/-/g, '+').replace(/_/g, '/');
@@ -35,7 +30,7 @@ function base64UrlDecode(str) {
 }
 
 async function getGoogleJwks() {
-  const text = await cachedJwksFetch(async () => {
+  const text = await cachedFetch(KUNCI_JWKS, JWKS_CACHE_TTL_MS, async () => {
     const res = await fetch('https://www.googleapis.com/oauth2/v3/certs');
     if (!res.ok) throw new Error('status ' + res.status);
     return res.text();
@@ -59,7 +54,7 @@ async function verifyLocal(idToken, expectedClientId) {
   let keys = await getGoogleJwks();
   let jwk = keys.find((k) => k.kid === header.kid);
   if (!jwk) {
-    jwksCache = null; // mungkin Google baru rotasi kunci, ambil ulang sekali
+    fetchCache.delete(KUNCI_JWKS); // mungkin Google baru rotasi kunci, ambil ulang sekali
     keys = await getGoogleJwks();
     jwk = keys.find((k) => k.kid === header.kid);
   }
@@ -85,7 +80,14 @@ async function verifyLocal(idToken, expectedClientId) {
     return { valid: false, reason: 'token_expired' };
   }
 
-  return { valid: true, email: String(payload.email || '').toLowerCase() };
+  return {
+    valid: true,
+    email: String(payload.email || '').toLowerCase(),
+    // Nama tampilan dari Google. Dipakai /kelas untuk menyapa siswa dan
+    // api/kelas-testimoni.js sebagai nama cadangan kalau siswanya tidak
+    // mengisi namanya sendiri. admin-guard.js mengabaikannya.
+    nama: String(payload.name || '').trim(),
+  };
 }
 
 // Cadangan kalau verifikasi lokal gagal karena sebab TEKNIS (bukan karena
@@ -105,7 +107,14 @@ async function verifyRemote(idToken, expectedClientId) {
   const expiresAt = Number(payload.exp) * 1000;
   if (!expiresAt || Date.now() > expiresAt) return { valid: false, reason: 'token_expired' };
 
-  return { valid: true, email: String(payload.email || '').toLowerCase() };
+  return {
+    valid: true,
+    email: String(payload.email || '').toLowerCase(),
+    // Nama tampilan dari Google. Dipakai /kelas untuk menyapa siswa dan
+    // api/kelas-testimoni.js sebagai nama cadangan kalau siswanya tidak
+    // mengisi namanya sendiri. admin-guard.js mengabaikannya.
+    nama: String(payload.name || '').trim(),
+  };
 }
 
 async function verifyGoogleIdToken(idToken, expectedClientId) {

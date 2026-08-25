@@ -615,13 +615,16 @@
   box-shadow: 0 0 0 3px rgba(229, 72, 77, 0.16);
 }
 
-/* Animasi batang kemajuan dimatikan buat yang memintanya. Batangnya
-   tetap berpindah, cuma tidak meluncur. */
-@media (prefers-reduced-motion: reduce) {
-  .daftar-kemajuan-isi {
-    transition: none;
-  }
-}
+/* prefers-reduced-motion dihormati lewat aturan global di styles.css
+   (menimpa transition-duration dan animation-duration jadi 0.01ms untuk
+   SEMUA elemen dengan !important), dan setiap halaman memuat styles.css
+   lebih dulu. Jadi batang kemajuan dan spinner di berkas ini sudah ikut
+   terjaga tanpa aturan tambahan.
+
+   Blok duplikat sempat ada di sini karena backlog menghitung kemunculan
+   "prefers-reduced-motion" PER BERKAS, padahal cakupannya global. Kalau
+   nanti ada yang mau menambahkannya lagi: periksa dulu apakah aturan
+   global itu sudah menutupinya. */
 
 /* Layar sempit: penanda kemajuan ditumpuk supaya teks "N isian wajib
    lagi" tidak menyempitkan batangnya sampai tidak terbaca sebagai
