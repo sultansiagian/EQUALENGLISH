@@ -1,0 +1,162 @@
+/**
+ * Halaman dokumen teks panjang (/privasi, dan halaman sejenis nanti).
+ *
+ * Dipisah dari daftar.css yang berlatar foto gelap: halaman ini untuk
+ * DIBACA, bukan diisi. Latar terang dan lebar baca yang dibatasi lebih
+ * menentukan di sini daripada suasana.
+ */
+
+.dok-body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--black);
+  font-family: var(--body);
+}
+
+/* Sama dengan topbar /daftar dan /status, supaya seluruh halaman
+   non-beranda punya kepala yang sama. */
+.dok-topbar {
+  padding: 20px 24px;
+  background: var(--black);
+}
+
+.dok-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--white);
+  font-family: var(--display);
+  font-weight: 700;
+}
+
+.dok-brand img {
+  height: 22px;
+  width: auto;
+}
+
+.dok-shell {
+  /* Sekitar 70 karakter per baris pada ukuran huruf di bawah. Teks
+     selebar layar penuh sulit dilacak matanya waktu pindah baris, dan
+     ini halaman yang benar-benar dibaca, bukan dipindai. */
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+.dok-shell h1 {
+  font-family: var(--display);
+  font-size: clamp(1.9rem, 5vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  text-wrap: balance;
+  margin: 0.9rem 0 0;
+}
+
+.dok-lede {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: var(--ink-muted);
+  margin: 1.1rem 0 0;
+}
+
+.dok-tanggal {
+  margin: 1.4rem 0 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.dok-shell section {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--line);
+}
+
+.dok-shell h2 {
+  font-family: var(--display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 1rem;
+}
+
+.dok-shell p {
+  font-size: 0.97rem;
+  line-height: 1.7;
+  color: var(--ink-muted);
+  margin: 0 0 1rem;
+}
+
+/* Teks yang ditebalkan di dalam paragraf redup harus benar-benar
+   menonjol, bukan sekadar lebih tebal dengan warna yang sama. */
+.dok-shell strong {
+  color: var(--black);
+  font-weight: 700;
+}
+
+.dok-shell ul {
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+}
+
+.dok-shell li {
+  font-size: 0.97rem;
+  line-height: 1.65;
+  color: var(--ink-muted);
+  margin-bottom: 0.55rem;
+}
+
+.dok-shell a {
+  color: var(--black);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+.dok-shell a:hover {
+  color: var(--pink-deep, var(--black));
+  text-decoration-thickness: 2px;
+}
+
+/* Tombol tidak ikut aturan tautan di atas: garis bawah di dalam tombol
+   pil terlihat seperti kesalahan. */
+.dok-aksi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin: 1.4rem 0 0;
+}
+
+.dok-aksi a {
+  text-decoration: none;
+}
+
+.dok-catatan {
+  margin-top: 1.6rem;
+  font-size: 0.85rem;
+}
+
+.dok-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.6rem;
+  padding: 28px 24px 40px;
+  border-top: 1px solid var(--line);
+  font-size: 0.85rem;
+}
+
+.dok-footer a {
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+
+.dok-footer a:hover,
+.dok-footer a:focus-visible {
+  color: var(--black);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

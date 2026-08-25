@@ -2873,3 +2873,15 @@ section[id] {
     transition: none;
   }
 }
+
+/* Tautan kebijakan privasi di footer beranda. Footer berlatar gelap. */
+.footer-privasi {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.footer-privasi:hover,
+.footer-privasi:focus-visible {
+  color: var(--pink);
+}

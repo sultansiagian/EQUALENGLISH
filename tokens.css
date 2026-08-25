@@ -53,6 +53,36 @@
   --ink-muted: #5c5b5b;
   --line: rgba(0, 0, 0, 0.14);
 
+  /* ---------- Peran, bukan warna ----------
+     --white dan --black di atas dipakai untuk DUA peran yang berlawanan:
+     sebagai latar kartu DAN sebagai teks di atas bilah gelap. Selama
+     situs cuma punya satu mode, itu tidak jadi masalah. Begitu ada mode
+     gelap, keduanya harus bergerak ke arah yang berbeda.
+
+     Karena itu peran latar-kartu dan teks-utama diberi token sendiri.
+     Nilainya sengaja sama persis dengan yang lama, jadi mode terang tidak
+     berubah sedikit pun; yang berubah cuma blok mode gelap di bawah yang
+     menimpanya.
+
+     Yang TIDAK ikut: --black sebagai latar bilah gelap (.kelas-hero,
+     .daftar-topbar) dan --white sebagai teks di atasnya. Keduanya sudah
+     benar di kedua mode, jadi dibiarkan memakai warna literalnya. */
+  --surface: var(--white);   /* latar kartu */
+  --surface-2: var(--paper); /* latar sekunder di dalam kartu */
+  --ink: var(--black);       /* teks utama di atas kartu */
+
+  /* Teks DI ATAS aksen pink. Sengaja TIDAK ikut --ink: pink tetap warna
+     terang di mode gelap maupun terang, jadi teks di atasnya harus gelap
+     di dua-duanya. Sempat memakai --ink, dan akibatnya tombol kirim jadi
+     teks terang di atas pink terang -- rasio 1,85:1, praktis tidak
+     terbaca. Ketahuan waktu kontrasnya diukur, bukan waktu dilihat. */
+  --ink-di-pink: #1a1016;
+
+  /* Teks redup di dalam kotak berlatar --pink-light (blok draf di
+     /daftar). Beda dari --ink-di-pink: latar kotak itu IKUT membalik per
+     mode, jadi warnanya juga harus ikut. */
+  --ink-di-pink-redup: #6b4159;
+
   /* Aksen sekunder, dipakai kartu testimoni supaya tiap kartu tidak
      tampil dengan warna yang sama persis. */
   --lilac: #c9a7ff;
@@ -122,4 +152,64 @@
    berkas itu ikut disentuh dalam satu langkah. Kode baru pakai --bahaya. */
 :root {
   --red: var(--bahaya);
+}
+
+/* ============================================================
+   MODE GELAP: /kelas dan /daftar (plus /status yang memakai daftar.css)
+   ============================================================
+
+   TERBATAS PADA DUA HALAMAN ITU, dan itu disengaja. Keduanya yang paling
+   lama dipelototi dan paling sering dibuka malam hari. Beranda dibiarkan
+   terang karena identitasnya memang cerah, dan menggelapkannya berarti
+   mengkalibrasi ulang shader, foto, section pink, dan kartu harga yang
+   semuanya disetel untuk latar terang.
+
+   YANG DIGELAPKAN CUMA KARTUNYA, bukan halamannya. Kedua halaman ini
+   sudah berlatar gelap sejak awal (foto untuk /daftar, hero + zona
+   fungsional untuk /kelas); yang menyilaukan malam hari justru kartu
+   putihnya. Jadi blok di bawah tidak menyentuh latar halaman sama sekali.
+
+   Ditulis di body, bukan :root, karena inilah yang membatasi cakupannya
+   ke dua halaman itu. Custom property diwariskan ke bawah, jadi semua
+   elemen di dalamnya ikut. */
+@media (prefers-color-scheme: dark) {
+  body.kelas-body,
+  body.daftar-body {
+    /* Bukan hitam pekat. Kartu hitam di atas latar yang juga gelap
+       kehilangan batasnya sendiri; abu gelap kebiruan tipis membuatnya
+       tetap terbaca sebagai kartu yang terangkat. */
+    --surface: #201e24;
+    --surface-2: #17161a;
+
+    --ink: #f2efec;
+    --ink-muted: #a5a1aa;
+    --line: rgba(242, 239, 236, 0.16);
+
+    /* Pink merek terlalu menyala di atas permukaan gelap dan bikin teks
+       di atasnya sulit dibaca. Diturunkan sedikit saturasinya, tanpa
+       berpindah rona -- ini tetap warna yang sama, cuma tidak berteriak. */
+    --pink: #e79bc7;
+    --pink-light: #3a2b36;
+
+    /* --ink-di-pink SENGAJA TIDAK ikut berubah di sini. Dia untuk teks
+       di atas --pink, dan --pink tetap warna terang di mode gelap, jadi
+       teksnya harus tetap gelap. Sempat dibalik jadi terang dan hasilnya
+       tombol kirim berkontras 1,73:1.
+
+       Yang ikut berubah cuma yang di bawah: latar kotak draf memakai
+       --pink-light, dan ITU yang menggelap. */
+    --ink-di-pink-redup: #cbb0c0;
+
+    /* --red didefinisikan di :root sebagai var(--bahaya), dan definisi
+       itu me-resolve --bahaya pada cakupan :root juga -- menimpa --bahaya
+       di sini TIDAK ikut mengubahnya. Jadi --red harus ditimpa langsung.
+       Ini jebakan cascade yang gampang terlewat: nilainya terlihat sudah
+       diperbarui di token, tapi yang dipakai komponen tetap yang lama. */
+    --red: #ff8a84;
+
+    /* Merah bawaan terlalu gelap di atas permukaan gelap. Tanda bintang
+       "wajib diisi" cuma mencapai 4,22:1 di sana, di bawah ambang baca. */
+    --bahaya: #ff8a84;
+    --bahaya-teks: #ff9d97;
+  }
 }

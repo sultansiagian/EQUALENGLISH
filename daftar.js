@@ -121,6 +121,18 @@ function gambarField(f) {
     wrap.innerHTML =
       '<span class="daftar-legend">' + label + '</span>' +
       bantuanHtml(f.bantuan, f) +
+      // Izin dari orang yang datanya diisikan. Mereka tidak pernah membuka
+      // situs ini dan tidak pernah menyetujui apa pun, jadi satu-satunya
+      // yang bisa memastikan mereka tahu adalah yang mengisi formulir.
+      // Ditaruh di ATAS isian temannya, bukan di bawah: setelah mengetik
+      // tiga nama, centang di bawah cuma jadi rintangan terakhir yang
+      // diklik tanpa dibaca.
+      '<label class="daftar-izin">' +
+      '<input type="checkbox" name="izinTeman" />' +
+      '<span>Aku sudah memberi tahu teman-temanku bahwa datanya aku isikan di sini. ' +
+      'Mereka bisa minta datanya dihapus kapan saja lewat ' +
+      '<a href="/privasi" target="_blank" rel="noopener">halaman privasi</a>.</span>' +
+      '</label>' +
       [2, 3]
         .map(function (n) {
           return (
@@ -886,6 +898,13 @@ function validasi() {
 
     if (f.tipe === 'peserta') {
       if (/pair|group/i.test(paket)) {
+        var izin = document.querySelector('[name="izinTeman"]');
+        if (izin && !izin.checked) {
+          izin.setAttribute('aria-invalid', 'true');
+          kurang.push('centang izin dari teman kamu');
+        } else if (izin) {
+          izin.removeAttribute('aria-invalid');
+        }
         var n2 = !nilai('p2Nama');
         var e2 = !emailSah(nilai('p2Email'));
         tandaiSalah('p2Nama', n2);
