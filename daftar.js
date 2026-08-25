@@ -151,7 +151,12 @@ function gambarField(f) {
       // baris yang muncul HANYA setelah ada berkas terpilih. Sebelum itu
       // seluruh baris ini tersembunyi, jadi kotaknya tetap sepi.
       '<div class="daftar-upload-hasil" hidden>' +
-      '<img class="daftar-upload-preview" alt="Pratinjau berkas yang kamu pilih" />' +
+      // PUNYA hidden SENDIRI, terpisah dari induknya. Baris hasil ini
+      // tampil lebih dulu (waktu status "Memproses…") dan tetap tampil
+      // waktu kompresinya gagal, dan di kedua keadaan itu gambarnya belum
+      // atau tidak punya src. <img> tanpa src digambar peramban sebagai
+      // kotak gambar rusak, tepat di sebelah nama berkasnya.
+      '<img class="daftar-upload-preview" alt="Pratinjau berkas yang kamu pilih" hidden />' +
       '<div class="daftar-upload-berkas">' +
       '<span class="daftar-upload-nama"></span>' +
       '<span class="daftar-upload-status"></span>' +
@@ -482,8 +487,19 @@ function setStatusUpload(kotak, state, teks) {
  * Batas total badan permintaan dijaga server di 3,5 MB, tapi batas total
  * saja tidak cukup: satu foto raksasa bisa menyingkirkan dua lainnya, dan
  * penolakannya baru datang setelah tombol kirim ditekan, yaitu waktu
- * orangnya sudah merasa selesai. Batas per berkas di sini membuat
- * masalahnya ketahuan di detik berkasnya dipilih.
+ * orangnya sudah merasa selesai.
+ *
+ * JARING PENGAMAN, BUKAN PENOLAKAN YANG BIASA TERJADI. Diukur waktu
+ * pengujian: gambar 4000x4000 berisi derau acak penuh (kasus terburuk
+ * untuk kompresi apa pun) keluar sebagai 804 KB setelah melewati
+ * SPEC_UNGGAHAN, dan tangkapan layar transfer yang sebenarnya jauh di
+ * bawah itu. Jadi batas ini praktis tidak akan pernah menolak berkas
+ * siapa pun selama SPEC_UNGGAHAN tidak diubah.
+ *
+ * Dipertahankan justru untuk saat itu berubah: kalau nanti `maks` atau
+ * `kualitas` dinaikkan, batas ini yang menahan supaya tiga unggahan tidak
+ * diam-diam melewati 3,5 MB dan gagal di server dengan pesan yang jauh
+ * lebih membingungkan.
  */
 var MAKS_PER_BERKAS_KB = 1500;
 
@@ -493,13 +509,33 @@ function ukuranKb(dataUrl) {
   return Math.round((String(dataUrl || '').length * 0.75) / 1024);
 }
 
+/**
+ * Pasang atau lepas pratinjau.
+ *
+ * DIPUSATKAN di sini karena sebelumnya src dan hidden diurus terpisah di
+ * empat tempat, dan tiga di antaranya melepas src TANPA menyembunyikan
+ * gambarnya -- yang tampil di layar jadi kotak gambar rusak, tepat di
+ * sebelah nama berkas. Selama semua jalur lewat fungsi ini, src dan
+ * hidden tidak mungkin lagi berbeda pendapat.
+ */
+function setPratinjau(kotak, dataUrl) {
+  var img = kotak.querySelector('.daftar-upload-preview');
+  if (dataUrl) {
+    img.src = dataUrl;
+    img.hidden = false;
+  } else {
+    img.removeAttribute('src');
+    img.hidden = true;
+  }
+}
+
 function bersihkanUpload(kotak) {
   var id = kotak.dataset.upload;
   unggahan[id] = '';
   var input = kotak.querySelector('input[type="file"]');
   input.value = '';
   kotak.querySelector('.daftar-upload-hasil').hidden = true;
-  kotak.querySelector('.daftar-upload-preview').removeAttribute('src');
+  setPratinjau(kotak, '');
   setStatusUpload(kotak, null, '');
   delete kotak.dataset.kurang;
   perbaruiKemajuan();
@@ -511,6 +547,10 @@ async function tanganiUpload(kotak, file) {
   var hasil = kotak.querySelector('.daftar-upload-hasil');
   input.disabled = true;
   hasil.hidden = false;
+  // Pratinjau berkas SEBELUMNYA dilepas dulu. Tanpa ini, mengganti foto
+  // menampilkan foto lama di samping nama berkas yang baru selama
+  // kompresinya berjalan.
+  setPratinjau(kotak, '');
   kotak.querySelector('.daftar-upload-nama').textContent = file.name || 'Berkas terpilih';
   setStatusUpload(kotak, null, 'Memproses…');
 
@@ -522,7 +562,7 @@ async function tanganiUpload(kotak, file) {
     // tidak disimpan, supaya tidak ada yang terkirim diam-diam.
     if (kb > MAKS_PER_BERKAS_KB) {
       unggahan[id] = '';
-      kotak.querySelector('.daftar-upload-preview').removeAttribute('src');
+      setPratinjau(kotak, '');
       setStatusUpload(
         kotak,
         'error',
@@ -534,14 +574,13 @@ async function tanganiUpload(kotak, file) {
 
     unggahan[id] = dataUrl;
 
-    var pratinjau = kotak.querySelector('.daftar-upload-preview');
-    pratinjau.src = dataUrl;
+    setPratinjau(kotak, dataUrl);
 
     setStatusUpload(kotak, 'ok', 'Siap dikirim, ' + kb + ' KB');
     delete kotak.dataset.kurang;
   } catch (err) {
     unggahan[id] = '';
-    kotak.querySelector('.daftar-upload-preview').removeAttribute('src');
+    setPratinjau(kotak, '');
     setStatusUpload(kotak, 'error', err.message);
   } finally {
     input.disabled = false;
