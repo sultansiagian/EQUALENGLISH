@@ -51,12 +51,23 @@ function tombol(label, href, gaya) {
 /**
  * Tiga keadaan, tiga kalimat yang benar-benar berbeda.
  *
- * Yang paling penting di sini keadaan "tidak_ditemukan". Godaannya
- * menulis "pendaftaran kamu tidak ada", padahal penyebab tersering
- * bukan itu: orangnya masuk pakai akun Google yang berbeda dari email
- * yang dia isi di formulir. Kalimatnya harus menyebut kemungkinan itu
- * DULU, sebelum menyimpulkan yang lebih menakutkan, karena yang membaca
- * layar ini sudah mentransfer uang.
+ * Yang paling perlu hati-hati keadaan "tidak_ditemukan". Secara teknis
+ * artinya emailnya tidak ada di roster MAUPUN di antrean, dan godaannya
+ * menulis persis begitu: "pendaftaran kamu tidak ada". Itu keliru untuk
+ * sebagian besar orang yang benar-benar mendarat di sini, dan menakutkan
+ * bagi semuanya, karena yang membaca layar ini sudah mentransfer uang.
+ *
+ * Siapa yang sebenarnya sampai ke sini:
+ *   - peserta yang mendaftar lewat Google Form lama atau membayar lewat
+ *     WhatsApp lalu dicatat manual, jadi memang belum masuk sistem;
+ *   - orang yang masuk pakai akun Google yang berbeda dari email yang
+ *     dia isi di formulir. Google One Tap suka menawarkan akun terakhir
+ *     yang dipakai, jadi ini terjadi tanpa orangnya sadar.
+ *
+ * Karena itu kalimatnya menyebut prosedur yang belum selesai, bukan data
+ * yang hilang, lalu mengingatkan soal akun Google. Emailnya sendiri
+ * ditampilkan tepat di bawah kalimat ini (lihat status-rincian), jadi
+ * pengingat itu langsung bisa dicocokkan tanpa mencari ke mana-mana.
  */
 function gambarHasil(data) {
   var kicker = el('status-kicker');
@@ -102,12 +113,19 @@ function gambarHasil(data) {
     return;
   }
 
-  kicker.textContent = 'BELUM KETEMU';
-  judul.textContent = 'Belum ada pendaftaran atas email ini.';
+  kicker.textContent = 'BELUM DIPROSES';
+  // "Prosesnya belum selesai", BUKAN "Aksesmu belum dibuka". Yang kedua
+  // sempat dipakai dan bertabrakan dengan judul keadaan disetujui di
+  // atas ("Akses kamu sudah dibuka") -- beda satu kata saja, pada teks
+  // paling besar di layar. Dua keadaan yang berlawanan tidak boleh
+  // dibedakan cuma oleh kata "belum" dan "sudah".
+  judul.textContent = 'Prosesnya belum selesai.';
   detail.textContent =
     'Admin belum memberikan akses kepadamu, karena ada beberapa prosedur yang ' +
-    'harus dilakukan sebelum itu. Pastikan pembayaranmu sudah berhasil. Apabila ' +
-    'sudah menunggu cukup lama, hubungi kami via WhatsApp.';
+    'harus dilakukan sebelum itu. Pastikan pembayaranmu sudah berhasil. Cek juga ' +
+    'akun Google yang kamu pakai masuk sekarang, karena harus sama dengan email ' +
+    'yang kamu isi di formulir. Apabila sudah menunggu cukup lama, hubungi kami ' +
+    'via WhatsApp.';
   aksi.appendChild(
     tombol('Tanya lewat WhatsApp', 'https://wa.me/6285888345058', 'button-dark')
   );
