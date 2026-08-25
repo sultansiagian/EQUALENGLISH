@@ -278,7 +278,7 @@
             <!-- Tombol simpan ke kalender. Disembunyikan sampai ada sesi
                  yang benar-benar bisa disimpan; lihat pasangUnduhKalender()
                  di kelas-kalender.js. -->
-            <button type="button" id="kelas-kalender" class="kelas-kalender-btn" hidden></button>
+            <button type="button" id="kelas-kalender" class="tombol-kecil" hidden></button>
           </article>
 
           <!-- Final Test. Syaratnya ditentukan SERVER (hitungFinalTest di
@@ -443,10 +443,12 @@
       </defs>
     </svg>
 
-    <script src="/shader-background.js"></script>
+    <!-- Dua latar animasi, dimuat lewat gerbang yang sama dengan beranda.
+         Kalau dilewati: hero jatuh ke lapisan CSS, dan kelas.js sudah
+         menjaga __kelasMorphicSync dengan pemeriksaan keberadaan. -->
+    <script src="/latar-opsional.js" data-latar="/shader-background.js,/morphic-background.js"></script>
     <script src="/kelas-kalender.js"></script>
     <script src="/kelas.js"></script>
-    <script src="/morphic-background.js"></script>
     <!-- Analytics, sama seperti di beranda dan /daftar. Tanpa cookie, jadi
          tidak menuntut banner persetujuan. Yang ingin diketahui di sini
          sederhana: apakah siswa benar-benar kembali ke ruang kelas selama

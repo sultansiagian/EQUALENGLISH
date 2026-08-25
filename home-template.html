@@ -722,7 +722,10 @@
       </div>
     </footer>
 
-    <script src="/shader-background.js"></script>
+    <!-- Latar animasi dimuat lewat gerbang, bukan langsung. Perangkat
+         yang tidak sanggup (atau yang memintanya dikurangi) melewatinya
+         dan jatuh ke .hero-glow berbasis CSS. Lihat latar-opsional.js. -->
+    <script src="/latar-opsional.js" data-latar="/shader-background.js"></script>
     <script src="/script.js"></script>
     <script src="/content-sheet.js"></script>
     <!-- Vercel Analytics. Endpoint ini cuma ada kalau situsnya di-serve

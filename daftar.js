@@ -173,7 +173,7 @@ function gambarField(f) {
       '<span class="daftar-upload-nama"></span>' +
       '<span class="daftar-upload-status"></span>' +
       '</div>' +
-      '<button type="button" class="daftar-upload-ganti">Ganti</button>' +
+      '<button type="button" class="tombol-kecil daftar-upload-ganti">Ganti</button>' +
       '</div>';
     return wrap;
   }
