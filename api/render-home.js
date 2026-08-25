@@ -294,6 +294,75 @@ function renderTestimonials(overrides) {
 // situ replaceById tidak bisa dipakai, karena regex-nya berhenti di
 // "</" pertama yang ketemu, yang buat elemen bersarang itu tag anaknya,
 // bukan tag penutup yang benar.
+/**
+ * Section FAQ, digambar dari isi Global Config.
+ *
+ * TIDAK TAMPIL SELAMA BELUM ADA ISINYA, dan itu bukan kehati-hatian
+ * berlebihan. Pertanyaan yang paling sering masuk ke WhatsApp adalah
+ * soal pengembalian dana, jumlah sesi, dan siapa yang boleh ikut.
+ * Jawabannya cuma boleh datang dari pemiliknya sendiri, karena yang
+ * tertulis di sini akan dibaca sebagai janji.
+ *
+ * Structured data FAQPage ikut dipasang di sini, bukan di HTML statis,
+ * supaya isinya tidak mungkin berbeda dari yang terlihat di halaman.
+ */
+function renderFaq(overrides) {
+  const list = Array.isArray(overrides.faq) ? overrides.faq : [];
+
+  // Dua-duanya wajib terisi. Pertanyaan tanpa jawaban lebih buruk
+  // daripada tidak ada sama sekali: orangnya menemukan pertanyaannya
+  // sendiri, lalu tidak menemukan jawabannya.
+  const sah = list.filter(
+    (f) => f && String(f.tanya || '').trim() && String(f.jawab || '').trim()
+  );
+  if (sah.length === 0) return '';
+
+  const judul = overrides.faqTitle !== undefined ? overrides.faqTitle : DEFAULTS.faqTitle;
+  const desc = overrides.faqDesc !== undefined ? overrides.faqDesc : DEFAULTS.faqDesc;
+
+  // <details>/<summary>, bukan akordeon buatan sendiri. Bisa dibuka
+  // dengan keyboard, dibacakan pembaca layar, dan ditemukan Ctrl+F
+  // browser tanpa satu baris JavaScript pun.
+  const item = sah
+    .map(
+      (f) =>
+        '<details class="faq-item">' +
+        '<summary>' + escapeHtml(String(f.tanya).trim()) + '</summary>' +
+        '<div class="faq-jawab">' +
+        escapeHtml(String(f.jawab).trim()).replace(/\n/g, '<br />') +
+        '</div>' +
+        '</details>'
+    )
+    .join('');
+
+  const ld = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: sah.map((f) => ({
+      '@type': 'Question',
+      name: String(f.tanya).trim(),
+      acceptedAnswer: { '@type': 'Answer', text: String(f.jawab).trim() },
+    })),
+  };
+
+  return (
+    '<section class="faq-section" id="faq" aria-labelledby="faq-title">' +
+    '<div class="page-shell" data-reveal-stagger>' +
+    '<p class="section-kicker">FAQ</p>' +
+    '<h2 id="faq-title">' + escapeHtml(judul) + '</h2>' +
+    '<p class="faq-desc">' + escapeHtml(desc) + '</p>' +
+    '<div class="faq-daftar">' + item + '</div>' +
+    '</div>' +
+    // JSON.stringify sudah melolos tanda kutip; "</" dipecah supaya isi
+    // jawaban yang kebetulan memuat penutup tag tidak bisa mengakhiri
+    // blok script ini lebih awal.
+    '<script type="application/ld+json">' +
+    JSON.stringify(ld).replace(/</g, '\\u003c') +
+    '</scr' + 'ipt>' +
+    '</section>'
+  );
+}
+
 function replaceBetweenMarkers(html, startMark, endMark, replacement) {
   const start = html.indexOf(startMark);
   if (start === -1) return html;
@@ -349,6 +418,18 @@ function renderHtml(raw, overrides) {
     renderTestimonials(overrides)
   );
 
+  const faqHtml = renderFaq(overrides);
+  html = replaceBetweenMarkers(html, '<!--FAQ:MULAI-->', '<!--FAQ:SELESAI-->', faqHtml);
+  // Tautan navigasinya ikut hilang waktu FAQ-nya kosong. Menu yang
+  // menunjuk ke section yang tidak ada akan terasa seperti tautan rusak,
+  // dan itu justru di menu utama.
+  html = replaceBetweenMarkers(
+    html,
+    '<!--FAQNAV:MULAI-->',
+    '<!--FAQNAV:SELESAI-->',
+    faqHtml ? '<a href="#faq">FAQ</a>' : ''
+  );
+
   return html;
 }
 
@@ -399,3 +480,5 @@ module.exports.replaceById = replaceById;
 module.exports.formatRupiah = formatRupiah;
 module.exports.escapeHtml = escapeHtml;
 module.exports.renderTestimonials = renderTestimonials;
+// Diekspor untuk diuji, sama alasannya dengan renderTestimonials di atas.
+module.exports.renderFaq = renderFaq;

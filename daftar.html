@@ -34,21 +34,22 @@
     <meta name="twitter:image" content="https://equalenglish.vercel.app/EDITS/og-banner.jpg" />
     <link rel="icon" type="image/png" href="/EDITS/favicon.png" />
     <link rel="apple-touch-icon" href="/EDITS/favicon.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Syne:wght@600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <!-- Font di-host sendiri, lihat fonts.css. Dua berkas yang paling awal
+         terlihat (judul Syne dan teks DM Sans) di-preload supaya tidak
+         menunggu CSS selesai diurai dulu sebelum mulai diambil. -->
+    <link rel="preload" href="/fonts/syne-600-800-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/dm-sans-400-700-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/fonts.css" />
     <!-- styles.css dipakai buat token warna/font dan komponen tombol yang
          sama dengan situs utama; daftar.css khusus layout halaman ini. -->
+    <link rel="stylesheet" href="/tokens.css" />
     <link rel="stylesheet" href="/styles.css" />
     <link rel="stylesheet" href="/daftar.css" />
   </head>
   <body class="daftar-body">
     <header class="daftar-topbar">
       <a class="daftar-brand" href="/" aria-label="EQUAL English, kembali ke beranda">
-        <img src="/EDITS/Vector.png" alt="EQUAL" />
+        <img src="/EDITS/Vector.png" alt="EQUAL" width="563" height="158" />
         <span>English</span>
       </a>
     </header>

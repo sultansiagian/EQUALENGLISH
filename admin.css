@@ -114,7 +114,7 @@ body.admin-masuk .admin-shell {
   font-size: 0.78rem;
   color: var(--pink-light);
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   background: rgba(255, 255, 255, 0.1);
   /* Email panjang tidak boleh mendorong brand keluar layar. Batasnya
      cuma 320px; sisanya diserahkan ke flexbox, yang akan menyusutkan
@@ -143,7 +143,7 @@ body.admin-masuk .admin-shell {
   flex-shrink: 0;
   padding: 0;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   background: transparent;
   color: var(--white);
   cursor: pointer;
@@ -176,7 +176,7 @@ body.admin-masuk .admin-shell {
   top: 8px;
   z-index: 90;
   padding: 10px 16px;
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   background: var(--pink);
   color: var(--black);
   font-family: var(--body);
@@ -232,8 +232,8 @@ body.admin-masuk .admin-shell {
   padding: 12px 16px;
   border: 1px solid rgba(229, 72, 77, 0.35);
   background: rgba(229, 72, 77, 0.07);
-  color: #8a2226;
-  border-radius: 10px;
+  color: var(--bahaya-teks);
+  border-radius: var(--r-isian);
   font-size: 0.9rem;
   line-height: 1.5;
   max-width: 60ch;
@@ -250,7 +250,7 @@ body.admin-masuk .admin-shell {
 .admin-spinner {
   width: 16px;
   height: 16px;
-  border-radius: 50%;
+  border-radius: var(--r-bulat);
   border: 2px solid var(--line);
   border-top-color: var(--pink);
   animation: admin-spin 0.8s linear infinite;
@@ -266,7 +266,7 @@ body.admin-masuk .admin-shell {
   font-family: var(--body);
   font-weight: 600;
   font-size: 0.92rem;
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   padding: 12px 24px;
   border: 2px solid var(--black);
   cursor: pointer;
@@ -295,7 +295,7 @@ body.admin-masuk .admin-shell {
   background: var(--black);
   color: var(--white);
   padding: 12px 18px;
-  border-radius: 10px;
+  border-radius: var(--r-isian);
   font-size: 0.9rem;
   margin-bottom: 24px;
 }
@@ -307,7 +307,7 @@ body.admin-masuk .admin-shell {
 .admin-card {
   background: var(--white);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--r-kartu);
   padding: 24px;
   margin-bottom: 24px;
 }
@@ -365,7 +365,7 @@ body.admin-masuk .admin-shell {
   font-size: 0.95rem;
   padding: 10px 12px;
   border: 1.5px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--r-isian);
   background: var(--paper);
   color: var(--black);
 }
@@ -403,7 +403,7 @@ body.admin-masuk .admin-shell {
 
 .admin-pkg {
   border: 1.5px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-panel);
   padding: 16px;
 }
 
@@ -422,7 +422,7 @@ body.admin-masuk .admin-shell {
   gap: 14px;
   background: var(--white);
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   padding: 10px 10px 10px 24px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   margin-bottom: 24px;
@@ -450,7 +450,7 @@ body.admin-masuk .admin-shell {
 }
 
 .admin-save-status[data-state='ok'] {
-  color: #1a7f37;
+  color: var(--sukses);
 }
 
 .admin-save-status[data-state='error'] {
@@ -489,7 +489,7 @@ body.admin-masuk .admin-shell {
 
 .admin-photo {
   border: 1.5px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-panel);
   padding: 16px;
 }
 
@@ -512,7 +512,7 @@ body.admin-masuk .admin-shell {
   max-height: 160px;
   object-fit: contain;
   background: var(--paper);
-  border-radius: 8px;
+  border-radius: var(--r-sedang);
   margin-bottom: 10px;
 }
 
@@ -544,7 +544,7 @@ body.admin-masuk .admin-shell {
 }
 
 .admin-photo-status[data-state='ok'] {
-  color: #1a7f37;
+  color: var(--sukses);
 }
 
 .admin-photo-status[data-state='error'] {
@@ -560,7 +560,7 @@ body.admin-masuk .admin-shell {
 
   .admin-save-bar {
     flex-wrap: wrap;
-    border-radius: 16px;
+    border-radius: var(--r-kartu);
   }
 }
 
@@ -576,7 +576,7 @@ body.admin-masuk .admin-shell {
   padding: 14px;
   background: var(--black);
   color: var(--pink-light);
-  border-radius: 10px;
+  border-radius: var(--r-isian);
   font-family: var(--mono);
   font-size: 0.78rem;
   line-height: 1.55;
@@ -601,13 +601,13 @@ body.admin-masuk .admin-shell {
 .admin-testi-empty {
   padding: 18px;
   border: 1.5px dashed var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-panel);
   margin: 0;
 }
 
 .admin-testi {
   border: 1.5px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-panel);
   padding: 16px;
   margin-bottom: 14px;
 }
@@ -635,7 +635,7 @@ body.admin-masuk .admin-shell {
   color: var(--red);
   background: transparent;
   border: 1px solid rgba(229, 72, 77, 0.35);
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   padding: 5px 12px;
   cursor: pointer;
   flex-shrink: 0;
@@ -657,7 +657,7 @@ body.admin-masuk .admin-shell {
 .admin-testi-preview {
   width: 56px;
   height: 56px;
-  border-radius: 50%;
+  border-radius: var(--r-bulat);
   object-fit: cover;
   flex-shrink: 0;
   background: var(--paper);
@@ -683,7 +683,7 @@ body.admin-masuk .admin-shell {
 }
 
 .admin-testi-status[data-state='ok'] {
-  color: #1a7f37;
+  color: var(--sukses);
 }
 
 .admin-testi-status[data-state='error'] {
@@ -716,7 +716,7 @@ body.admin-masuk .admin-shell {
 .admin-pendaftar-kosong {
   padding: 18px;
   border: 1.5px dashed var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-panel);
   margin: 0;
 }
 
@@ -727,7 +727,7 @@ body.admin-masuk .admin-shell {
 
 .admin-pendaftar {
   border: 1.5px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-panel);
   padding: 18px;
   margin-bottom: 14px;
   background: var(--paper);
@@ -751,7 +751,7 @@ body.admin-masuk .admin-shell {
   font-family: var(--mono);
   font-size: 0.72rem;
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   background: var(--pink);
   color: var(--black);
   white-space: nowrap;
@@ -779,7 +779,7 @@ body.admin-masuk .admin-shell {
 .admin-pendaftar-peserta {
   margin-top: 14px;
   padding: 12px 14px;
-  border-radius: 10px;
+  border-radius: var(--r-isian);
   background: var(--white);
   border: 1px solid var(--line);
   font-size: 0.88rem;
@@ -838,7 +838,7 @@ body.admin-masuk .admin-shell {
   color: var(--red);
   background: transparent;
   border: 1px solid rgba(229, 72, 77, 0.35);
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   padding: 9px 18px;
   cursor: pointer;
 }
@@ -855,7 +855,7 @@ body.admin-masuk .admin-shell {
 }
 
 .admin-pendaftar-status[data-state='ok'] {
-  color: #1a7f37;
+  color: var(--sukses);
 }
 
 .admin-pendaftar-status[data-state='error'] {
@@ -889,7 +889,7 @@ body.admin-masuk .admin-shell {
   font-size: 0.95rem;
   padding: 10px 12px;
   border: 1.5px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--r-isian);
   background: var(--paper);
   color: var(--black);
 }
@@ -910,7 +910,7 @@ body.admin-masuk .admin-shell {
 
 .form-field {
   border: 1.5px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-panel);
   padding: 16px;
   margin-bottom: 14px;
   background: var(--white);
@@ -937,7 +937,7 @@ body.admin-masuk .admin-shell {
   letter-spacing: 0.05em;
   color: var(--ink-muted);
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   padding: 3px 9px;
 }
 
@@ -948,7 +948,7 @@ body.admin-masuk .admin-shell {
   letter-spacing: 0.05em;
   background: var(--pink);
   color: var(--black);
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   padding: 3px 9px;
 }
 
@@ -964,7 +964,7 @@ body.admin-masuk .admin-shell {
   font-weight: 600;
   border: 1px solid var(--line);
   background: var(--white);
-  border-radius: 8px;
+  border-radius: var(--r-sedang);
   padding: 5px 11px;
   cursor: pointer;
   color: var(--black);
@@ -1014,7 +1014,7 @@ body.admin-masuk .admin-shell {
   font-size: 0.95rem;
   padding: 10px 12px;
   border: 1.5px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--r-isian);
   background: var(--paper);
   color: var(--black);
 }
@@ -1041,7 +1041,7 @@ body.admin-masuk .admin-shell {
   text-align: center;
   padding: 14px 10px;
   border: 1.5px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-panel);
   cursor: pointer;
 }
 
@@ -1080,7 +1080,7 @@ body.admin-masuk .admin-shell {
 .form-status-pratinjau {
   margin: 18px 0 0;
   padding: 12px 15px;
-  border-radius: 10px;
+  border-radius: var(--r-isian);
   font-size: 0.9rem;
   line-height: 1.5;
   border: 1px solid var(--line);
@@ -1090,13 +1090,13 @@ body.admin-masuk .admin-shell {
 .form-status-pratinjau[data-state='buka'] {
   border-color: rgba(26, 127, 55, 0.3);
   background: rgba(26, 127, 55, 0.07);
-  color: #14602a;
+  color: var(--sukses-pekat);
 }
 
 .form-status-pratinjau[data-state='tutup'] {
   border-color: rgba(229, 72, 77, 0.35);
   background: rgba(229, 72, 77, 0.07);
-  color: #8a2226;
+  color: var(--bahaya-teks);
 }
 
 @media (max-width: 620px) {
@@ -1125,7 +1125,7 @@ body.admin-masuk .admin-shell {
 body {
   /* Warna cadangan kalau gambarnya gagal dimuat: tetap gelap, supaya
      teks terang di atasnya tidak pernah jadi putih-di-atas-putih. */
-  background-color: #12100f;
+  background-color: var(--gelap);
 }
 
 body::before {
@@ -1186,7 +1186,7 @@ body.admin-masuk::before {
 /* Pesan error login juga di luar kartu, jadi versi terangnya dipakai
    supaya tetap terbaca di atas foto gelap. */
 .admin-panel-center .admin-signin-error {
-  color: #ffd7d8;
+  color: var(--bahaya-latar);
   background: rgba(229, 72, 77, 0.18);
   border-color: rgba(255, 255, 255, 0.25);
 }
@@ -1240,7 +1240,7 @@ body.admin-masuk::before {
 
 .stat-angka-item {
   border: 1.5px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--r-besar);
   padding: 16px;
 }
 
@@ -1433,7 +1433,7 @@ body.admin-masuk::before {
   gap: 10px;
   margin: 18px 0;
   padding: 14px 16px;
-  border-radius: 12px;
+  border-radius: var(--r-panel);
   background: var(--paper);
   font-family: var(--mono);
   font-size: 1.05rem;
@@ -1524,7 +1524,7 @@ body.admin-masuk::before {
 
 .kiriman-item {
   border: 1.5px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--r-besar);
   padding: 16px;
 }
 
@@ -1555,7 +1555,7 @@ body.admin-masuk::before {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 3px 8px;
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   background: var(--white);
   border: 1px solid var(--pink);
 }
@@ -1586,7 +1586,7 @@ body.admin-masuk::before {
    tertukar sekilas. */
 .kiriman-badge-izin {
   border-color: var(--line);
-  color: #1a7f37;
+  color: var(--sukses);
 }
 
 .kiriman-badge-privat {
@@ -1863,7 +1863,7 @@ a.admin-nav-item:focus-visible {
   gap: 12px;
   padding: 14px;
   border: 1.5px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-panel);
 }
 
 .jadwal-nomor {
@@ -1884,7 +1884,7 @@ a.admin-nav-item:focus-visible {
   color: var(--red);
   background: none;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--r-sedang);
   padding: 10px 12px;
   cursor: pointer;
 }
@@ -1941,7 +1941,7 @@ a.admin-nav-item:focus-visible {
 
 .batch-item {
   border: 1.5px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--r-besar);
   padding: 16px;
 }
 
@@ -1973,7 +1973,7 @@ a.admin-nav-item:focus-visible {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 3px 8px;
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   background: var(--white);
   border: 1px solid var(--pink);
 }
@@ -1991,7 +1991,7 @@ a.admin-nav-item:focus-visible {
   color: var(--ink-muted);
   background: none;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--r-sedang);
   padding: 5px 10px;
   cursor: pointer;
 }
@@ -2150,8 +2150,8 @@ a.admin-nav-item:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #1a7f37;
-  border-color: #1a7f37;
+  background: var(--sukses);
+  border-color: var(--sukses);
   color: var(--white);
   animation: admin-btn-berhasil 320ms var(--ease-out);
 }

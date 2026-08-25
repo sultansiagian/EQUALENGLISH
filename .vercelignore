@@ -1,0 +1,19 @@
+# Berkas yang tidak perlu ikut ke deployment.
+#
+# Tanpa ini, apa pun di root ikut dilayani sebagai berkas statis. Itu
+# tidak berbahaya untuk isi di bawah (semuanya sudah publik di GitHub),
+# tapi tidak ada gunanya juga: menambah ukuran deployment dan membuat
+# alamat seperti /test/csv.test.js bisa dibuka orang.
+
+# Tes hanya dijalankan lokal dan di CI, tidak pernah oleh situsnya.
+test/
+
+# Dokumen dan aset kerja, bukan bagian situs.
+DOKUMENTASI/
+*.pdf
+*.pptx
+
+# Catatan proyek untuk manusia, bukan untuk dilayani.
+PRODUCT.md
+README.md
+apps-script.gs

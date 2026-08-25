@@ -1,6 +1,6 @@
-const { requireAdmin } = require('./_lib/admin-guard');
-const { readOverrides } = require('./_lib/global-config-store');
-const { normalisasiFields } = require('./_lib/form-schema');
+const { requireAdmin } = require('./admin-guard');
+const { readOverrides } = require('./global-config-store');
+const { normalisasiFields } = require('./form-schema');
 
 /**
  * Susunan LENGKAP pertanyaan form untuk halaman /atur-form.
@@ -41,7 +41,7 @@ module.exports = async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).json({ ok: true, fields });
   } catch (err) {
-    console.error('atur-form error:', err.message);
+    console.error('susunan-form error:', err.message);
     return res.status(502).json({ ok: false, reason: 'gagal_baca', pesan: err.message });
   }
 };

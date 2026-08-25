@@ -412,3 +412,72 @@ function handleReject(id) {
   sh.deleteRow(ketemu.nomorBaris);
   return jsonOut({ ok: true });
 }
+
+/**
+ * ============================================================
+ * SALINAN HARIAN SPREADSHEET
+ * ============================================================
+ *
+ * Spreadsheet ini satu-satunya tempat data pendaftaran berada. Tidak ada
+ * salinannya di mana pun: tidak di situs, tidak di Vercel, tidak di
+ * basis data lain. Satu blok sel yang tertimpa tanpa sadar, atau satu
+ * akun yang bermasalah, dan roster plus riwayat pembayaran seluruh batch
+ * ikut hilang.
+ *
+ * ------------------------------------------------------------
+ * TRIGGER-NYA HARUS DIPASANG MANUAL, SEKALI SAJA
+ * ------------------------------------------------------------
+ * Kode ini tidak berjalan sendiri hanya karena ditempel. Di editor Apps
+ * Script:
+ *
+ *   1. Ikon jam (Triggers) di bilah kiri
+ *   2. Add Trigger
+ *        Choose which function to run          : backupHarian
+ *        Select event source                   : Time-driven
+ *        Select type of time based trigger     : Day timer
+ *        Select time of day                    : 1am to 2am
+ *   3. Save, lalu izinkan aksesnya waktu Google bertanya
+ *
+ * Untuk memastikan sekarang tanpa menunggu besok: pilih fungsi
+ * backupHarian di editor lalu tekan Run, dan cek folder Backup di Drive.
+ */
+
+var FOLDER_BACKUP = 'Backup EQUAL';
+
+// Salinan yang lebih tua dari ini dibuang. 30 hari cukup untuk menyadari
+// data hilang dan mengembalikannya; menyimpan lebih lama cuma memenuhi
+// Drive dengan salinan yang tidak akan pernah dibuka.
+var SIMPAN_BACKUP_HARI = 30;
+
+function backupHarian() {
+  var asal = SpreadsheetApp.getActiveSpreadsheet();
+  var folder = folderBackup();
+
+  var stempel = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyy-MM-dd');
+  var nama = 'BACKUP ' + stempel + ' - ' + asal.getName();
+
+  // Kalau hari ini sudah pernah disalin (mis. trigger jalan dua kali,
+  // atau dijalankan manual untuk mengecek), tidak perlu menyalin lagi.
+  var sudahAda = folder.getFilesByName(nama);
+  if (sudahAda.hasNext()) return;
+
+  DriveApp.getFileById(asal.getId()).makeCopy(nama, folder);
+  buangBackupLama(folder);
+}
+
+function folderBackup() {
+  var ada = DriveApp.getFoldersByName(FOLDER_BACKUP);
+  return ada.hasNext() ? ada.next() : DriveApp.createFolder(FOLDER_BACKUP);
+}
+
+function buangBackupLama(folder) {
+  var batas = new Date().getTime() - SIMPAN_BACKUP_HARI * 24 * 60 * 60 * 1000;
+  var berkas = folder.getFiles();
+  while (berkas.hasNext()) {
+    var f = berkas.next();
+    // setTrashed, BUKAN penghapusan permanen. Kalau ada yang salah
+    // dengan perhitungan tanggal di atas, berkasnya masih bisa
+    // dikembalikan dari Trash selama 30 hari berikutnya.
+    if (f.getDateCreated().getTime() < batas) f.setTrashed(true);
+  }
+}

@@ -14,6 +14,13 @@
 window.onAdminReady = function (data) {
   fillForm(data.values);
   loadPhotoPreviews(data.values);
+  faq = Array.isArray(data.values.faq)
+    ? data.values.faq.map(function (f) {
+        return { tanya: f.tanya || '', jawab: f.jawab || '' };
+      })
+    : [];
+  renderFaqList();
+
   testimonials = Array.isArray(data.values.testimonials)
     ? data.values.testimonials.map(function (t) {
         return Object.assign({}, t);
@@ -180,6 +187,125 @@ function testiTemplate(index, item) {
   return row;
 }
 
+// ============================================================
+// FAQ
+// ============================================================
+//
+// Pola persis sama dengan testimoni di atas, dan itu disengaja: dua-duanya
+// daftar yang panjangnya bebas, dua-duanya disimpan sebagai array di
+// Global Config, dan dua-duanya TIDAK tampil di beranda selama kosong.
+// Menyamakan bentuknya berarti siapa pun yang sudah paham satu, otomatis
+// paham yang lain.
+//
+// Bedanya cuma satu: tidak ada foto, jadi tidak ada jalur unggah.
+let faq = [];
+
+function faqTemplate(index, item) {
+  const row = document.createElement('div');
+  row.className = 'admin-testi';
+  row.innerHTML =
+    '<div class="admin-testi-head">' +
+    '<span class="admin-testi-no">' + (index + 1) + '</span>' +
+    '<button type="button" class="admin-faq-remove" aria-label="Hapus pertanyaan ini">Hapus</button>' +
+    '</div>' +
+    '<label class="admin-field"><span>Pertanyaan</span>' +
+    '<input type="text" data-f="tanya" /></label>' +
+    '<label class="admin-field"><span>Jawaban</span>' +
+    '<textarea data-f="jawab" rows="4"></textarea></label>';
+
+  row.querySelectorAll('[data-f]').forEach((input) => {
+    input.value = item[input.dataset.f] || '';
+    input.addEventListener('input', () => {
+      faq[index][input.dataset.f] = input.value;
+      // Menyalakan peringatan sebelum meninggalkan halaman, sama seperti
+      // isian lain di /admin. Tanpa ini, jawaban FAQ yang panjang bisa
+      // hilang tanpa peringatan apa pun.
+      tandaiAdminBerubah();
+    });
+  });
+
+  row.querySelector('.admin-faq-remove').addEventListener('click', () => {
+    // Konfirmasi sebelum menghapus, sama seperti testimoni. Jawaban yang
+    // sudah ditulis panjang tidak boleh hilang karena satu klik meleset.
+    const tanya = String(faq[index].tanya || '').trim();
+    const pesan =
+      'Hapus pertanyaan ' + (tanya ? '"' + tanya + '"' : 'ini') + '? ' +
+      'Perubahan baru berlaku setelah kamu tekan Simpan FAQ.';
+    if (!window.confirm(pesan)) return;
+    faq.splice(index, 1);
+    tandaiAdminBerubah();
+    renderFaqList();
+  });
+
+  return row;
+}
+
+function renderFaqList() {
+  const list = document.getElementById('admin-faq-list');
+  if (!list) return;
+  list.textContent = '';
+  if (faq.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'admin-hint admin-testi-empty';
+    empty.textContent =
+      'Belum ada pertanyaan. Section FAQ dan tautannya di menu tidak tampil di ' +
+      'beranda sampai kamu tambah minimal satu yang lengkap.';
+    list.appendChild(empty);
+    return;
+  }
+  faq.forEach((item, i) => list.appendChild(faqTemplate(i, item)));
+}
+
+function setFaqStatus(state, teks) {
+  const el = document.getElementById('admin-faq-status');
+  if (!el) return;
+  el.textContent = teks;
+  if (state) el.dataset.state = state;
+  else el.removeAttribute('data-state');
+}
+
+async function saveFaq() {
+  const btn = document.getElementById('admin-faq-save');
+  tombolSibuk(btn, true);
+  setFaqStatus(null, 'Menyimpan…');
+
+  try {
+    const res = await fetch('/api/admin-content', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify({
+        items: {
+          faq: faq,
+          faqTitle: document.querySelector('[data-key="faqTitle"]').value,
+          faqDesc: document.querySelector('[data-key="faqDesc"]').value,
+        },
+      }),
+    });
+    const data = await res.json();
+
+    if (res.ok && data.ok) {
+      tandaiAdminTersimpan();
+      const lengkap = faq.filter(
+        (f) => String(f.tanya || '').trim() && String(f.jawab || '').trim()
+      ).length;
+      setFaqStatus(
+        'ok',
+        lengkap === 0
+          ? 'Tersimpan. Section FAQ belum tampil karena belum ada yang lengkap.'
+          : 'Tersimpan. ' + lengkap + ' pertanyaan tayang di beranda.'
+      );
+    } else if (res.status === 401) {
+      handleUnauthorized(data.reason);
+    } else {
+      setFaqStatus('error', 'Gagal menyimpan: ' + (data.message || data.reason || res.status));
+    }
+  } catch (err) {
+    setFaqStatus('error', 'Gagal menyimpan: ' + err.message);
+  } finally {
+    tombolSibuk(btn, false);
+  }
+}
+
 function renderTestiList() {
   const list = document.getElementById('admin-testi-list');
   list.textContent = '';
@@ -325,6 +451,20 @@ async function runDiagnose() {
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('admin-save-btn').addEventListener('click', saveForm);
   document.getElementById('admin-diagnose-btn').addEventListener('click', runDiagnose);
+  const faqSave = document.getElementById('admin-faq-save');
+  if (faqSave) faqSave.addEventListener('click', saveFaq);
+  const faqAdd = document.getElementById('admin-faq-add');
+  if (faqAdd) {
+    faqAdd.addEventListener('click', () => {
+      faq.push({ tanya: '', jawab: '' });
+      renderFaqList();
+      // Fokus ke kolom Pertanyaan baris baru, sama seperti testimoni.
+      const rows = document.querySelectorAll('#admin-faq-list .admin-testi');
+      const last = rows[rows.length - 1];
+      if (last) last.querySelector('[data-f="tanya"]').focus();
+    });
+  }
+
   document.getElementById('admin-testi-save').addEventListener('click', saveTestimonials);
   document.getElementById('admin-testi-add').addEventListener('click', () => {
     testimonials.push({ nama: '', fakultas: '', skorEpt: '', pesan: '', fotoUrl: '' });

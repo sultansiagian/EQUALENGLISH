@@ -1,0 +1,107 @@
+/**
+ * ============================================================
+ * SATU SUMBER UNTUK WARNA DAN RADIUS
+ * ============================================================
+ *
+ * Dimuat PALING AWAL di setiap halaman, sebelum styles.css. Isinya cuma
+ * deklarasi variabel, nol aturan gaya, jadi urutannya tidak pernah
+ * bersaing dengan apa pun.
+ *
+ * ------------------------------------------------------------
+ * KENAPA BERKAS INI ADA
+ * ------------------------------------------------------------
+ * Situs ini punya empat stylesheet (styles, kelas, daftar, admin) dan
+ * semuanya memuat styles.css lebih dulu, jadi variabel di sana sebenarnya
+ * SUDAH tersedia di mana-mana. Masalahnya bukan ketersediaan, melainkan
+ * dua hal lain:
+ *
+ *   1. Setnya tidak lengkap. Warna status (hijau berhasil, merah gagal)
+ *      tidak pernah jadi variabel, jadi #1a7f37 diketik ulang di tujuh
+ *      tempat pada tiga berkas berbeda, dan #8a2226 di tiga tempat.
+ *      Mengubah satu warna status berarti cari-ganti lintas berkas
+ *      sambil berharap tidak ada yang terlewat.
+ *   2. Tempatnya salah. Variabel merek tinggal di dalam styles.css yang
+ *      isinya 60 KB aturan khusus beranda. Berkas yang menentukan warna
+ *      seluruh situs seharusnya tidak perlu dibuka untuk alasan lain.
+ *
+ * ------------------------------------------------------------
+ * YANG SENGAJA BELUM ADA DI SINI
+ * ------------------------------------------------------------
+ * Skala jarak dan skala ukuran huruf BELUM ditokenkan. Angkanya tersebar
+ * di ratusan aturan dan sebagian sengaja dibuat ganjil untuk kasus
+ * tertentu, jadi memaksanya masuk skala berisiko menggeser tata letak di
+ * tempat yang tidak terpikirkan. Itu pekerjaan tersendiri, bukan bonus
+ * dari pekerjaan ini.
+ *
+ * ------------------------------------------------------------
+ * MODE GELAP
+ * ------------------------------------------------------------
+ * Belum ada, tapi berkas inilah tempatnya nanti: satu blok
+ * @media (prefers-color-scheme: dark) yang menulis ulang token di bawah,
+ * tanpa menyentuh satu pun aturan komponen. Itu sebabnya komponen harus
+ * memakai var(), bukan nilai mentah -- warna yang diketik langsung tidak
+ * akan pernah ikut berubah.
+ */
+
+:root {
+  /* ---------- Palet merek ---------- */
+  --pink: #ffacdf;
+  --pink-light: #ffd7ef;
+  --white: #ffffff;
+  --paper: #f7f5f2;
+  --black: #000000;
+  --ink-muted: #5c5b5b;
+  --line: rgba(0, 0, 0, 0.14);
+
+  /* Aksen sekunder, dipakai kartu testimoni supaya tiap kartu tidak
+     tampil dengan warna yang sama persis. */
+  --lilac: #c9a7ff;
+  --peach: #ffb9a7;
+
+  /* ---------- Warna status ----------
+     Dipisah dari palet merek karena artinya bukan identitas, melainkan
+     keadaan: berhasil, gagal, sedang menunggu. Pink tidak boleh dipakai
+     untuk ini, dan sebaliknya. */
+  --sukses: #1a7f37;
+  --sukses-pekat: #14602a;
+  --bahaya: #e5484d;
+  --bahaya-teks: #8a2226;
+  --bahaya-latar: #ffd7d8;
+
+  /* Latar gelap halaman berlatar foto (/daftar, /status) dan topbar
+     admin. Bukan --black: ini sedikit hangat supaya foto di belakangnya
+     tidak terlihat kebiruan. */
+  --gelap: #12100f;
+
+  /* ---------- Radius ----------
+     Dinamai menurut PERAN, bukan ukuran, dan nilainya sama persis dengan
+     yang sudah dipakai sekarang. Dua-duanya disengaja: nama berdasarkan
+     peran membuat kode baru memilih dengan benar tanpa mengukur, dan
+     nilai yang tidak diubah membuat migrasi ini tidak menggeser satu
+     piksel pun. */
+  --r-kecil: 4px;   /* lencana, tag kecil */
+  --r-sedang: 8px;  /* pratinjau, kotak kecil */
+  --r-isian: 10px;  /* kolom isian, kotak pesan */
+  --r-panel: 12px;  /* panel, kartu rapat */
+  --r-besar: 14px;  /* kartu sedang */
+  --r-kartu: 16px;  /* kartu utama */
+  --r-pil: 999px;   /* tombol, chip */
+  --r-bulat: 50%;   /* avatar, titik */
+
+  /* ---------- Huruf ---------- */
+  --display: "Syne", "Arial Black", sans-serif;
+  --body: "DM Sans", Arial, sans-serif;
+  --mono: "DM Mono", "Courier New", monospace;
+
+  /* ---------- Gerak ----------
+     Kurva khas situs ini. Tadinya diulang sebagai literal cubic-bezier di
+     tujuh tempat, jadi hover kartu dan hover tombol terasa beda keluarga. */
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* Alias untuk --bahaya. Nama lamanya dipakai di banyak tempat pada
+   styles.css; dibiarkan hidup supaya migrasi ini tidak menuntut seluruh
+   berkas itu ikut disentuh dalam satu langkah. Kode baru pakai --bahaya. */
+:root {
+  --red: var(--bahaya);
+}

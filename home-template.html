@@ -84,12 +84,13 @@
         }
       }, 2500);
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Syne:wght@600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <!-- Font di-host sendiri, lihat fonts.css. Dua berkas yang paling awal
+         terlihat (judul Syne dan teks DM Sans) di-preload supaya tidak
+         menunggu CSS selesai diurai dulu sebelum mulai diambil. -->
+    <link rel="preload" href="/fonts/syne-600-800-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/dm-sans-400-700-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/fonts.css" />
+    <link rel="stylesheet" href="/tokens.css" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -98,7 +99,7 @@
     <header class="site-header">
       <div class="header-inner">
         <a class="brand" href="#home" aria-label="EQUAL English, kembali ke beranda">
-          <img src="/EDITS/Vector.png" alt="EQUAL" />
+          <img src="/EDITS/Vector.png" alt="EQUAL" width="563" height="158" />
           <span>English</span>
         </a>
 
@@ -113,6 +114,7 @@
           <a href="#cara-belajar">Cara belajar</a>
           <a href="#mentor">Mentor</a>
           <a href="#harga">Harga</a>
+          <!--FAQNAV:MULAI--><!--FAQNAV:SELESAI-->
           <a href="/kelas">Ruang Kelas</a>
           <a class="nav-cta" href="#mulai">Mulai belajar <span aria-hidden="true">↗</span></a>
         </nav>
@@ -615,6 +617,17 @@
         </div>
       </section>
 
+      <!-- SECTION FAQ.
+           Kosong di sini, digambar api/render-home.js dari isi yang
+           disimpan lewat /admin. Tidak tampil sama sekali selama belum
+           diisi, sama seperti section testimoni -- lihat renderFaq()
+           untuk alasannya.
+
+           Letaknya SEBELUM section CTA, bukan sesudah: keraguan yang
+           belum terjawab harus habis dulu, baru tombol daftarnya
+           disodorkan. -->
+      <!--FAQ:MULAI--><!--FAQ:SELESAI-->
+
       <section class="cta-section" id="mulai" aria-labelledby="cta-title">
         <div class="cta-star cta-star-one" aria-hidden="true">✦</div>
         <div class="cta-star cta-star-two" aria-hidden="true">✦</div>
@@ -682,7 +695,7 @@
     <footer class="site-footer">
       <div class="page-shell footer-grid">
         <a class="footer-brand" href="#home" aria-label="EQUAL English, kembali ke beranda">
-          <img src="/EDITS/Vector.png" alt="EQUAL" />
+          <img src="/EDITS/Vector.png" alt="EQUAL" width="563" height="158" />
           <span>Your English. Elevated.</span>
         </a>
         <p>Untuk kamu yang ingin<br />terus berkembang.</p>

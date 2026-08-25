@@ -9,6 +9,11 @@ const { normalisasiFields } = require('./_lib/form-schema');
 // bersama SELURUH konten situs.
 const MAX_TESTIMONIALS = 24;
 
+// Batas jumlah tanya-jawab FAQ. Halaman FAQ yang lebih panjang dari ini
+// sudah bukan FAQ lagi, dan alasan batasnya sama dengan testimoni:
+// Global Config dipakai bersama SELURUH konten situs dengan jatah 1 MB.
+const MAKS_FAQ = 30;
+
 // Batas jumlah sesi jadwal kelas. Jauh di atas kebutuhan wajar
 // (bootcamp 10 hari), alasannya sama dengan batas testimoni di atas.
 const MAKS_SESI = 60;
@@ -95,6 +100,25 @@ module.exports = async function handler(req, res) {
         // memutuskan item mana yang layak tampil di halaman publik adalah
         // renderTestimonials() di api/render-home.js, bukan di sini.
         .filter((t) => t.nama || t.pesan || t.fakultas || t.skorEpt || t.fotoUrl);
+    }
+
+    // FAQ, sama seperti testimonials: isinya array, jadi allowlist kunci
+    // saja belum cukup untuk menjaga bentuk dalamnya.
+    if (filtered.faq !== undefined) {
+      if (!Array.isArray(filtered.faq)) {
+        return res.status(400).json({ ok: false, reason: 'faq_bukan_array' });
+      }
+      filtered.faq = filtered.faq
+        .slice(0, MAKS_FAQ)
+        .map((f) => ({
+          tanya: trimTo(f && f.tanya, 200),
+          jawab: trimTo(f && f.jawab, 1200),
+        }))
+        // Yang benar-benar kosong dibuang; yang setengah isi TETAP
+        // disimpan karena admin mungkin sedang menyicil. Yang memutuskan
+        // mana yang layak tayang adalah renderFaq() di render-home.js,
+        // dan itu menuntut tanya DAN jawab dua-duanya terisi.
+        .filter((f) => f.tanya || f.jawab);
     }
 
     // ============================================================

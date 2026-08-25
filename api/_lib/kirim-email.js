@@ -1,6 +1,10 @@
 const DEFAULTS = require('./site-defaults');
 const { panggilAppsScript } = require('./apps-script');
 const { bungkusEmail, linkWhatsApp, asalDari } = require('./email-html');
+// Dimuat dengan require biasa walau lapor-masalah juga memakai
+// apps-script.js: Node menangani lingkaran require ini dengan benar
+// karena laporMasalah baru dipanggil saat runtime, bukan saat modul dimuat.
+const { laporMasalah } = require('./lapor-masalah');
 
 /**
  * Email otomatis ke pendaftar, dikirim lewat Apps Script di spreadsheet
@@ -114,6 +118,23 @@ async function kirim(overrides, jenis, tujuan, nilai) {
       console.error(
         'kirim-email: sisa kuota Gmail hari ini tinggal ' + sisa + ' email. Setelah ' +
           'habis, email otomatis berhenti terkirim sampai besok.'
+      );
+      // Dilaporkan juga, karena inilah kegagalan yang paling sunyi di
+      // seluruh situs: begitu kuotanya habis, pendaftaran TETAP tersimpan
+      // dan situsnya TETAP terlihat normal, cuma tidak ada satu pun tanda
+      // terima yang sampai. Tanpa pemberitahuan, itu bisa berlangsung
+      // berhari-hari.
+      //
+      // Sengaja tidak di-await: ini di tengah jalur pengiriman email, dan
+      // pemberitahuan tidak boleh menunda apa pun. laporMasalah menelan
+      // errornya sendiri, jadi tidak ada janji yang menggantung.
+      laporMasalah(
+        'kuota-gmail-tipis',
+        'Kuota email Gmail hampir habis (sisa ' + sisa + ')',
+        'Setelah kuota harian habis, tanda terima dan pemberitahuan akses BERHENTI ' +
+          'terkirim sampai besok, tapi pendaftarannya tetap tersimpan dan situsnya ' +
+          'tetap terlihat normal. Kalau ada pendaftar hari ini yang bilang tidak ' +
+          'menerima email, kemungkinan besar ini sebabnya, bukan salah alamat.'
       );
     }
 

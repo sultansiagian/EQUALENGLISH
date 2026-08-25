@@ -6,6 +6,7 @@ const { statusForm } = require('./_lib/form-status');
 const { kirimTandaTerima } = require('./_lib/kirim-email');
 const { kerjakanDiLatar } = require('./_lib/kerja-latar');
 const { bolehKirimForm, bolehKirimTandaTerima } = require('./_lib/rem-laju');
+const { laporMasalah } = require('./_lib/lapor-masalah');
 
 /**
  * Endpoint form pendaftaran di /daftar. INI SATU-SATUNYA endpoint di
@@ -178,6 +179,21 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true, id: hasil.id });
   } catch (err) {
     console.error('daftar: gagal mengirim ke Apps Script:', err.message);
+    // Dilaporkan, TIDAK ditunggu. Ini kegagalan yang paling mahal di
+    // seluruh situs: orangnya sudah transfer dan yang dia lihat cuma
+    // "coba lagi nanti". Tanpa pemberitahuan, satu-satunya cara tahu
+    // adalah menunggu ada yang mengeluh lewat WhatsApp.
+    kerjakanDiLatar(
+      () =>
+        laporMasalah(
+          'daftar-gagal-simpan',
+          'Pendaftaran gagal tersimpan ke spreadsheet',
+          'Ada calon peserta yang mengirim formulir dan gagal. Kemungkinan besar ' +
+            'dia sudah mentransfer. Cek /pendaftar, dan kalau barisnya memang tidak ' +
+            'ada, hubungi dia untuk mendaftarkan manual.\n\nPesan teknis: ' + err.message
+        ),
+      'lapor daftar gagal'
+    );
     return res.status(502).json({
       ok: false,
       reason: 'gagal_simpan',

@@ -1,27 +1,7 @@
-:root {
-  --pink: #ffacdf;
-  --pink-light: #ffd7ef;
-  --white: #ffffff;
-  --paper: #f7f5f2;
-  --black: #000000;
-  --ink-muted: #5c5b5b;
-  --line: rgba(0, 0, 0, 0.14);
-  /* Dipakai cuma buat penanda "Tidak Tersedia" di kartu paket harga
-     (lihat .plan-save-unavailable) -- satu-satunya tempat di situs ini
-     yang butuh warna merah/status, jadi sengaja dipisah dari palet
-     pink/hitam/putih di atas. */
-  --red: #e5484d;
-  --display: "Syne", "Arial Black", sans-serif;
-  --body: "DM Sans", Arial, sans-serif;
-  --mono: "DM Mono", "Courier New", monospace;
-  /* Kurva easing khas situs ini, tadinya diulang sebagai literal cubic-bezier
-     di 7+ tempat berbeda (kartu, reveal, gap-chart). Dipusatkan jadi satu
-     token supaya semua animasi/hover terasa satu keluarga gerakan, dan
-     dipakai juga buat menggantikan transition polos "ease" bawaan browser
-     di elemen interaktif (tombol, nav, link) yang sebelumnya beda rasa dari
-     hover kartu. */
-  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
-}
+/* Token warna, radius, huruf, dan easing ADA DI tokens.css, yang dimuat
+   lebih dulu di setiap halaman. Dipindah ke sana supaya berkas yang
+   menentukan warna seluruh situs tidak perlu dibuka untuk alasan lain.
+   Lihat catatan lengkapnya di berkas itu. */
 
 * {
   box-sizing: border-box;
@@ -110,7 +90,7 @@ img {
   padding: 0.75rem 1rem;
   color: var(--black);
   background: var(--pink);
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   font-weight: 700;
   transition: top 180ms var(--ease-out);
 }
@@ -218,7 +198,7 @@ img {
   padding: 0.72rem 1rem;
   color: var(--black);
   background: var(--white);
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   transition: background 180ms var(--ease-out), transform 180ms var(--ease-out);
 }
 
@@ -236,7 +216,7 @@ img {
   color: var(--white);
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.45);
-  border-radius: 50%;
+  border-radius: var(--r-bulat);
   cursor: pointer;
 }
 
@@ -271,7 +251,7 @@ img {
 
 .hero-glow {
   position: absolute;
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   filter: blur(1px);
   pointer-events: none;
 }
@@ -354,7 +334,7 @@ img {
   width: 0.6rem;
   height: 0.6rem;
   background: var(--pink);
-  border-radius: 50%;
+  border-radius: var(--r-bulat);
 }
 
 h1,
@@ -406,7 +386,7 @@ h2 em {
   gap: 0.7rem;
   padding: 0.94rem 1.28rem;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   font-size: 0.87rem;
   font-weight: 700;
   transition: transform 180ms var(--ease-out), background 180ms var(--ease-out),
@@ -523,7 +503,7 @@ button.text-link:focus-visible {
   place-items: center;
   background: var(--white);
   border: 1px solid var(--black);
-  border-radius: 50%;
+  border-radius: var(--r-bulat);
   font-size: 0.57rem;
   font-weight: 700;
 }
@@ -543,7 +523,7 @@ button.text-link:focus-visible {
 .orbit {
   position: absolute;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
+  border-radius: var(--r-bulat);
 }
 
 .orbit-one {
@@ -575,7 +555,7 @@ button.text-link:focus-visible {
   color: var(--black);
   text-align: center;
   background: var(--pink);
-  border-radius: 50%;
+  border-radius: var(--r-bulat);
   box-shadow: 16px 18px 0 rgba(255, 255, 255, 0.08);
 }
 
@@ -624,7 +604,7 @@ button.text-link:focus-visible {
   color: var(--black);
   place-items: center;
   background: var(--white);
-  border-radius: 50%;
+  border-radius: var(--r-bulat);
   box-shadow: 4px 4px 0 var(--black);
   font-family: var(--mono);
   font-size: 0.66rem;
@@ -666,7 +646,7 @@ button.text-link:focus-visible {
   height: 7px;
   margin-bottom: 0.45rem;
   background: var(--pink);
-  border-radius: 50%;
+  border-radius: var(--r-bulat);
 }
 
 .word-bubble {
@@ -813,7 +793,7 @@ h2 {
   flex-direction: column;
   justify-content: flex-end;
   overflow: hidden;
-  border-radius: 4px;
+  border-radius: var(--r-kecil);
 }
 
 .value-card-pink { background: var(--pink); }
@@ -930,7 +910,7 @@ h2 {
   flex-direction: column;
   justify-content: space-between;
   overflow: hidden;
-  border-radius: 4px;
+  border-radius: var(--r-kecil);
 }
 
 .program-card-large { color: var(--black); background: var(--pink); }
@@ -1071,7 +1051,7 @@ h2 {
   height: 52px;
   background: var(--pink);
   border: 1px solid var(--black);
-  border-radius: 50%;
+  border-radius: var(--r-bulat);
 }
 
 .marker-circle::after {
@@ -1081,7 +1061,7 @@ h2 {
   width: 26px;
   height: 26px;
   border: 1px solid var(--black);
-  border-radius: 50%;
+  border-radius: var(--r-bulat);
   content: "";
 }
 
@@ -1123,7 +1103,7 @@ h2 {
   display: block;
   height: 9px;
   background: var(--black);
-  border-radius: 999px;
+  border-radius: var(--r-pil);
 }
 
 .marker-stack i:nth-child(1) { width: 62px; }
@@ -1311,7 +1291,7 @@ h2 {
   padding: 1.9rem 2.3rem;
   background: var(--paper);
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: var(--r-kecil);
 }
 
 .student-access-label {
@@ -1358,7 +1338,7 @@ h2 {
   position: relative;
   margin: 0 0 4.2rem;
   overflow: hidden;
-  border-radius: 4px;
+  border-radius: var(--r-kecil);
 }
 
 .section-figure img {
@@ -1375,7 +1355,7 @@ h2 {
   padding: 0.5rem 0.9rem;
   color: var(--black);
   background: var(--pink);
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   font-family: var(--body);
   font-size: 0.66rem;
   font-weight: 700;
@@ -1687,7 +1667,7 @@ section[id] {
   height: 14px;
   margin: -7px 0 0 -7px;
   background: rgba(255, 255, 255, 0.5);
-  border-radius: 50%;
+  border-radius: var(--r-bulat);
 }
 
 .gap-score {
@@ -1818,7 +1798,7 @@ section[id] {
   flex-direction: column;
   justify-content: space-between;
   background: var(--white);
-  border-radius: 4px;
+  border-radius: var(--r-kecil);
 }
 
 .proof-score { margin: 0; }
@@ -1869,7 +1849,7 @@ section[id] {
   justify-content: space-between;
   background: var(--white);
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: var(--r-kecil);
 }
 
 .proof-quote blockquote { margin: 0; }
@@ -1921,7 +1901,7 @@ section[id] {
   gap: 3.6rem;
   padding: 3rem;
   border: 1px solid var(--black);
-  border-radius: 4px;
+  border-radius: var(--r-kecil);
 }
 
 .bootcamp-card h2 {
@@ -2012,7 +1992,7 @@ section[id] {
   flex-direction: column;
   background: var(--white);
   border: 1px solid var(--black);
-  border-radius: 4px;
+  border-radius: var(--r-kecil);
   transition: transform 420ms var(--ease-out);
 }
 
@@ -2058,7 +2038,7 @@ section[id] {
   height: 15px;
   margin-left: -7.5px;
   background: currentColor;
-  border-radius: 50%;
+  border-radius: var(--r-bulat);
   content: "";
 }
 
@@ -2114,7 +2094,7 @@ section[id] {
   margin: 0.95rem 0 0;
   padding: 0.4rem 0.75rem;
   background: var(--pink);
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   font-family: var(--body);
   font-size: 0.64rem;
   font-weight: 700;
@@ -2639,10 +2619,10 @@ section[id] {
    merek (--pink/--pink-light) plus sedikit geseran ke ungu/koral supaya
    kartunya tidak seragam, tanpa keluar dari palet situs. */
 .testi-card[data-testi-variant='0'] { --testi-a: #ffacdf; --testi-b: #ffd7ef; }
-.testi-card[data-testi-variant='1'] { --testi-a: #ffd7ef; --testi-b: #c9a7ff; }
-.testi-card[data-testi-variant='2'] { --testi-a: #ffacdf; --testi-b: #ffb9a7; }
-.testi-card[data-testi-variant='3'] { --testi-a: #c9a7ff; --testi-b: #ffacdf; }
-.testi-card[data-testi-variant='4'] { --testi-a: #ffb9a7; --testi-b: #ffd7ef; }
+.testi-card[data-testi-variant='1'] { --testi-a: #ffd7ef; --testi-b: var(--lilac); }
+.testi-card[data-testi-variant='2'] { --testi-a: #ffacdf; --testi-b: var(--peach); }
+.testi-card[data-testi-variant='3'] { --testi-a: var(--lilac); --testi-b: #ffacdf; }
+.testi-card[data-testi-variant='4'] { --testi-a: var(--peach); --testi-b: #ffd7ef; }
 
 .testi-card-inner {
   position: relative;
@@ -2679,7 +2659,7 @@ section[id] {
 .testi-avatar {
   width: 52px;
   height: 52px;
-  border-radius: 50%;
+  border-radius: var(--r-bulat);
   object-fit: cover;
   flex-shrink: 0;
   background: rgba(255, 255, 255, 0.1);
@@ -2735,7 +2715,7 @@ section[id] {
   font-size: 0.95rem;
   letter-spacing: -0.03em;
   padding: 0.32rem 0.62rem;
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   background: var(--pink);
   color: var(--black);
   white-space: nowrap;
@@ -2772,5 +2752,112 @@ section[id] {
 @media (prefers-reduced-motion: reduce) {
   .testi-card-glow {
     animation: none;
+  }
+}
+
+/* ============================================================
+   SECTION FAQ
+   ============================================================
+   Digambar api/render-home.js dari isi Global Config, jadi kelasnya
+   harus cocok dengan yang ditulis renderFaq() di sana.
+
+   Memakai <details>/<summary> bawaan browser, bukan akordeon buatan
+   sendiri: bisa dibuka lewat keyboard, dibacakan pembaca layar, dan
+   ditemukan Ctrl+F browser tanpa satu baris JavaScript pun. */
+.faq-section {
+  padding: 6.5rem 0 5rem;
+  background: var(--paper);
+  color: var(--black);
+}
+
+.faq-section h2 {
+  font-family: var(--display);
+  font-size: clamp(1.9rem, 4.4vw, 2.9rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  margin: 0.7rem 0 0;
+  max-width: 18ch;
+}
+
+.faq-desc {
+  color: var(--ink-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 52ch;
+  margin: 1rem 0 0;
+}
+
+.faq-daftar {
+  margin-top: 2.6rem;
+  border-top: 1px solid var(--line);
+  /* Lebar baca dibatasi. Jawaban selebar layar penuh sulit dilacak
+     matanya waktu pindah baris, dan ini teks yang dibaca sungguhan,
+     bukan dipindai. */
+  max-width: 70ch;
+}
+
+.faq-item {
+  border-bottom: 1px solid var(--line);
+}
+
+.faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 0;
+  font-family: var(--display);
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.35;
+  cursor: pointer;
+  list-style: none;
+}
+
+/* Segitiga bawaan dibuang di kedua mesin peramban, lalu diganti tanda
+   plus di kanan supaya arah bukanya jelas. */
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item summary::after {
+  content: '+';
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 1.3rem;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--ink-muted);
+  transition: transform 200ms var(--ease-out);
+}
+
+.faq-item[open] summary::after {
+  content: '−';
+  color: var(--black);
+}
+
+.faq-item summary:hover {
+  color: var(--ink-muted);
+}
+
+/* Fokus keyboard harus terlihat: summary adalah elemen yang benar-benar
+   dinavigasi dengan Tab. */
+.faq-item summary:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: 3px;
+}
+
+.faq-jawab {
+  padding: 0 0 1.3rem;
+  color: var(--ink-muted);
+  font-size: 0.97rem;
+  line-height: 1.65;
+  max-width: 62ch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faq-item summary::after {
+    transition: none;
   }
 }

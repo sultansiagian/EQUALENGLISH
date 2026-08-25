@@ -22,15 +22,16 @@
         }
       }, 2500);
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Syne:wght@600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <!-- Font di-host sendiri, lihat fonts.css. Dua berkas yang paling awal
+         terlihat (judul Syne dan teks DM Sans) di-preload supaya tidak
+         menunggu CSS selesai diurai dulu sebelum mulai diambil. -->
+    <link rel="preload" href="/fonts/syne-600-800-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/dm-sans-400-700-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/fonts.css" />
     <!-- Cuma dipakai buat token warna/font (:root) dan komponen kecil,
          BUKAN buat layout section index.html -- admin.css yang mengatur
          semua layout halaman ini sendiri. -->
+    <link rel="stylesheet" href="/tokens.css" />
     <link rel="stylesheet" href="/styles.css" />
     <link rel="stylesheet" href="/admin.css" />
   </head>
@@ -296,6 +297,46 @@
               Simpan Testimoni
             </button>
             <span id="admin-testi-status" class="admin-save-status"></span>
+          </div>
+        </section>
+
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>06</b> / PERTANYAAN YANG ITU-ITU LAGI</p>
+          <h2>FAQ <span class="admin-card-note">beranda</span></h2>
+          <p class="admin-hint">
+            Sama seperti testimoni: selama daftarnya kosong, section FAQ dan
+            tautannya di menu <strong>tidak muncul sama sekali</strong> di
+            beranda. Satu baris baru tayang kalau pertanyaan DAN jawabannya
+            dua-duanya terisi.
+          </p>
+          <p class="admin-hint">
+            Isi dengan pertanyaan yang benar-benar sering masuk ke WhatsApp
+            kamu, pakai jawaban kamu sendiri. Yang paling sering ditanyakan
+            biasanya: rekaman bisa dibuka berapa lama, kalau berhalangan satu
+            sesi bagaimana, boleh ikut kalau bukan mahasiswa UI, uangnya bisa
+            kembali atau tidak, dan kelasnya jam berapa.
+          </p>
+
+          <label class="admin-field">
+            <span>Judul section</span>
+            <input type="text" data-key="faqTitle" />
+          </label>
+          <label class="admin-field">
+            <span>Deskripsi section</span>
+            <textarea data-key="faqDesc" rows="2"></textarea>
+          </label>
+
+          <div id="admin-faq-list" class="admin-testi-list"></div>
+
+          <button type="button" id="admin-faq-add" class="admin-btn admin-btn-ghost">
+            + Tambah Pertanyaan
+          </button>
+
+          <div class="admin-save-bar admin-save-bar-testi" data-reveal>
+            <button type="button" id="admin-faq-save" class="admin-btn admin-btn-primary">
+              Simpan FAQ
+            </button>
+            <span id="admin-faq-status" class="admin-save-status"></span>
           </div>
         </section>
 

@@ -189,7 +189,38 @@ const DEFAULT_MATERIALS = {
 // gagal) supaya satu hiccup sesaat gak bikin semua orang gagal login
 // selama sisa TTL.
 // ============================================================
-const CSV_CACHE_TTL_MS = 45 * 1000;
+/**
+ * ============================================================
+ * TTL DIPISAH MENURUT SEBERAPA CEPAT ISINYA BERUBAH
+ * ============================================================
+ *
+ * Dulu ketiga sheet memakai satu TTL 45 detik. Itu diambil dari
+ * kebutuhan roster, lalu dipakai juga untuk jadwal dan materi yang
+ * sebenarnya berubah beberapa kali PER BATCH, bukan per menit. Akibatnya
+ * dua pengambilan ke Google diulang tiap 45 detik tanpa alasan.
+ *
+ * ROSTER tetap pendek dan tidak boleh dipanjangkan: angka ini adalah
+ * jeda antara admin menekan Setujui dan siswanya benar-benar bisa masuk.
+ * Menaikkannya jadi lima menit berarti lima menit siswa yang sudah
+ * dibayar ditolak di pintu, dan itu keluhan yang pasti datang.
+ *
+ * ============================================================
+ * KENAPA BUKAN CACHE-CONTROL DI BALASANNYA
+ * ============================================================
+ * Sempat direncanakan begitu, dan itu KELIRU. Balasan endpoint ini
+ * bergantung pada siapa yang login: isinya materi kelas untuk email
+ * tertentu. Menaruhnya di cache bersama (CDN/edge) berarti balasan satu
+ * siswa bisa disajikan ke siswa lain yang kebetulan meminta sesudahnya.
+ * Cache di sini HARUS per proses dan per data, bukan per balasan HTTP.
+ *
+ * Konsekuensi yang diterima: cache ini hilang setiap cold start, jadi
+ * login pertama setelah masa sepi tetap menarik ulang sheet-nya. Itu
+ * memang tidak diselesaikan di sini, dan menyelesaikannya menuntut
+ * penyimpanan di luar proses -- satu layanan baru pada alur yang paling
+ * tidak boleh gagal di situs ini.
+ */
+const CSV_CACHE_TTL_MS = 45 * 1000; // roster: sependek jeda "Setujui" -> bisa masuk
+const ISI_KELAS_CACHE_TTL_MS = 10 * 60 * 1000; // jadwal & materi: berubah per batch
 const JWKS_CACHE_TTL_MS = 60 * 60 * 1000; // kunci publik Google jarang rotasi
 const fetchCache = new Map(); // key -> { promise, expiresAt }
 
@@ -809,7 +840,7 @@ async function fetchSchedule(url) {
   // tetap harus bisa diakses. Kartu jadwal & timer di client cukup jadi
   // kosong/tersembunyi kalau ini gagal.
   try {
-    const text = await cachedFetch('schedule:' + url, CSV_CACHE_TTL_MS, () =>
+    const text = await cachedFetch('schedule:' + url, ISI_KELAS_CACHE_TTL_MS, () =>
       fetchTextWithRetry(url)
     );
     return extractSchedule(text);
@@ -953,7 +984,7 @@ async function fetchMaterialsOverrides(url) {
   // kebaca TIDAK BOLEH menggagalkan login. Field yang tidak ketemu di
   // sini otomatis jatuh balik ke DEFAULT_MATERIALS di pemanggil.
   try {
-    const text = await cachedFetch('materials:' + url, CSV_CACHE_TTL_MS, () =>
+    const text = await cachedFetch('materials:' + url, ISI_KELAS_CACHE_TTL_MS, () =>
       fetchTextWithRetry(url)
     );
     const found = extractMaterials(text);

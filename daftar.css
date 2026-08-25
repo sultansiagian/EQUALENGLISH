@@ -64,7 +64,7 @@
 
 .daftar-group {
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--r-kartu);
   background: var(--white);
   padding: 22px;
   margin: 28px 0 0;
@@ -113,7 +113,7 @@
   font-size: 1rem;
   padding: 11px 13px;
   border: 1.5px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--r-isian);
   background: var(--paper);
   color: var(--black);
 }
@@ -166,7 +166,7 @@
   text-align: center;
   padding: 16px 10px;
   border: 1.5px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-panel);
   cursor: pointer;
 }
 
@@ -221,7 +221,7 @@
    berdampingan di kolom yang sama. */
 .daftar-upload {
   border: 1.5px dashed var(--line);
-  border-radius: 16px;
+  border-radius: var(--r-kartu);
   background: var(--white);
   padding: 22px;
   margin-top: 14px;
@@ -239,14 +239,68 @@
   max-width: 100%;
 }
 
+/* Baris hasil unggahan: pratinjau, nama berkas, tombol ganti. Muncul
+   hanya setelah ada berkas terpilih, jadi kotaknya tetap sepi selama
+   belum ada apa-apa. */
+.daftar-upload-hasil {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
 .daftar-upload-preview {
   display: block;
-  max-width: 180px;
-  max-height: 130px;
-  object-fit: contain;
-  border-radius: 8px;
-  margin-top: 10px;
+  /* Kecil saja. Gunanya memastikan berkasnya benar, bukan membaca
+     nominalnya -- dan pratinjau besar mendorong tombol kirim makin jauh
+     ke bawah, padahal formulir ini sudah panjang. */
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: var(--r-sedang);
   background: var(--paper);
+  flex-shrink: 0;
+}
+
+.daftar-upload-berkas {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+/* Nama berkas dari HP bisa sangat panjang. Dipotong dengan elipsis
+   supaya tidak mendorong tombol Ganti keluar layar. */
+.daftar-upload-nama {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--black);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.daftar-upload-ganti {
+  flex-shrink: 0;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  border-radius: var(--r-pil);
+  background: var(--white);
+  color: var(--black);
+  font-family: var(--body);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.daftar-upload-ganti:hover,
+.daftar-upload-ganti:focus-visible {
+  background: var(--black);
+  color: var(--white);
+  border-color: var(--black);
 }
 
 .daftar-upload-status {
@@ -259,7 +313,7 @@
 }
 
 .daftar-upload-status[data-state='ok'] {
-  color: #1a7f37;
+  color: var(--sukses);
 }
 
 .daftar-upload-status[data-state='error'] {
@@ -289,7 +343,7 @@
   margin: 28px 0 0;
   padding: 26px 22px;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--r-kartu);
   background: var(--white);
 }
 
@@ -314,7 +368,7 @@
   margin: 24px 0 0;
   padding: 18px 22px;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--r-kartu);
   background: var(--white);
 }
 
@@ -386,7 +440,7 @@
   margin: 26px 0 0;
   padding: 12px 16px;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 12px;
+  border-radius: var(--r-panel);
   /* Alas gelap pekat, bukan transparan: isian formulir yang berwarna
      terang lewat di belakangnya waktu digulir, dan tanpa alas yang solid
      teksnya bertumpuk jadi tidak terbaca. */
@@ -397,7 +451,7 @@
 .daftar-kemajuan-bar {
   flex: 1;
   height: 6px;
-  border-radius: 999px;
+  border-radius: var(--r-pil);
   background: rgba(255, 255, 255, 0.16);
   overflow: hidden;
 }
@@ -451,7 +505,7 @@
   margin: 26px 0 0;
   padding: 18px 20px;
   border: 1px solid var(--pink);
-  border-radius: 16px;
+  border-radius: var(--r-kartu);
   background: var(--pink-light);
   color: var(--black);
 }
@@ -517,8 +571,8 @@
   padding: 13px 16px;
   border: 1px solid rgba(229, 72, 77, 0.35);
   background: rgba(229, 72, 77, 0.07);
-  color: #8a2226;
-  border-radius: 10px;
+  color: var(--bahaya-teks);
+  border-radius: var(--r-isian);
   font-size: 0.92rem;
   line-height: 1.5;
 }
@@ -627,7 +681,7 @@
   font-size: 1rem;
   padding: 11px 13px;
   border: 1.5px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--r-isian);
   background: var(--paper);
   color: var(--black);
 }
@@ -645,7 +699,7 @@
   font-size: 1rem;
   padding: 11px 13px;
   border: 1.5px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--r-isian);
   background: var(--paper);
   color: var(--black);
   resize: vertical;
@@ -684,7 +738,7 @@
 .daftar-spinner {
   width: 16px;
   height: 16px;
-  border-radius: 50%;
+  border-radius: var(--r-bulat);
   border: 2px solid var(--line);
   border-top-color: var(--pink);
   animation: daftar-spin 0.8s linear infinite;
@@ -706,7 +760,7 @@
    Halaman ini formulir panjang yang digulir jauh, jadi bedanya paling
    terasa di sini. */
 body.daftar-body {
-  background-color: #12100f;
+  background-color: var(--gelap);
 }
 
 body.daftar-body::before {

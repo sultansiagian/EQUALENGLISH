@@ -147,8 +147,17 @@ function gambarField(f) {
       '<span class="daftar-upload-label">' + label + tandaWajib(f.wajib) + '</span>' +
       bantuanHtml(f.bantuan, f) +
       '<input type="file" accept="image/*" />' +
-      '<img class="daftar-upload-preview" alt="" hidden />' +
-      '<span class="daftar-upload-status"></span>';
+      // Pratinjau, nama berkas, dan tombol ganti dikumpulkan dalam satu
+      // baris yang muncul HANYA setelah ada berkas terpilih. Sebelum itu
+      // seluruh baris ini tersembunyi, jadi kotaknya tetap sepi.
+      '<div class="daftar-upload-hasil" hidden>' +
+      '<img class="daftar-upload-preview" alt="Pratinjau berkas yang kamu pilih" />' +
+      '<div class="daftar-upload-berkas">' +
+      '<span class="daftar-upload-nama"></span>' +
+      '<span class="daftar-upload-status"></span>' +
+      '</div>' +
+      '<button type="button" class="daftar-upload-ganti">Ganti</button>' +
+      '</div>';
     return wrap;
   }
 
@@ -363,6 +372,13 @@ function gambarForm() {
     input.addEventListener('change', function () {
       if (input.files && input.files[0]) tanganiUpload(kotak, input.files[0]);
     });
+    // Tombol ganti membuka pemilih berkas yang sama. Tanpa ini, satu-
+    // satunya cara mengganti foto yang salah pilih adalah menemukan
+    // sendiri kotak berkasnya yang sudah tertutup pratinjau.
+    kotak.querySelector('.daftar-upload-ganti').addEventListener('click', function () {
+      bersihkanUpload(kotak);
+      input.click();
+    });
   });
 
   perbaruiPaket();
@@ -460,23 +476,72 @@ function setStatusUpload(kotak, state, teks) {
   else s.removeAttribute('data-state');
 }
 
+/**
+ * Batas per berkas SETELAH dikompres.
+ *
+ * Batas total badan permintaan dijaga server di 3,5 MB, tapi batas total
+ * saja tidak cukup: satu foto raksasa bisa menyingkirkan dua lainnya, dan
+ * penolakannya baru datang setelah tombol kirim ditekan, yaitu waktu
+ * orangnya sudah merasa selesai. Batas per berkas di sini membuat
+ * masalahnya ketahuan di detik berkasnya dipilih.
+ */
+var MAKS_PER_BERKAS_KB = 1500;
+
+function ukuranKb(dataUrl) {
+  // Base64 memuat 3 byte asli dalam tiap 4 huruf, jadi panjangnya
+  // dikalikan 0,75 untuk memperkirakan ukuran berkas sebenarnya.
+  return Math.round((String(dataUrl || '').length * 0.75) / 1024);
+}
+
+function bersihkanUpload(kotak) {
+  var id = kotak.dataset.upload;
+  unggahan[id] = '';
+  var input = kotak.querySelector('input[type="file"]');
+  input.value = '';
+  kotak.querySelector('.daftar-upload-hasil').hidden = true;
+  kotak.querySelector('.daftar-upload-preview').removeAttribute('src');
+  setStatusUpload(kotak, null, '');
+  delete kotak.dataset.kurang;
+  perbaruiKemajuan();
+}
+
 async function tanganiUpload(kotak, file) {
   var id = kotak.dataset.upload;
   var input = kotak.querySelector('input[type="file"]');
+  var hasil = kotak.querySelector('.daftar-upload-hasil');
   input.disabled = true;
+  hasil.hidden = false;
+  kotak.querySelector('.daftar-upload-nama').textContent = file.name || 'Berkas terpilih';
   setStatusUpload(kotak, null, 'Memproses…');
 
   try {
     var dataUrl = await kompres(file);
+    var kb = ukuranKb(dataUrl);
+
+    // Ditolak DI SINI, bukan dibiarkan sampai tombol kirim. Fotonya juga
+    // tidak disimpan, supaya tidak ada yang terkirim diam-diam.
+    if (kb > MAKS_PER_BERKAS_KB) {
+      unggahan[id] = '';
+      kotak.querySelector('.daftar-upload-preview').removeAttribute('src');
+      setStatusUpload(
+        kotak,
+        'error',
+        'Masih ' + kb + ' KB setelah dikecilkan, batasnya ' + MAKS_PER_BERKAS_KB +
+          ' KB. Coba potong bagian yang tidak perlu, atau foto ulang layarnya.'
+      );
+      return;
+    }
+
     unggahan[id] = dataUrl;
 
     var pratinjau = kotak.querySelector('.daftar-upload-preview');
     pratinjau.src = dataUrl;
-    pratinjau.hidden = false;
 
-    setStatusUpload(kotak, 'ok', 'Siap dikirim (' + Math.round((dataUrl.length * 0.75) / 1024) + ' KB)');
+    setStatusUpload(kotak, 'ok', 'Siap dikirim, ' + kb + ' KB');
+    delete kotak.dataset.kurang;
   } catch (err) {
     unggahan[id] = '';
+    kotak.querySelector('.daftar-upload-preview').removeAttribute('src');
     setStatusUpload(kotak, 'error', err.message);
   } finally {
     input.disabled = false;

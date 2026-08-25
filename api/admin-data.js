@@ -1,6 +1,7 @@
 const statistik = require('./_lib/handler-statistik');
 const testimoni = require('./_lib/handler-testimoni');
 const emailUji = require('./_lib/handler-email-uji');
+const susunanForm = require('./_lib/handler-susunan-form');
 
 /**
  * Satu pintu untuk beberapa endpoint panel admin sekaligus.
@@ -38,6 +39,11 @@ const BAGIAN = {
   statistik: statistik,
   testimoni: testimoni,
   'email-uji': emailUji,
+  // Dulu berdiri sendiri sebagai api/atur-form.js. Dipindah ke sini
+  // 2026-08-25 bukan karena ada yang salah dengannya, tapi untuk
+  // mengosongkan slot lebih dulu: waktu itu jumlahnya 11 dari 12, dan
+  // menunggu sampai mentok berarti membereskannya sambil panik.
+  'susunan-form': susunanForm,
 };
 
 module.exports = async function handler(req, res) {

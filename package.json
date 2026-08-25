@@ -1,7 +1,10 @@
 {
   "name": "equal-english",
   "private": true,
-  "description": "Situs EQUAL English. Tanpa build step -- package.json ini cuma ada supaya Vercel meng-install dua dependency di bawah untuk fungsi-fungsi di /api. Tidak ada yang perlu dijalankan lokal (lihat README.md).",
+  "description": "Situs EQUAL English. Tanpa build step -- package.json ini cuma ada supaya Vercel meng-install dua dependency di bawah untuk fungsi-fungsi di /api. Tidak ada yang perlu dijalankan lokal kecuali `npm test` (lihat README.md).",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
   "dependencies": {
     "@vercel/blob": "latest",
     "@vercel/global-config": "latest"

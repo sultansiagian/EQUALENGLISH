@@ -205,6 +205,22 @@ module.exports = {
   testimonials: [],
 
   // ============================================================
+  // FAQ
+  // ============================================================
+  // KOSONG SECARA SENGAJA, dan section-nya TIDAK tampil di beranda
+  // selama masih kosong. Pola yang sama dipakai testimoni di atas, dan
+  // alasannya sama: pertanyaan seperti "uangnya bisa balik atau tidak"
+  // cuma boleh dijawab oleh pemiliknya sendiri. Jawaban yang dikarang
+  // di sini akan dibaca sebagai janji, dan janji yang salah lebih mahal
+  // daripada halaman yang belum ada.
+  //
+  // Diisi lewat /admin. Begitu ada satu pasang tanya-jawab yang lengkap,
+  // section-nya muncul sendiri berikut structured data FAQPage-nya.
+  faq: [],
+  faqTitle: 'Pertanyaan yang sering masuk',
+  faqDesc: 'Kalau yang kamu cari tidak ada di sini, tanya langsung lewat WhatsApp.',
+
+  // ============================================================
   // FORM PENDAFTARAN (/daftar), bisa disusun ulang dari /admin.
   //
   // Isi formFields adalah ARRAY definisi pertanyaan. Bentuk dan seluruh

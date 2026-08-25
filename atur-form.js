@@ -149,7 +149,9 @@ function perbaruiAkses() {
 // Bedanya di sini SEMUA field ditampilkan, termasuk yang dimatikan.
 async function muatFields() {
   try {
-    var res = await fetch('/api/atur-form', { headers: authHeaders() });
+    // Dulu /api/atur-form, sekarang menumpang /api/admin-data. Lihat
+    // catatan batas 12 Serverless Function di berkas itu.
+    var res = await fetch('/api/admin-data?bagian=susunan-form', { headers: authHeaders() });
     var data = await res.json();
     if (res.status === 401) return handleUnauthorized(data.reason);
     if (!res.ok || !data.ok) throw new Error(data.pesan || data.reason || res.status);
