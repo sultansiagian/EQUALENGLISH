@@ -15,9 +15,19 @@
         "rule": "broken-image",
         "value": "*",
         "files": [
+          "admin.html",
+          "admin.js",
+          "daftar.js",
           "kelas.html"
         ],
-        "createdAt": "2026-08-10T17:20:49.639Z"
+        "createdAt": "2026-08-10T17:20:49.639Z",
+        "reason": "Elemen pratinjau unggahan. Semuanya punya atribut hidden di markup/template dan baru di-unhide pada baris yang sama dengan pemasangan src, jadi tidak pernah tergambar sebagai kotak gambar rusak. Diverifikasi 2026-08-25 dengan memantau daftar.js tiap 4ms selama kompresi foto 3,1 MB (2,5 detik) plus dua jalur gagal: nol pelanggaran. Kalau nanti ada pratinjau BARU yang di-unhide sebelum src-nya siap, pengecualian ini akan menyembunyikannya -- cek manual dulu sebelum menambah berkas ke daftar ini."
+      },
+      {
+        "rule": "overused-font",
+        "value": "arial",
+        "createdAt": "2026-08-23T08:50:47.939Z",
+        "reason": "Email HTML: Gmail buang @font-face, cuma font bawaan sistem yang tersedia"
       }
     ]
   }
