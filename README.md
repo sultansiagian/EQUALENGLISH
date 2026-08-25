@@ -37,6 +37,14 @@ Untuk menguji hasil penyisipannya, panggil `renderHtml()` dari
 | `api/_lib/kerja-latar.js` | Menitipkan pekerjaan yang selesai setelah balasan dikirim (mis. email) ke `waitUntil`, supaya tidak ikut hilang waktu fungsi Vercel dibekukan. |
 | `status.html` / `status.js` | Halaman `/status`, tempat pendaftar mengecek sendiri apakah datanya sudah masuk dan sudah disetujui. Login Google, TIDAK menerima email yang diketik. Endpointnya menumpang `/api/verify-access` dengan `mode:'status'` supaya tidak menghabiskan slot Serverless Function terakhir (lihat catatan batas 12 di bawah). |
 | `api/_lib/status-pendaftar.js` | Pencarian satu orang di antrean "Pendaftar Web". Bentuk balasannya sengaja dikunci ke status plus nama paket saja, tidak pernah nama/HP/email siapa pun, karena mencari satu baris menuntut seluruh antrean ditarik dulu. |
+| `tokens.css` | Satu sumber warna dan radius, dimuat paling awal di setiap halaman. Tempat mode gelap nanti ditulis: satu blok media query yang menimpa token, tanpa menyentuh aturan komponen. |
+| `fonts.css` + `fonts/` | Font di-host sendiri (DM Sans & Syne pakai variable font, DM Mono statis). Dibuat otomatis dari Google Fonts; kalau bobotnya berubah, ambil ulang, jangan disunting tangan. |
+| `test/` | Tes `node --test`, jalan lewat `npm test`. Tidak ikut ter-deploy (lihat `.vercelignore`). |
+| `api/_lib/ambil-sheet.js` | Pengambil CSV bersama: cache in-memory, batas waktu, coba-ulang. |
+| `api/_lib/roster.js` | Siapa yang boleh masuk kelas. Ubah di sini = ubah gerbang akses; jalankan `npm test` dan coba satu login asli sebelum merge. |
+| `api/_lib/jadwal.js` | Jadwal sesi (dari sheet maupun `/atur-kelas`), progres batch, kunci Zoom dan kuis. |
+| `api/_lib/materi.js` | Materi kelas: nilai bawaan, isi dari `/atur-kelas`, pembacaan sheet materi. |
+| `api/_lib/lapor-masalah.js` | Email peringatan ke admin waktu `/api/daftar` gagal menyimpan atau kuota Gmail menipis. Direm satu per jam per jenis. |
 | `api/_lib/rem-laju.js` | Rem laju untuk `/api/daftar`, satu-satunya endpoint publik. Tiga lapisan: per IP (longgar, karena wifi kampus membuat banyak orang terlihat sebagai satu IP), per alamat email tujuan, dan jatah total tanda terima per jam. Yang dilindungi terutama kuota Gmail, bukan baris sheet -- lihat penjelasan di dalam filenya. |
 | `analitik.html` / `analitik.js` | Halaman `/analitik`: jumlah pendaftar, komposisi paket, dan pendapatan per batch. Chart digambar sendiri dengan SVG, tanpa library. |
 | `api/_lib/statistik.js` | Perhitungan angka analitik. Membaca sheet yang sama dengan gerbang login siswa, jadi tidak mungkin ada dua angka berbeda untuk hal yang sama. |
@@ -111,6 +119,36 @@ melayani file itu duluan (Vercel mengecek file statis SEBELUM `rewrites`).
   tersimpan). Drafnya dihapus hanya setelah server mengonfirmasi barisnya
   masuk, tidak lebih awal. Lihat catatan `hapusDraf()` di `daftar.js` soal
   kenapa simpanan tertunda harus ikut dibatalkan di situ.
+
+## Tes
+
+```bash
+npm test
+```
+
+Memakai test runner bawaan Node, tanpa dependency tambahan, jadi tidak
+melanggar keputusan zero build step. Yang diuji lebih dulu adalah bagian
+yang **salahnya sunyi**: pemetaan kolom spreadsheet, penebak format
+tanggal, rem laju, penyusunan email, dan penampil FAQ. Bagian-bagian itu
+kalau salah tidak memunculkan error di mana pun, cuma data yang mendarat
+di kolom keliru dan siswa yang tidak bisa login berhari-hari kemudian.
+
+`test/verify-access.test.js` ditulis SEBELUM berkas itu dipecah, dan
+sudah lulus melawan versi utuhnya. Kalau nanti gagal, yang berubah pasti
+perilakunya, bukan tesnya.
+
+## Backup harian spreadsheet
+
+Kodenya ada di `apps-script.gs` (`backupHarian`), tapi **trigger-nya harus
+dipasang manual sekali** di editor Apps Script, karena tidak bisa dibuat
+dari luar akun Google pemiliknya:
+
+1. Buka Apps Script di spreadsheet, ikon jam (Triggers) di bilah kiri
+2. Add Trigger: fungsi `backupHarian`, Time-driven, Day timer, 1am to 2am
+3. Save, lalu izinkan aksesnya
+
+Untuk memastikan sekarang tanpa menunggu besok: pilih `backupHarian` di
+editor lalu tekan Run, dan cek folder `Backup EQUAL` di Drive.
 
 ## Batas 12 Serverless Function
 
