@@ -105,10 +105,9 @@ function gambarHasil(data) {
   kicker.textContent = 'BELUM KETEMU';
   judul.textContent = 'Belum ada pendaftaran atas email ini.';
   detail.textContent =
-    'Penyebab tersering: kamu masuk pakai akun Google yang berbeda dari email ' +
-    'yang kamu isi di formulir. Coba keluar lalu masuk lagi dengan email yang ' +
-    'kamu pakai waktu mendaftar. Kalau kamu yakin sudah mendaftar dengan email ' +
-    'ini dan sudah transfer, hubungi kami lewat WhatsApp supaya dicek manual.';
+    'Admin belum memberikan akses kepadamu, karena ada beberapa prosedur yang ' +
+    'harus dilakukan sebelum itu. Pastikan pembayaranmu sudah berhasil. Apabila ' +
+    'sudah menunggu cukup lama, hubungi kami via WhatsApp.';
   aksi.appendChild(
     tombol('Tanya lewat WhatsApp', 'https://wa.me/6285888345058', 'button-dark')
   );
