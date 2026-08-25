@@ -67,13 +67,15 @@ button {
 }
 
 /* Elemen kode dipakai di halaman admin buat menyebut nama env var dan
-   kata kunci seperti "done". Tanpa ini, browser memakai font monospace
-   bawaan sistem yang bentuknya jauh berbeda dari DM Mono di sekitarnya. */
+   kata kunci seperti "done". Tanpa aturan ini, browser memakai font
+   monospace bawaan sistem, dan sejak monospace dibuang dari situs ini
+   (lihat token --label di tokens.css) itu satu-satunya tempat monospace
+   masih bisa menyelinap masuk. */
 code,
 kbd,
 samp,
 pre {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.92em;
 }
 
@@ -156,7 +158,7 @@ img {
 .brand > span {
   padding-left: 0.7rem;
   border-left: 1px solid rgba(255, 255, 255, 0.55);
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.67rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -316,7 +318,7 @@ img {
 .eyebrow,
 .section-kicker {
   margin: 0;
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.69rem;
   font-weight: 500;
   letter-spacing: 0.1em;
@@ -563,7 +565,7 @@ button.text-link:focus-visible {
   position: relative;
   z-index: 1;
   margin-bottom: 0.1rem;
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.64rem;
   font-weight: 500;
   letter-spacing: 0.13em;
@@ -606,7 +608,7 @@ button.text-link:focus-visible {
   background: var(--white);
   border-radius: var(--r-bulat);
   box-shadow: 4px 4px 0 var(--black);
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: -0.05em;
@@ -669,7 +671,7 @@ button.text-link:focus-visible {
 
 .word-bubble span,
 .word-bubble small {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.58rem;
 }
 
@@ -692,13 +694,13 @@ button.text-link:focus-visible {
 
 .hero-art-footer > span {
   color: var(--pink);
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.65rem;
 }
 
 .hero-art-footer p {
   margin: 0;
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.63rem;
   line-height: 1.45;
 }
@@ -716,7 +718,7 @@ button.text-link:focus-visible {
   align-items: center;
   gap: 1.35rem;
   animation: ticker-scroll 26s linear infinite;
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.85rem;
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -804,7 +806,7 @@ h2 {
   position: absolute;
   top: 1.55rem;
   right: 1.55rem;
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.68rem;
 }
 
@@ -922,7 +924,7 @@ h2 {
   z-index: 1;
   display: flex;
   justify-content: space-between;
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.62rem;
   font-weight: 500;
   letter-spacing: 0.06em;
@@ -971,7 +973,7 @@ h2 {
 
 .program-tag {
   margin-bottom: 0.55rem;
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.62rem;
   font-weight: 500;
   letter-spacing: 0.08em;
@@ -1004,7 +1006,7 @@ h2 {
 .journey-side-note {
   margin: 0;
   color: var(--ink-muted);
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.65rem;
   line-height: 1.5;
   text-align: right;
@@ -1034,7 +1036,7 @@ h2 {
 }
 
 .step-number {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.66rem;
 }
 
@@ -1415,7 +1417,7 @@ h2 {
 .footer-grid > p,
 .footer-bottom {
   color: rgba(255, 255, 255, 0.58);
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.64rem;
   line-height: 1.5;
 }
@@ -1561,7 +1563,7 @@ section[id] {
 .impact-stat cite {
   display: block;
   color: rgba(255, 255, 255, 0.4);
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.6rem;
   font-style: normal;
   letter-spacing: 0.04em;
@@ -1600,7 +1602,7 @@ section[id] {
   gap: 1rem;
   margin: 0 0 1.4rem;
   color: rgba(255, 255, 255, 0.45);
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.6rem;
   letter-spacing: 0.06em;
 }
@@ -1672,7 +1674,10 @@ section[id] {
 
 .gap-score {
   color: rgba(255, 255, 255, 0.62);
-  font-family: var(--mono);
+  font-family: var(--label);
+  /* Lebar digit seragam. Dulu ini datang gratis dari font monospace;
+     setelah monospace dibuang, tabular-nums yang menggantikannya. */
+  font-variant-numeric: tabular-nums;
   font-size: 0.85rem;
   text-align: right;
 }
@@ -1717,7 +1722,7 @@ section[id] {
   padding-top: 1.2rem;
   border-top: 1px solid rgba(255, 255, 255, 0.14);
   color: rgba(255, 255, 255, 0.4);
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.6rem;
   line-height: 1.75;
 }
@@ -1816,7 +1821,10 @@ section[id] {
   display: block;
   margin-top: 0.55rem;
   color: var(--ink-muted);
-  font-family: var(--mono);
+  font-family: var(--label);
+  /* Lebar digit seragam. Dulu ini datang gratis dari font monospace;
+     setelah monospace dibuang, tabular-nums yang menggantikannya. */
+  font-variant-numeric: tabular-nums;
   font-size: 0.6rem;
   letter-spacing: 0.13em;
 }
@@ -1875,14 +1883,14 @@ section[id] {
   padding: 0.32rem 0.5rem;
   background: var(--pink);
   border-radius: 3px;
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.55rem;
   letter-spacing: 0.1em;
 }
 
 .proof-byline cite {
   color: var(--ink-muted);
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.63rem;
   font-style: normal;
 }
@@ -1940,7 +1948,7 @@ section[id] {
 
 .bootcamp-list span {
   color: var(--ink-muted);
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.62rem;
 }
 
@@ -2152,11 +2160,14 @@ section[id] {
 
 /* ============================================================
    SKALA TIPOGRAFI KECIL
-   Teks kecil sebelumnya DM Mono 400–500 dengan opacity rendah, jadi
-   terbaca ragu-ragu. DM Mono tidak punya bobot di atas 500, jadi peran
-   label dipindah ke DM Sans 700 (sudah dimuat), ukuran dinaikkan, dan
-   kontrasnya ditambah. DM Mono hanya dipertahankan untuk angka data
-   pada chart, yang butuh lebar karakter seragam antarbaris.
+   Teks kecil sebelumnya memakai font monospace dengan opacity rendah,
+   jadi terbaca ragu-ragu. Peran label dipindah ke DM Sans 700, ukuran
+   dinaikkan, dan kontrasnya ditambah.
+
+   Per 2026-08-25 monospace dibuang seluruhnya dari situs ini. Angka data
+   pada chart, yang dulu jadi satu-satunya alasan monospace dipertahankan,
+   sekarang memakai font-variant-numeric: tabular-nums -- hasilnya sama
+   (lebar digit seragam antarbaris) tanpa keluarga font tambahan.
    Font display (Syne) dan font body tidak diubah.
    ============================================================ */
 
@@ -2274,7 +2285,8 @@ section[id] {
   font-weight: 700;
 }
 
-/* Angka data tetap monospace agar kolomnya lurus antarbaris. */
+/* Angka data dibuat lurus antarbaris lewat tabular-nums, bukan lewat
+   font monospace. Lihat .gap-score di bawah. */
 .gap-axis {
   color: rgba(255, 255, 255, 0.6);
   font-size: 0.66rem;
@@ -2722,7 +2734,7 @@ section[id] {
 }
 
 .testi-score-label {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.58rem;
   font-weight: 400;
   letter-spacing: 0.12em;
@@ -2824,7 +2836,7 @@ section[id] {
 .faq-item summary::after {
   content: '+';
   flex-shrink: 0;
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 1.3rem;
   font-weight: 400;
   line-height: 1;

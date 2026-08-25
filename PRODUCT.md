@@ -51,7 +51,8 @@ Paket, Mentor).
 Nama "EQUAL English". Copy Bahasa Indonesia saja, gaya casual-akrab, tanpa
 em dash, tanpa klaim statistik yang dikarang. Identitas visual `index.html`
 dan gerbang login `kelas.html` (`.kelas-hero`) sudah mapan: font Syne
-(display) + DM Sans (body) + DM Mono (label/data), palet pink (#ffacdf) /
+(display) + DM Sans (body dan label; DM Mono DIBUANG 2026-08-25 atas
+permintaan pemilik, font monospace tidak dipakai lagi di mana pun), palet pink (#ffacdf) /
 hitam / paper cream (#f7f5f2) — hasil banyak sesi kolaborasi sebelumnya.
 Kredensial mentor (IELTS 8/9, EPT UI 673/674) adalah fakta terverifikasi,
 tidak boleh diubah atau dikarang.

@@ -199,7 +199,7 @@
 }
 
 .daftar-person h3 {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -305,7 +305,7 @@
 
 .daftar-upload-status {
   display: block;
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.78rem;
   color: var(--ink-muted);
   margin-top: 8px;
@@ -379,7 +379,7 @@
 }
 
 .status-rincian dt {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.68rem;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -422,7 +422,7 @@
    lain di situs ini. Ditulis "1 dari 3", bukan "01", karena yang perlu
    diketahui pengisi bukan urutannya melainkan sisanya. */
 .daftar-bagian-no {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   color: var(--pink);
@@ -479,7 +479,10 @@
 }
 
 .daftar-kemajuan-teks {
-  font-family: var(--mono);
+  font-family: var(--label);
+  /* Lebar digit seragam. Dulu ini datang gratis dari font monospace;
+     setelah monospace dibuang, tabular-nums yang menggantikannya. */
+  font-variant-numeric: tabular-nums;
   font-size: 0.72rem;
   color: rgba(255, 255, 255, 0.8);
   white-space: nowrap;
@@ -527,7 +530,10 @@
 /* Usia draf ditulis dengan huruf mono, sama seperti label data lain di
    situs ini, supaya terbaca sebagai keterangan waktu dan bukan kalimat. */
 #daftar-draf-usia {
-  font-family: var(--mono);
+  font-family: var(--label);
+  /* Lebar digit seragam. Dulu ini datang gratis dari font monospace;
+     setelah monospace dibuang, tabular-nums yang menggantikannya. */
+  font-variant-numeric: tabular-nums;
   font-size: 0.76rem;
   color: #7a4463;
 }
@@ -730,7 +736,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: var(--mono);
+  font-family: var(--label);
   color: var(--ink-muted);
   padding: 40px 0;
 }

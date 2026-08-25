@@ -110,7 +110,7 @@ body.admin-masuk .admin-shell {
 
 .admin-topbar-user {
   margin-left: auto;
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.78rem;
   color: var(--pink-light);
   padding: 6px 12px;
@@ -243,7 +243,7 @@ body.admin-masuk .admin-shell {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: var(--mono);
+  font-family: var(--label);
   color: var(--ink-muted);
 }
 
@@ -322,7 +322,7 @@ body.admin-masuk .admin-shell {
 }
 
 .admin-card-note {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.75rem;
   font-weight: 400;
   color: var(--ink-muted);
@@ -408,7 +408,7 @@ body.admin-masuk .admin-shell {
 }
 
 .admin-pkg h3 {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -439,7 +439,7 @@ body.admin-masuk .admin-shell {
 }
 
 .admin-save-status {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.82rem;
   color: var(--ink-muted);
   /* min-width:0 -- default flex item punya min-width:auto yang menolak
@@ -536,7 +536,7 @@ body.admin-masuk .admin-shell {
 
 .admin-photo-status {
   display: block;
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.78rem;
   color: var(--ink-muted);
   margin-top: 6px;
@@ -577,7 +577,7 @@ body.admin-masuk .admin-shell {
   background: var(--black);
   color: var(--pink-light);
   border-radius: var(--r-isian);
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.78rem;
   line-height: 1.55;
   /* Hasil diagnosa bisa panjang dan punya baris lebar (URL, connection
@@ -620,7 +620,7 @@ body.admin-masuk .admin-shell {
 }
 
 .admin-testi-head h3 {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -675,7 +675,7 @@ body.admin-masuk .admin-shell {
 
 .admin-testi-status {
   display: block;
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.76rem;
   color: var(--ink-muted);
   margin-top: 5px;
@@ -748,7 +748,7 @@ body.admin-masuk .admin-shell {
 }
 
 .admin-pendaftar-paket {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.72rem;
   padding: 4px 10px;
   border-radius: var(--r-pil);
@@ -788,7 +788,7 @@ body.admin-masuk .admin-shell {
 
 .admin-pendaftar-subjudul {
   display: block;
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -849,7 +849,10 @@ body.admin-masuk .admin-shell {
 }
 
 .admin-pendaftar-status {
-  font-family: var(--mono);
+  font-family: var(--label);
+  /* Lebar digit seragam. Dulu ini datang gratis dari font monospace;
+     setelah monospace dibuang, tabular-nums yang menggantikannya. */
+  font-variant-numeric: tabular-nums;
   font-size: 0.8rem;
   color: var(--ink-muted);
 }
@@ -931,7 +934,7 @@ body.admin-masuk .admin-shell {
 }
 
 .form-field-tipe {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -942,7 +945,7 @@ body.admin-masuk .admin-shell {
 }
 
 .form-field-kunci {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1253,7 +1256,7 @@ body.admin-masuk::before {
 
 .stat-angka-label {
   display: block;
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -1294,7 +1297,7 @@ body.admin-masuk::before {
 
 .stat-donut-wrap figcaption,
 .stat-bar-wrap figcaption {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -1376,7 +1379,10 @@ body.admin-masuk::before {
 }
 
 .stat-bar-nilai {
-  font-family: var(--mono);
+  font-family: var(--label);
+  /* Lebar digit seragam. Dulu ini datang gratis dari font monospace;
+     setelah monospace dibuang, tabular-nums yang menggantikannya. */
+  font-variant-numeric: tabular-nums;
   font-size: 0.78rem;
   white-space: nowrap;
 }
@@ -1402,6 +1408,12 @@ body.admin-masuk::before {
   padding: 10px 12px;
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
+  /* Di SINI angkanya berada, bukan di thead yang isinya label teks.
+     Kolom angka rata kanan adalah alasan tabular-nums ada: tanpa lebar
+     digit yang seragam, "1.180.000" dan "945.000" tidak berbaris rapi
+     walau ujung kanannya sejajar. Dulu efek ini datang dari font
+     monospace; setelah monospace dibuang, ini penggantinya. */
+  font-variant-numeric: tabular-nums;
 }
 
 .stat-tabel th[scope='row'],
@@ -1410,7 +1422,7 @@ body.admin-masuk::before {
 }
 
 .stat-tabel thead th {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1435,7 +1447,7 @@ body.admin-masuk::before {
   padding: 14px 16px;
   border-radius: var(--r-panel);
   background: var(--paper);
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 1.05rem;
 }
 
@@ -1544,13 +1556,13 @@ body.admin-masuk::before {
 }
 
 .kiriman-meta {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.74rem;
   color: var(--ink-muted);
 }
 
 .kiriman-badge {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.66rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1867,7 +1879,7 @@ a.admin-nav-item:focus-visible {
 }
 
 .jadwal-nomor {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.78rem;
   color: var(--ink-muted);
   /* Disejajarkan dengan isian di sebelahnya, bukan dengan labelnya. */
@@ -1968,7 +1980,7 @@ a.admin-nav-item:focus-visible {
 }
 
 .batch-badge {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.66rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1979,7 +1991,7 @@ a.admin-nav-item:focus-visible {
 }
 
 .batch-periode {
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.74rem;
   color: var(--ink-muted);
 }
@@ -2009,7 +2021,7 @@ a.admin-nav-item:focus-visible {
 
 .batch-angka-label {
   display: block;
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -2028,7 +2040,7 @@ a.admin-nav-item:focus-visible {
 
 .batch-rinci {
   margin: 12px 0 0;
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.74rem;
   color: var(--ink-muted);
 }
@@ -2053,7 +2065,7 @@ a.admin-nav-item:focus-visible {
    BAHASA BERANDA DI PANEL ADMIN
    =====================================================================
    Panel ini memakai token yang sama dengan beranda sejak awal (Syne,
-   DM Sans, DM Mono, pink/hitam/paper), tapi bentuknya masih seperti
+   DM Sans, pink/hitam/paper), tapi bentuknya masih seperti
    formulir pengaturan generik: judul kecil, kartu diam, tidak ada
    penanda urutan.
 
@@ -2069,7 +2081,7 @@ a.admin-nav-item:focus-visible {
 
 .admin-kicker {
   margin: 0 0 10px;
-  font-family: var(--mono);
+  font-family: var(--label);
   font-size: 0.69rem;
   font-weight: 500;
   letter-spacing: 0.1em;

@@ -91,7 +91,25 @@
   /* ---------- Huruf ---------- */
   --display: "Syne", "Arial Black", sans-serif;
   --body: "DM Sans", Arial, sans-serif;
-  --mono: "DM Mono", "Courier New", monospace;
+
+  /* ============================================================
+     JANGAN PERNAH MEMAKAI FONT MONOSPACE DI SITUS INI
+     ============================================================
+     Token ini dulu bernama --mono dan berisi "DM Mono". Dihapus atas
+     permintaan pemilik pada 2026-08-25, dan permintaannya tegas: font
+     monospace tidak boleh dipakai lagi di mana pun.
+
+     Jadi kalau nanti butuh membedakan label, angka, atau data dari teks
+     biasa, caranya BUKAN dengan mengganti keluarga fontnya. Pakai yang
+     sudah dipakai aturan-aturan di bawah: huruf kapital, letter-spacing,
+     ukuran lebih kecil, atau warna yang lebih redup. Untuk angka yang
+     perlu sejajar rapi antarbaris, pakai font-variant-numeric:
+     tabular-nums -- DM Sans mendukungnya, dan itu memberi lebar digit
+     yang seragam tanpa perlu font monospace sama sekali.
+
+     Namanya --label, bukan --mono, supaya tidak ada yang mengira ini
+     masih font monospace lalu menambahinya lagi. */
+  --label: "DM Sans", Arial, sans-serif;
 
   /* ---------- Gerak ----------
      Kurva khas situs ini. Tadinya diulang sebagai literal cubic-bezier di
