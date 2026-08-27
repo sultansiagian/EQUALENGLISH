@@ -109,14 +109,25 @@
   margin-bottom: 0.55rem;
 }
 
-.dok-shell a {
+/* :not(.button) BUKAN hiasan. Tanpa itu, selector ini (0,1,1) menang
+   atas .button-dark (0,1,0) di styles.css, jadi tombol .button-dark di
+   bawah halaman ini mendapat color: var(--black) DI ATAS latar
+   var(--black) miliknya sendiri -- rasio 1,00:1, tulisannya benar-benar
+   tidak ada. Bukan cuma di mode gelap: halaman ini terang di kedua mode,
+   jadi tombolnya kosong sepanjang waktu.
+
+   Sebelumnya yang dikecualikan cuma garis bawahnya (lihat .dok-aksi a di
+   bawah), dan warnanya terlewat. Pengecualiannya dipindah ke sini supaya
+   satu aturan mengurus keduanya, dan tombol apa pun yang ditambahkan ke
+   halaman dokumen nanti otomatis ikut benar. */
+.dok-shell a:not(.button) {
   color: var(--black);
   text-decoration: underline;
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
 }
 
-.dok-shell a:hover {
+.dok-shell a:not(.button):hover {
   color: var(--pink-deep, var(--black));
   text-decoration-thickness: 2px;
 }

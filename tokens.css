@@ -83,6 +83,25 @@
      mode, jadi warnanya juga harus ikut. */
   --ink-di-pink-redup: #6b4159;
 
+  /* Teks redup DI ATAS --pink (bukan --pink-light). Gampang tertukar
+     dengan --ink-di-pink-redup di atas, padahal keduanya untuk latar
+     yang berlawanan arah, jadi bedanya ditulis di sini sekali:
+
+       --ink-di-pink-redup  -> latar --pink-light, yang IKUT menggelap
+                               di mode gelap, jadi teksnya ikut menerang.
+       --ink-di-pink-lembut -> latar --pink, yang TETAP terang di kedua
+                               mode, jadi teksnya harus tetap gelap.
+
+     Dipakai untuk keterangan kecil di dalam kartu paket yang terpilih
+     ("2 orang"). Sebelum ada token ini, keterangan itu memakai
+     --ink-muted, dan --ink-muted menerang di mode gelap: abu terang di
+     atas pink terang, 1,2:1, praktis hilang.
+
+     Nilainya dipilih supaya lolos di KEDUA pink: 5,70:1 di atas #ffacdf
+     dan 4,62:1 di atas #e79bc7. Kalau salah satu pink digeser nanti,
+     angka ini harus diukur ulang, bukan dikira-kira. */
+  --ink-di-pink-lembut: #543d4a;
+
   /* Aksen sekunder, dipakai kartu testimoni supaya tiap kartu tidak
      tampil dengan warna yang sama persis. */
   --lilac: #c9a7ff;
@@ -94,7 +113,23 @@
      untuk ini, dan sebaliknya. */
   --sukses: #1a7f37;
   --sukses-pekat: #14602a;
-  --bahaya: #e5484d;
+
+  /* Dulu #e5484d, dan itu tidak pernah lolos ambang baca di mode terang:
+     3,91:1 di atas putih. Yang paling sering memakainya adalah tanda
+     bintang "wajib diisi" di /daftar -- penanda kecil yang justru harus
+     langsung kelihatan, dan satu-satunya pembeda isian wajib dari isian
+     opsional.
+
+     Menariknya, versi gelapnya SUDAH diperbaiki (lihat catatan di blok
+     mode gelap di bawah, yang menyebut pengukuran 4,22:1), jadi yang
+     tertinggal justru mode terang yang dipakai semua orang.
+
+     #d0262c: 5,26:1 di atas putih dan 4,83:1 di atas --paper, tetap
+     merah yang sama, cuma sedikit lebih dalam. Dua tempat yang
+     memakainya sebagai LATAR (toast error di /admin, label paket habis
+     di beranda) ikut membaik, bukan memburuk: teks putih di atasnya naik
+     dari 3,91:1 ke 5,26:1. */
+  --bahaya: #d0262c;
   --bahaya-teks: #8a2226;
   --bahaya-latar: #ffd7d8;
 
@@ -211,5 +246,23 @@
        "wajib diisi" cuma mencapai 4,22:1 di sana, di bawah ambang baca. */
     --bahaya: #ff8a84;
     --bahaya-teks: #ff9d97;
+
+    /* Hijau berhasil ikut alasan yang sama dengan merah di atas, dan
+       sempat terlewat justru karena kabar baik lebih jarang dilihat
+       waktu menguji: #1a7f37 cuma 3,25:1 di atas kartu gelap, jadi
+       "Berhasil diunggah" di /daftar terbaca setengah hilang persis di
+       saat orangnya ingin memastikan unggahannya masuk.
+
+       Dicerahkan ke 6,50:1, sebanding dengan merahnya (7,25:1) supaya
+       kedua kabar punya bobot yang mirip di mata. Sengaja tidak lebih
+       terang dari itu: hijau menyala di sebelah pink merek terbaca
+       seperti notifikasi sistem, bukan seperti halaman ini.
+
+       --sukses-pekat ikut dibalikkan arahnya. Di mode terang "pekat"
+       berarti LEBIH GELAP dari --sukses karena penekanan di atas latar
+       terang datang dari warna yang lebih dalam; di mode gelap arah itu
+       terbalik, jadi versi penekanannya justru lebih terang. */
+    --sukses: #3fb950;
+    --sukses-pekat: #56d364;
   }
 }

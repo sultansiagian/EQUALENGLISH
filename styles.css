@@ -17,10 +17,24 @@ html {
   font-family: var(--body);
 }
 
+/* --ink, BUKAN --black. Keduanya bernilai sama persis di mode terang,
+   jadi baris ini tidak mengubah satu piksel pun di sana. Bedanya cuma
+   muncul di mode gelap: --ink ikut membalik jadi terang, --black tidak
+   pernah.
+
+   Ini warna yang DIWARISI seluruh halaman. Selama nilainya --black,
+   setiap teks di /kelas dan /daftar yang tidak menyebut warnanya sendiri
+   -- label form, teks centang, isi kartu -- jatuh ke hitam pekat di atas
+   kartu yang justru menggelap, dan hilang sama sekali. Bukan satu-dua
+   elemen: itu perilaku bawaan untuk semua yang tidak diwarnai manual.
+
+   Jadi memperbaikinya di sini, bukan di tiap komponen, memang tepat:
+   akar masalahnya satu baris, dan komponen yang belum ditulis pun ikut
+   benar tanpa harus mengingat aturannya. */
 body {
   margin: 0;
   min-width: 320px;
-  color: var(--black);
+  color: var(--ink);
   background: var(--white);
   font-family: var(--body);
   -webkit-font-smoothing: antialiased;
@@ -64,6 +78,26 @@ select,
 textarea,
 button {
   font-family: inherit;
+}
+
+/* ============================================================
+   WARNA TEKS CONTOH DI ISIAN
+   ============================================================
+   Sama seperti font di atas, placeholder TIDAK mewarisi apa pun: browser
+   memberinya abu-abu tetapnya sendiri (#757575 di Chrome) yang tidak
+   pernah ikut mode gelap. Di atas isian yang menggelap, abu itu cuma
+   mencapai 3,91:1 -- di bawah ambang baca, dan terlihat seperti tulisan
+   yang setengah hilang, bukan seperti contoh pengisian.
+
+   Disetel ke --ink-muted supaya ikut membalik bersama token lain, dan
+   ditaruh sebagai aturan dasar di sini supaya isian yang ditambahkan
+   nanti otomatis benar. opacity:1 wajib: Firefox memberi placeholder
+   opacity < 1 secara bawaan, jadi tanpa baris itu warnanya jadi redup
+   dua kali. */
+input::placeholder,
+textarea::placeholder {
+  color: var(--ink-muted);
+  opacity: 1;
 }
 
 /* Elemen kode dipakai di halaman admin buat menyebut nama env var dan

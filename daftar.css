@@ -180,15 +180,32 @@
   font-size: 0.8rem;
 }
 
+/* Kartu paket yang TERPILIH berlatar pink, dan pink tetap warna terang
+   di mode gelap. Jadi isinya tidak boleh mewarisi warna teks halaman:
+   di mode gelap warna itu terang, dan terang di atas pink terang berarti
+   tulisannya hilang -- terukur 1,85:1 untuk nama paketnya dan 1,2:1
+   untuk keterangan di bawahnya, dua-duanya jauh di bawah ambang baca.
+
+   Keduanya diwarnai eksplisit dengan token khusus latar pink, yang
+   sengaja TIDAK ikut membalik per mode. */
 .daftar-plan input:checked + .daftar-plan-box {
   border-color: var(--ink);
   background: var(--pink);
+  color: var(--ink-di-pink);
+}
+
+.daftar-plan input:checked + .daftar-plan-box small {
+  color: var(--ink-di-pink-lembut);
 }
 
 /* Fokus keyboard harus tetap terlihat walau input aslinya disembunyikan,
-   supaya pilihan paket bisa dipakai tanpa mouse. */
+   supaya pilihan paket bisa dipakai tanpa mouse.
+
+   --ink, bukan --black: kartunya menggelap di mode gelap, dan cincin
+   fokus hitam di atas latar gelap sama saja dengan tidak ada cincin
+   fokus sama sekali. */
 .daftar-plan input:focus-visible + .daftar-plan-box {
-  outline: 2px solid var(--black);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
@@ -542,8 +559,35 @@
   font-size: 0.8rem;
 }
 
-.daftar-draf .button-outline {
-  border-color: rgba(0, 0, 0, 0.45);
+/* Tombol sekunder DI DALAM kotak draf, bukan di atas foto halaman.
+   Bedanya menentukan warnanya, dan inilah yang dulu salah.
+
+   .daftar-body .button-outline (di bawah) memutihkan tombol ini karena
+   latar halaman /daftar adalah foto gelap. Tapi kotak draf punya
+   latarnya SENDIRI -- var(--pink-light), yang di mode terang berarti
+   pink muda. Teks putih di atas pink muda cuma 1,29:1: tombolnya ada,
+   bisa diklik, dan sama sekali tidak terbaca. Bukan cuma di mode gelap
+   -- justru mode terang yang rusak, karena di mode gelap --pink-light
+   ikut menggelap sehingga putihnya kebetulan benar.
+
+   Selectornya sengaja tiga kelas (0,3,0) supaya menang atas
+   .daftar-body .button-outline yang (0,2,0) DAN ditulis lebih bawah.
+   Menyamakan kekhususan saja tidak cukup di sini: yang belakangan
+   menang, dan yang belakangan justru aturan yang salah untuk kotak ini.
+
+   Hover dikembalikan ke perilaku bawaan .button-outline (teks pink di
+   atas hitam), yang aman di kedua mode karena hitam tetap hitam dan pink
+   tetap terang. */
+.daftar-body .daftar-draf .button-outline {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.daftar-body .daftar-draf .button-outline:hover,
+.daftar-body .daftar-draf .button-outline:focus-visible {
+  color: var(--pink);
+  background: var(--black);
+  border-color: var(--black);
 }
 
 @media (max-width: 620px) {

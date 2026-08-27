@@ -331,6 +331,24 @@ module.exports = {
   // 404 di email orang.
   emailLogoUrl: '/EDITS/logo-equal-black.png',
 
+  // Pasangan TERANG dari logo email di atas, dipakai waktu kotak
+  // masuknya bermode gelap.
+  //
+  // Kenapa perlu berkas kedua: logo email adalah wordmark hitam di atas
+  // latar tembus pandang. Klien bermode gelap menggelapkan kartu
+  // putihnya, tapi tidak pernah membalik isi gambar, jadi wordmark hitam
+  // itu tinggal balok pink kecil di kiri atas. Ini yang dilaporkan
+  // sebagai "logonya tidak kelihatan".
+  //
+  // Berkasnya dibuat dari logo-equal-black.png dengan geometri yang sama
+  // persis (562x262, jadi rasio 120x56 di email tidak berubah): tintanya
+  // saja yang dibalik jadi terang, aksen pinknya dibiarkan apa adanya
+  // karena pink sudah terbaca di latar terang maupun gelap.
+  //
+  // Boleh dikosongkan. Emailnya cuma kembali memakai satu logo untuk
+  // semua keadaan, persis seperti sebelum ini ada.
+  emailLogoGelapUrl: '/EDITS/logo-equal-light.png',
+
   // Nomor untuk tombol WhatsApp di email tanda terima. Email itu tidak
   // punya tautan lain: pendaftarnya belum bisa masuk ruang kelas, jadi
   // satu-satunya tindakan yang masuk akal di tahap itu adalah bertanya.

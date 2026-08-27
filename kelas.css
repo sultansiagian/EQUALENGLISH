@@ -601,8 +601,12 @@
   transform: translate(2px, -2px);
 }
 
+/* --ink, bukan --black: tile-nya berlatar --surface yang menggelap di
+   mode gelap, dan cincin fokus hitam di atas kartu gelap tidak terlihat
+   sama sekali. Di mode terang nilainya identik, jadi tampilannya di sana
+   tidak berubah. */
 .kelas-tile-link:focus-visible {
-  outline: 2px solid var(--black);
+  outline: 2px solid var(--ink);
   outline-offset: 4px;
   border-radius: 2px;
 }
@@ -907,7 +911,11 @@
 .kelas-schedule-badge {
   margin-left: auto;
   padding: 0.22rem 0.55rem;
-  color: var(--ink);
+  /* --ink-di-pink, BUKAN --ink: alasannya sama persis dengan
+     .kelas-tile-badge di atas, dan lencana ini memang terlewat waktu
+     yang itu diperbaiki. Dua lencana yang bentuknya nyaris kembar
+     sebaiknya juga kembar aturannya. */
+  color: var(--ink-di-pink);
   background: var(--pink);
   border-radius: var(--r-pil);
   font-family: var(--body);

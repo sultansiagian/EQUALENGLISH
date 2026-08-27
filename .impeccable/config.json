@@ -28,6 +28,15 @@
         "value": "arial",
         "createdAt": "2026-08-23T08:50:47.939Z",
         "reason": "Email HTML: Gmail buang @font-face, cuma font bawaan sistem yang tersedia"
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "kelas.css"
+        ],
+        "createdAt": "2026-08-27T13:09:53.087Z",
+        "reason": "User confirmed: progress-bar fill animates width once on load; scaleX would distort its pill border-radius, and prefers-reduced-motion already disables it"
       }
     ]
   }

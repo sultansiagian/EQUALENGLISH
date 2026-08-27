@@ -36,7 +36,95 @@ const WARNA = {
   teksRedup: '#5c5b5b',
   garis: '#e8e4e0',
   pink: '#ffacdf',
+  // Teks DI ATAS pink. Pink tetap warna terang di mode gelap, jadi nilai
+  // ini sengaja satu-satunya yang TIDAK punya pasangan gelap di bawah.
+  teksDiPink: '#1a1016',
 };
+
+/**
+ * Pasangan gelap dari WARNA di atas.
+ *
+ * Nilainya sengaja sama persis dengan token mode gelap di tokens.css
+ * (--surface, --surface-2, --ink, --ink-muted, --pink), supaya email dan
+ * situs tidak pelan-pelan berpisah jadi dua "mode gelap" yang beda.
+ *
+ * --line di situs berupa rgba, dan rgba tidak bisa diandalkan sebagai
+ * warna border di email, jadi di sini dipakai hasil datarnya di atas
+ * kartu: rgba(242,239,236,0.16) di atas #201e24 = #423f44.
+ */
+const GELAP = {
+  latar: '#17161a',
+  kartu: '#201e24',
+  teks: '#f2efec',
+  teksRedup: '#a5a1aa',
+  garis: '#423f44',
+  pink: '#e79bc7',
+};
+
+/**
+ * ============================================================
+ * MODE GELAP DI EMAIL
+ * ============================================================
+ * Masalahnya bukan teori: logo email adalah wordmark HITAM di atas latar
+ * tembus pandang, dan kartunya putih. Begitu kotak masuknya gelap,
+ * kartu putih itu ikut digelapkan sementara gambarnya tidak pernah ikut
+ * dibalik, jadi yang tersisa cuma balok pink kecil di kiri atas. Logonya
+ * hilang, dan itu persis yang dilaporkan.
+ *
+ * Ada dua jenis klien, dan keduanya butuh jawaban yang berbeda:
+ *
+ *   1. Yang MENGHORMATI prefers-color-scheme (Apple Mail, iOS Mail,
+ *      Outlook.com, sebagian Gmail). Untuk mereka email ini membawa
+ *      paletnya sendiri lewat <style> di bawah, dan logonya ditukar ke
+ *      versi terang. Hasilnya email gelap yang memang dirancang, bukan
+ *      hasil pembalikan mesin.
+ *
+ *   2. Yang MEMBALIK WARNA sendiri tanpa menanyakan apa pun (Gmail di
+ *      Android/iOS, Outlook untuk Windows). Mereka tidak membaca media
+ *      query, jadi satu-satunya pegangan adalah dua meta di bawah:
+ *      color-scheme dan supported-color-schemes memberi tahu klien bahwa
+ *      email ini sudah mengurus mode gelapnya sendiri, dan sebagian
+ *      besar berhenti membalik begitu melihatnya.
+ *
+ * Selain itu ada selector [data-ogsc]/[data-ogsb]. Outlook.com dan Gmail
+ * menempelkan atribut itu ke elemen waktu mereka membalik warna, jadi ia
+ * satu-satunya kail yang tersedia di jalur pembalikan otomatis.
+ *
+ * SEMUA gaya inline tetap versi TERANG. Itu disengaja: klien yang
+ * membuang <style> sama sekali (sebagian Gmail lama, banyak webmail
+ * korporat) tetap menerima email terang yang utuh dan benar, bukan email
+ * setengah jadi. Blok di bawah cuma menambah, tidak pernah jadi syarat.
+ */
+function gayaGelap() {
+  return (
+    '<style type="text/css">' +
+    ':root{color-scheme:light dark;supported-color-schemes:light dark;}' +
+    '@media (prefers-color-scheme: dark){' +
+    '.eq-latar{background:' + GELAP.latar + ' !important;}' +
+    '.eq-kartu{background:' + GELAP.kartu + ' !important;}' +
+    '.eq-judul{color:' + GELAP.teks + ' !important;}' +
+    '.eq-teks{color:' + GELAP.teksRedup + ' !important;}' +
+    '.eq-kaki{color:' + GELAP.teksRedup + ' !important;border-top-color:' + GELAP.garis + ' !important;}' +
+    '.eq-tombol-utama{background:' + GELAP.pink + ' !important;}' +
+    '.eq-tombol-kedua{background:' + GELAP.kartu + ' !important;border-color:' + GELAP.garis + ' !important;}' +
+    '.eq-tombol-kedua a{color:' + GELAP.teks + ' !important;}' +
+    // Penukaran logo. Yang terang disembunyikan dengan display:none DAN
+    // max-height:0 -- sebagian klien mengabaikan salah satunya, dan yang
+    // lolos akan menyisakan celah kosong setinggi logo di atas judul.
+    '.eq-logo-terang{display:none !important;max-height:0 !important;overflow:hidden !important;mso-hide:all;}' +
+    '.eq-logo-gelap{display:block !important;max-height:none !important;overflow:visible !important;}' +
+    '}' +
+    // Jalur pembalikan otomatis Outlook.com/Gmail.
+    '[data-ogsc] .eq-judul{color:' + GELAP.teks + ' !important;}' +
+    '[data-ogsc] .eq-teks{color:' + GELAP.teksRedup + ' !important;}' +
+    '[data-ogsc] .eq-kaki{color:' + GELAP.teksRedup + ' !important;}' +
+    '[data-ogsc] .eq-logo-terang{display:none !important;max-height:0 !important;overflow:hidden !important;}' +
+    '[data-ogsc] .eq-logo-gelap{display:block !important;max-height:none !important;overflow:visible !important;}' +
+    '[data-ogsb] .eq-kartu{background:' + GELAP.kartu + ' !important;}' +
+    '[data-ogsb] .eq-latar{background:' + GELAP.latar + ' !important;}' +
+    '</style>'
+  );
+}
 
 function escapeHtml(s) {
   return String(s === undefined || s === null ? '' : s)
@@ -136,7 +224,7 @@ function tombol(url, label, sekunder) {
     return (
       '<table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" ' +
       'style="margin:0 auto;">' +
-      '<tr><td align="center" bgcolor="' + WARNA.kartu + '" ' +
+      '<tr><td align="center" bgcolor="' + WARNA.kartu + '" class="eq-tombol-kedua" ' +
       'style="border-radius:999px;border:1px solid ' + WARNA.garis + ';">' +
       '<a href="' + escapeHtml(url) + '" ' +
       'style="display:inline-block;padding:13px 24px;font-family:Arial,Helvetica,sans-serif;' +
@@ -159,11 +247,15 @@ function tombolUtama(url, label) {
   return (
     '<table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" ' +
     'style="margin:0 auto;">' +
-    '<tr><td align="center" bgcolor="' + WARNA.pink + '" ' +
+    // Teksnya SENGAJA tidak diberi kelas eq-*: latarnya pink, dan pink
+    // tetap warna terang di mode gelap, jadi teks di atasnya harus tetap
+    // gelap di dua-duanya. Ikut dibalikkan berarti teks terang di atas
+    // pink terang -- persis jebakan yang dicatat di tokens.css.
+    '<tr><td align="center" bgcolor="' + WARNA.pink + '" class="eq-tombol-utama" ' +
     'style="border-radius:999px;">' +
     '<a href="' + escapeHtml(url) + '" ' +
     'style="display:inline-block;padding:14px 30px;font-family:Arial,Helvetica,sans-serif;' +
-    'font-size:15px;font-weight:bold;color:' + WARNA.teks + ';text-decoration:none;' +
+    'font-size:15px;font-weight:bold;color:' + WARNA.teksDiPink + ';text-decoration:none;' +
     'border-radius:999px;">' +
     escapeHtml(label) +
     '</a></td></tr></table>'
@@ -172,7 +264,7 @@ function tombolUtama(url, label) {
 
 function paragraf(teks) {
   return (
-    '<p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:15px;' +
+    '<p class="eq-teks" style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:15px;' +
     'line-height:1.65;color:' + WARNA.teksRedup + ';">' +
     escapeHtml(teks).replace(/\n/g, '<br />') +
     '</p>'
@@ -185,6 +277,9 @@ function paragraf(teks) {
  *                               email, seperti kebiasaan email transaksi.
  * @param {string} opsi.teks     Isi email yang penandanya SUDAH diisi.
  * @param {string} opsi.logoUrl  Boleh relatif, boleh URL penuh.
+ * @param {string} opsi.logoGelapUrl  Versi terang dari logo, dipakai di
+ *                               kotak masuk bermode gelap. Boleh kosong:
+ *                               emailnya cuma kembali memakai satu logo.
  * @param {string} opsi.asal     Asal situs, untuk melengkapi logo relatif.
  * @param {string} opsi.waUrl    Alamat WhatsApp, dipakai HANYA kalau isi
  *                               emailnya tidak punya tautan sendiri.
@@ -194,6 +289,7 @@ function bungkusEmail(opsi) {
   const teks = String(o.teks || '');
   const asal = String(o.asal || '');
   const logo = logoAbsolut(o.logoUrl, asal);
+  const logoGelap = logoAbsolut(o.logoGelapUrl, asal);
 
   // Satu baris kosong memisahkan paragraf, sama seperti yang terlihat
   // admin waktu mengetik di /atur-form.
@@ -253,17 +349,43 @@ function bungkusEmail(opsi) {
     }
   }
 
+  // 120x56 mengikuti rasio berkasnya (562x262). Kalau logonya diganti
+  // dengan berkas berasio lain, angka ini ikut diubah -- ukuran yang
+  // tidak sesuai membuat logonya gepeng, dan email tidak punya
+  // object-fit untuk menyelamatkannya.
+  //
+  // width/height ditulis sebagai atribut DAN di gaya inline: sebagian
+  // klien mengabaikan salah satunya, dan tanpa ukuran yang pasti logonya
+  // melar sepenuh amplop sebelum gambarnya selesai dimuat.
+  function gambarLogo(src) {
+    return (
+      '<img src="' + escapeHtml(src) + '" alt="EQUAL English" width="120" ' +
+      'height="56" style="display:block;width:120px;height:56px;border:0;" />'
+    );
+  }
+
+  // Logo versi terang untuk kotak masuk yang gelap. Dua <img>, bukan satu
+  // yang ditukar src-nya lewat CSS: penukaran src cuma jalan di WebKit,
+  // sedangkan menyembunyikan salah satu dari dua elemen adalah satu-
+  // satunya cara yang dimengerti Outlook.com dan Gmail juga.
+  //
+  // Kalau versi gelapnya tidak disetel, seluruh mekanisme ini dilewati
+  // dan emailnya kembali persis seperti sebelumnya: satu logo, tanpa
+  // pembungkus tambahan. Lebih baik begitu daripada menampilkan dua logo
+  // bertumpuk di klien yang tidak paham penyembunyiannya.
   const barisLogo = logo
     ? '<tr><td style="padding:32px 32px 0;">' +
-      // 120x56 mengikuti rasio berkasnya (562x262). Kalau logonya
-      // diganti dengan berkas berasio lain, angka ini ikut diubah --
-      // ukuran yang tidak sesuai membuat logonya gepeng, dan email tidak
-      // punya object-fit untuk menyelamatkannya.
-      '<img src="' + escapeHtml(logo) + '" alt="EQUAL English" width="120" ' +
-      // width/height ditulis sebagai atribut DAN di gaya inline: sebagian
-      // klien mengabaikan salah satunya, dan tanpa ukuran yang pasti
-      // logonya melar sepenuh amplop sebelum gambarnya selesai dimuat.
-      'height="56" style="display:block;width:120px;height:56px;border:0;" />' +
+      (logoGelap
+        ? '<div class="eq-logo-terang">' + gambarLogo(logo) + '</div>' +
+          // Dibungkus komentar kondisional supaya Outlook untuk Windows
+          // (yang tidak mengenal display:none di sini) tidak pernah
+          // melihatnya sama sekali, jadi tidak mungkin tampil dobel.
+          '<!--[if !mso]><!-->' +
+          '<div class="eq-logo-gelap" style="display:none;max-height:0;overflow:hidden;mso-hide:all;">' +
+          gambarLogo(logoGelap) +
+          '</div>' +
+          '<!--<![endif]-->'
+        : gambarLogo(logo)) +
       '</td></tr>'
     : '';
 
@@ -275,24 +397,31 @@ function bungkusEmail(opsi) {
     '<!doctype html><html lang="id"><head>' +
     '<meta charset="utf-8" />' +
     '<meta name="viewport" content="width=device-width,initial-scale=1" />' +
+    // Dua meta ini yang membuat sebagian besar klien BERHENTI membalik
+    // warna sendiri dan menyerahkannya ke <style> di bawah. Tanpa
+    // keduanya, media query di sana tidak pernah kebagian giliran.
+    '<meta name="color-scheme" content="light dark" />' +
+    '<meta name="supported-color-schemes" content="light dark" />' +
     '<title>' + escapeHtml(o.subjek || '') + '</title>' +
+    gayaGelap() +
     '</head>' +
-    '<body style="margin:0;padding:0;background:' + WARNA.latar + ';">' +
+    '<body class="eq-latar" style="margin:0;padding:0;background:' + WARNA.latar + ';">' +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" ' +
-    'style="background:' + WARNA.latar + ';padding:24px 12px;">' +
+    'class="eq-latar" style="background:' + WARNA.latar + ';padding:24px 12px;">' +
     '<tr><td align="center">' +
     '<table role="presentation" width="' + LEBAR + '" cellpadding="0" cellspacing="0" border="0" ' +
+    'class="eq-kartu" ' +
     'style="width:100%;max-width:' + LEBAR + 'px;background:' + WARNA.kartu + ';border-radius:16px;">' +
     barisLogo +
     '<tr><td style="padding:24px 32px 0;">' +
-    '<h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:26px;' +
+    '<h1 class="eq-judul" style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:26px;' +
     'line-height:1.25;color:' + WARNA.teks + ';">' +
     escapeHtml(o.subjek || '') +
     '</h1></td></tr>' +
     '<tr><td style="padding:20px 32px 0;">' + isiHtml + '</td></tr>' +
     barisTombol +
     '<tr><td style="padding:28px 32px 32px;">' +
-    '<div style="border-top:1px solid ' + WARNA.garis + ';padding-top:16px;' +
+    '<div class="eq-kaki" style="border-top:1px solid ' + WARNA.garis + ';padding-top:16px;' +
     'font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:' +
     WARNA.teksRedup + ';">' +
     'Email ini dikirim otomatis karena kamu mendaftar di EQUAL English. ' +

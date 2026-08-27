@@ -92,6 +92,7 @@ async function kirim(overrides, jenis, tujuan, nilai) {
       teks: isiJadi,
       statusUrl: statusUrl,
       logoUrl: ambil(overrides, 'emailLogoUrl'),
+      logoGelapUrl: ambil(overrides, 'emailLogoGelapUrl'),
       asal: asalSitus,
       waUrl: linkWhatsApp(ambil(overrides, 'waNomor')),
     });
