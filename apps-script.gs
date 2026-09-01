@@ -64,7 +64,8 @@
  *   -> baris masuk ke tab "Pendaftar Web", BELUM dapat akses kelas
  *      karena tab ini tidak terdaftar di ROSTER_CSV_URLS
  *   -> admin cek bukti bayar di /pendaftar, klik Setujui
- *   -> baris DIPINDAH ke tab "Form_Responses"
+ *   -> baris DIPINDAH ke tab roster (lihat TAB_ROSTER_KANDIDAT di bawah;
+ *      di spreadsheet ini namanya "Form Responses 1")
  *   -> api/verify-access.js membacanya seperti biasa, akses terbuka
  */
 
@@ -72,8 +73,80 @@
 var SECRET = 'GANTI_DENGAN_KATA_SANDI_ACAK_PANJANG';
 
 var TAB_PENDING = 'Pendaftar Web';
-var TAB_ROSTER = 'Form_Responses';
 var TAB_TESTIMONI = 'Testimoni';
+
+/**
+ * Tab roster: tempat baris pendaftar yang SUDAH disetujui.
+ *
+ * ------------------------------------------------------------
+ * KENAPA INI SEBUAH DAFTAR, BUKAN SATU NAMA
+ * ------------------------------------------------------------
+ * Nama tab ini tidak pernah kita yang menentukan: Google Form membuatnya
+ * sendiri waktu spreadsheet responsnya dibuat, dan namanya berbeda-beda
+ * menurut bahasa akun dan versi Form yang dipakai -- "Form Responses 1",
+ * "Form_Responses", kadang tanpa angka. Berkas ini sebelumnya memaku satu
+ * nama saja, dan getSheetByName() mencocokkan huruf per huruf tanpa
+ * cadangan.
+ *
+ * Akibatnya waktu namanya tidak sama persis: handleApprove membalas
+ * `tab_roster_tidak_ketemu`, tombol Setujui di /pendaftar gagal, dan
+ * TIDAK ADA baris yang pernah pindah ke roster. Spreadsheet-nya sendiri
+ * terlihat baik-baik saja, jadi yang terlihat cuma "kok tidak ada yang
+ * masuk ya".
+ *
+ * Sekarang beberapa nama yang lazim dicoba berurutan. Kalau tab-mu
+ * bernama lain lagi, tambahkan namanya di urutan PALING ATAS.
+ */
+var TAB_ROSTER_KANDIDAT = [
+  'Form Responses 1',
+  'Form_Responses',
+  'Form Responses',
+  'Form responses 1',
+];
+
+// Dipertahankan supaya kode lama yang menyebut TAB_ROSTER tetap jalan,
+// dan supaya pesan error punya satu nama untuk disebut.
+var TAB_ROSTER = TAB_ROSTER_KANDIDAT[0];
+
+/**
+ * Cari tab roster, balik null kalau tidak satu pun kandidat ketemu.
+ */
+function sheetRoster() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  for (var i = 0; i < TAB_ROSTER_KANDIDAT.length; i++) {
+    var sh = ss.getSheetByName(TAB_ROSTER_KANDIDAT[i]);
+    if (sh) return sh;
+  }
+  return null;
+}
+
+/**
+ * Balasan gagal yang MENYEBUTKAN nama tab yang benar-benar ada.
+ *
+ * Tanpa ini, yang terbaca di situs cuma "tab_roster_tidak_ketemu", dan
+ * satu-satunya cara tahu penyebabnya adalah membuka spreadsheet lalu
+ * membandingkan nama tab satu per satu dengan isi berkas ini. Dengan
+ * daftarnya ikut dikirim, penyebabnya kelihatan dari layar admin.
+ */
+function rosterTidakKetemu() {
+  var nama = [];
+  try {
+    nama = SpreadsheetApp.getActiveSpreadsheet().getSheets().map(function (s) {
+      return s.getName();
+    });
+  } catch (err) {
+    nama = ['(gagal membaca daftar tab: ' + err + ')'];
+  }
+  return jsonOut({
+    ok: false,
+    reason: 'tab_roster_tidak_ketemu',
+    pesan:
+      'Tidak ada tab bernama ' + TAB_ROSTER_KANDIDAT.join(' / ') +
+      '. Tab yang ada di spreadsheet ini: ' + nama.join(', ') +
+      '. Tambahkan nama yang benar ke TAB_ROSTER_KANDIDAT di Apps Script.',
+    tabTersedia: nama,
+  });
+}
 
 function doPost(e) {
   try {
@@ -92,6 +165,8 @@ function doPost(e) {
     if (body.action === 'listTestimoni') return handleListTestimoni();
     if (body.action === 'tayangkanTestimoni') return handleTayangkanTestimoni(body.id, body.tayang);
     if (body.action === 'riwayat') return handleRiwayat(body.perubahan, body.oleh);
+    if (body.action === 'rosterList') return handleRosterList();
+    if (body.action === 'rosterTandai') return handleRosterTandai(body.nomorBaris, body.cabut);
     if (body.action === 'ping') return jsonOut({ ok: true, pesan: 'terhubung' });
 
     return jsonOut({ ok: false, reason: 'action_tidak_dikenal' });
@@ -204,8 +279,7 @@ function handleList() {
   // Terbaru di atas, supaya yang baru masuk langsung kelihatan di /pendaftar.
   hasil.reverse();
 
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var shRoster = ss.getSheetByName(TAB_ROSTER);
+  var shRoster = sheetRoster();
   var judul = [];
   if (shRoster && shRoster.getLastColumn() > 0) {
     judul = shRoster.getRange(1, 1, 1, shRoster.getLastColumn()).getValues()[0].map(String);
@@ -236,9 +310,8 @@ function handleApprove(id, isiTambahan) {
   var ketemu = cariBarisById(shPending, id);
   if (!ketemu) return jsonOut({ ok: false, reason: 'id_tidak_ketemu' });
 
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var shRoster = ss.getSheetByName(TAB_ROSTER);
-  if (!shRoster) return jsonOut({ ok: false, reason: 'tab_roster_tidak_ketemu' });
+  var shRoster = sheetRoster();
+  if (!shRoster) return rosterTidakKetemu();
 
   var baris = ketemu.nilai.slice(1); // buang kolom id
 
@@ -260,6 +333,127 @@ function handleApprove(id, isiTambahan) {
   shPending.deleteRow(ketemu.nomorBaris);
 
   return jsonOut({ ok: true });
+}
+
+/**
+ * ============================================================
+ * BATCH: BACA ROSTER DAN CABUT/PULIHKAN AKSES
+ * ============================================================
+ *
+ * Halaman /batch di situs perlu dua hal yang tidak bisa didapat dari CSV
+ * yang dipublikasikan: NOMOR BARIS yang pasti (supaya tahu baris mana
+ * yang mau ditandai) dan kemampuan MENULIS balik ke sheet. Keduanya cuma
+ * ada lewat Apps Script.
+ *
+ * Yang TIDAK berubah: cara akses ditentukan. api/_lib/roster.js tetap
+ * membaca CSV dan tetap memutuskan lewat kata "done" dan tanggal kolom W
+ * seperti selama ini. Dua fungsi di bawah cuma menulis penanda yang sama
+ * yang selama ini kamu ketik sendiri, jadi kalau keduanya tidak pernah
+ * dipakai pun gerbang kelasnya berperilaku persis seperti sekarang.
+ */
+
+// Indeks dihitung dari 0. Sengaja jauh di kanan: kolom X ke kanan itu
+// jatah pertanyaan tambahan buatan admin, dan jumlahnya bisa tumbuh
+// sampai kolom 62. Menaruh penanda di sela-sela jatah itu berarti suatu
+// hari pertanyaan baru akan menimpanya tanpa gejala apa pun.
+//
+// HARUS SAMA dengan KOLOM_BATCH/KOLOM_CABUT di api/_lib/form-schema.js.
+// Kalau salah satunya diubah tanpa yang lain, situs akan menulis label
+// batch ke kolom yang tidak dibaca skrip ini, dan tombol cabut akan
+// menandai kolom yang salah.
+var KOLOM_BATCH = 70;   // BS -- label batch, ditulis waktu Setujui
+var KOLOM_CABUT = 71;   // BT -- tempat baku penanda "done" dari /batch
+
+/**
+ * Kirim seluruh isi roster apa adanya, plus nomor barisnya.
+ *
+ * Barisnya dikirim mentah (belum diterjemahkan jadi nama/email/paket)
+ * karena susunan kolom ditentukan admin lewat /atur-form, dan yang tahu
+ * susunan itu adalah situs, bukan skrip ini. Pola yang sama dipakai
+ * handleList() untuk tab Pendaftar Web.
+ */
+function handleRosterList() {
+  var sh = sheetRoster();
+  if (!sh) return rosterTidakKetemu();
+  if (sh.getLastRow() < 2) return jsonOut({ ok: true, baris: [] });
+
+  var nilai = sh.getDataRange().getValues();
+  var hasil = [];
+
+  for (var i = 1; i < nilai.length; i++) {
+    var isi = [];
+    var kosong = true;
+    var dicabut = false;
+
+    for (var c = 0; c < nilai[i].length; c++) {
+      var sel = nilai[i][c];
+      var teks = sel === null || sel === undefined ? '' : String(sel);
+      isi.push(teks);
+      if (teks.trim() !== '') kosong = false;
+      // Sama persis dengan aturan di api/_lib/roster.js: SELURUH isi sel
+      // harus tepat "done", bukan sekadar mengandung kata itu.
+      if (teks.trim().toLowerCase() === 'done') dicabut = true;
+    }
+
+    // Baris kosong di tengah sheet (bekas hapus manual) dilewati supaya
+    // tidak muncul sebagai peserta hantu tanpa nama di halaman admin.
+    if (kosong) continue;
+
+    hasil.push({ nomorBaris: i + 1, isi: isi, dicabut: dicabut });
+  }
+
+  return jsonOut({ ok: true, baris: hasil });
+}
+
+/**
+ * Cabut atau pulihkan akses SATU BARIS roster.
+ *
+ * Mencabut menulis "done" di kolom BT, satu tempat yang tetap, supaya
+ * pencabutan lewat halaman admin selalu bisa ditemukan di kolom yang
+ * sama waktu ditelusuri belakangan.
+ *
+ * MEMULIHKAN membersihkan "done" dari SELURUH sel di baris itu, bukan
+ * cuma dari kolom BT. Alasannya penting: roster.js menganggap "done" di
+ * sel MANA PUN sebagai pencabutan, jadi kalau tombol Pulihkan cuma
+ * mengosongkan kolom BT sementara ada "done" lain yang pernah kamu ketik
+ * manual, tombolnya akan terlihat berhasil padahal orangnya tetap
+ * terkunci di luar. Kegagalan diam-diam seperti itu yang paling mahal:
+ * yang menekan tombol tidak punya cara tahu.
+ */
+function handleRosterTandai(nomorBaris, cabut) {
+  var sh = sheetRoster();
+  if (!sh) return rosterTidakKetemu();
+
+  var n = Number(nomorBaris);
+  // Baris 1 itu judul kolom. Menandainya akan merusak header sheet.
+  if (!(n >= 2) || n !== Math.floor(n)) return jsonOut({ ok: false, reason: 'baris_tidak_sah' });
+  if (n > sh.getLastRow()) return jsonOut({ ok: false, reason: 'baris_tidak_ketemu' });
+
+  if (cabut) {
+    sh.getRange(n, KOLOM_CABUT + 1).setValue('done');
+    SpreadsheetApp.flush();
+    return jsonOut({ ok: true, dicabut: true });
+  }
+
+  var lebar = Math.max(sh.getLastColumn(), KOLOM_CABUT + 1);
+  var rentang = sh.getRange(n, 1, 1, lebar);
+  var isi = rentang.getValues()[0];
+  var berubah = false;
+
+  for (var c = 0; c < isi.length; c++) {
+    var teks = isi[c] === null || isi[c] === undefined ? '' : String(isi[c]);
+    if (teks.trim().toLowerCase() === 'done') {
+      isi[c] = '';
+      berubah = true;
+    }
+  }
+
+  if (berubah) {
+    rentang.setValues([isi]);
+    SpreadsheetApp.flush();
+  }
+
+  return jsonOut({ ok: true, dicabut: false });
 }
 
 /**

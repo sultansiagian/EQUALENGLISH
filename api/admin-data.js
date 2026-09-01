@@ -2,6 +2,7 @@ const statistik = require('./_lib/handler-statistik');
 const testimoni = require('./_lib/handler-testimoni');
 const emailUji = require('./_lib/handler-email-uji');
 const susunanForm = require('./_lib/handler-susunan-form');
+const batch = require('./_lib/handler-batch');
 
 /**
  * Satu pintu untuk beberapa endpoint panel admin sekaligus.
@@ -44,6 +45,11 @@ const BAGIAN = {
   // mengosongkan slot lebih dulu: waktu itu jumlahnya 11 dari 12, dan
   // menunggu sampai mentok berarti membereskannya sambil panik.
   'susunan-form': susunanForm,
+  // Halaman /batch. Ditaruh di sini sejak awal, bukan sebagai rute
+  // sendiri: waktu ditambahkan, jumlah rutenya sudah 10 dari 12, dan
+  // menaruhnya di api/ akan menghabiskan satu slot untuk sesuatu yang
+  // memang tidak butuh rutenya sendiri.
+  batch: batch,
 };
 
 module.exports = async function handler(req, res) {

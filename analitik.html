@@ -165,8 +165,9 @@
             </p>
 
             <p id="batch-kosong" class="admin-hint" hidden>
-              Belum ada batch. Mulai batch pertama untuk memisahkan pendapatan
-              per angkatan. <strong>Batch pertama menghitung sejak awal</strong>,
+              Belum ada batch. Buka batch pertama di
+              <a href="/batch">halaman Batch</a> untuk memisahkan pendapatan per
+              angkatan. <strong>Batch pertama menghitung sejak awal</strong>,
               jadi tidak ada pendaftar lama yang tertinggal.
             </p>
 
@@ -180,15 +181,17 @@
 
             <div id="batch-list" class="batch-list"></div>
 
-            <div class="admin-save-bar" data-reveal>
-              <button type="button" id="batch-mulai" class="admin-btn admin-btn-primary" hidden>
-                Mulai Batch Pertama
-              </button>
-              <button type="button" id="batch-tutup" class="admin-btn admin-btn-primary" hidden>
-                Tutup Batch Ini &amp; Mulai Batch Baru
-              </button>
-              <span id="batch-status" class="admin-save-status"></span>
-            </div>
+            <!-- Halaman ini CUMA MEMBACA batch, tidak lagi mengelolanya.
+                 Tombol mulai/tutup/ganti-nama dulu ada di sini dan
+                 menulis daftarnya sendiri, terpisah dari daftar yang
+                 dipakai /batch untuk melabeli peserta dan mencabut
+                 aksesnya. Dua daftar yang sama-sama disebut "batch" itu
+                 bisa berselisih tanpa ada yang memberi tahu. -->
+            <p class="admin-hint">
+              Batch dibuka, ditutup, dan diganti namanya di
+              <a href="/batch">halaman Batch</a>. Angka di sini mengikuti
+              rentang waktu yang disetel di sana.
+            </p>
           </section>
 
           <section class="admin-card" data-reveal>

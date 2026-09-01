@@ -91,8 +91,17 @@ module.exports = {
   hargaRiwayat: [],
 
   // ============================================================
-  // CATATAN BATCH, dipakai halaman /analitik
+  // CATATAN BATCH -- BENTUK LAMA, TIDAK DITULIS LAGI
   // ============================================================
+  // Dulu ditulis tombol mulai/tutup di /analitik. Sejak pengelolaan
+  // batch disatukan di /batch, yang ditulis adalah `batchList` di bawah,
+  // dan kunci ini cuma DIBACA sekali sebagai asal migrasi oleh
+  // daftarTersimpan() di api/_lib/batch.js -- supaya riwayat pendapatan
+  // per angkatan yang sudah tercatat tidak hilang. Begitu `batchList`
+  // terisi, isi di sini berhenti berpengaruh.
+  //
+  // Tidak dihapus supaya migrasinya tetap bisa jalan di deployment yang
+  // datanya sudah terlanjur ada.
   // Tiap item: { nama, mulai, selesai }.
   //   mulai/selesai : waktu ISO, atau null
   //   mulai null    : batch ini menghitung sejak awal, dipakai batch
@@ -275,6 +284,54 @@ module.exports = {
   //
   // Kosong = pendaftar baru tidak diberi batas waktu sama sekali.
   aksesBerakhirPada: '',
+
+  // ============================================================
+  // BATCH
+  //
+  // Daftar angkatan, diurut dari yang paling lama. Tiap batch:
+  //   { id, nama, dibukaPada, aksesBerakhir, tertutup }
+  //
+  // Batch AKTIF = satu-satunya yang `tertutup: false`. Waktu admin
+  // menekan Setujui di /pendaftar, dua nilai ikut ditulis ke baris
+  // roster: nama batch aktif ke kolom BS, dan aksesBerakhir milik batch
+  // itu ke kolom W. Jadi batch yang berbeda bisa punya tanggal berakhir
+  // yang berbeda tanpa saling mengganggu, dan tanggal itu tetap terlihat
+  // serta bisa diubah manual per orang langsung di spreadsheet.
+  //
+  // KENAPA DAFTARNYA DI SINI, BUKAN DI SPREADSHEET.
+  // Isinya keputusan pengelolaan (batch mana yang sedang menerima, sampai
+  // kapan aksesnya), bukan data peserta. Menaruhnya di sheet berarti
+  // gerbang kelas punya satu lagi hal yang bisa gagal dibaca; menaruhnya
+  // di sini membuat api/_lib/roster.js tidak perlu tahu apa pun soal
+  // batch, dan itu memang tujuannya -- file itu yang menentukan siapa
+  // boleh masuk kelas berbayar, jadi semakin sedikit yang diketahuinya
+  // semakin sedikit yang bisa rusak.
+  //
+  // Kosong = fitur batch belum dipakai. Semua baris roster yang ada
+  // ditampilkan di /batch sebagai satu kelompok tanpa label, dan
+  // pencabutannya tetap bisa dilakukan seperti biasa.
+  batchList: [],
+
+  // ============================================================
+  // EMAIL PEMBERITAHUAN AKSES BERAKHIR
+  //
+  // Dikirim waktu admin mencabut akses lewat /batch, bukan waktu tanggal
+  // kolom W lewat dengan sendirinya. Pencabutan otomatis karena tanggal
+  // memang tidak melewati kode ini sama sekali -- tidak ada yang berjalan
+  // pada saat itu untuk memicunya.
+  //
+  // Penandanya sama dengan email lain: {nama}.
+  emailCabutAktif: true,
+  emailCabutSubjek: 'Masa akses ruang kelas kamu sudah berakhir',
+  emailCabutIsi:
+    'Halo {nama},\n\n' +
+    'Masa akses ruang kelas kamu sudah berakhir, jadi materinya tidak bisa ' +
+    'dibuka lagi mulai sekarang.\n\n' +
+    'Terima kasih sudah belajar bareng kami. Semoga yang kamu dapat di kelas ' +
+    'kepakai terus.\n\n' +
+    'Kalau kamu merasa ini keliru, atau mau ikut batch berikutnya, balas email ' +
+    'ini atau hubungi kami di WhatsApp 0858-8834-5058.\n\n' +
+    'EQUAL English',
 
   // ============================================================
   // EMAIL OTOMATIS KE PENDAFTAR

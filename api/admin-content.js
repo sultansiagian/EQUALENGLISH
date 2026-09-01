@@ -4,6 +4,12 @@ const { readOverrides, writeOverrides } = require('./_lib/global-config-store');
 const { normalisasiFields } = require('./_lib/form-schema');
 const { panggilAppsScript } = require('./_lib/apps-script');
 const { kerjakanDiLatar } = require('./_lib/kerja-latar');
+// Batas jumlah catatan batch (satu batch kira-kira sebulan, jadi 60 sudah
+// lima tahun ke depan). DIAMBIL dari batch.js, bukan diketik ulang:
+// sempat ada dua konstanta bernama sama dengan nilai sama di dua berkas,
+// dan dua angka untuk satu batasan cepat atau lambat dinaikkan sendirian
+// sehingga batasnya bergantung pada pintu mana yang dilewati.
+const { MAKS_BATCH } = require('./_lib/batch');
 
 // Batas jumlah testimoni & panjang tiap field. Angkanya dipilih longgar
 // (jauh di atas kebutuhan wajar) tapi tetap terbatas, semata supaya satu
@@ -19,10 +25,6 @@ const MAKS_FAQ = 30;
 // Batas jumlah sesi jadwal kelas. Jauh di atas kebutuhan wajar
 // (bootcamp 10 hari), alasannya sama dengan batas testimoni di atas.
 const MAKS_SESI = 60;
-
-// Batas jumlah catatan batch. Satu batch kira-kira sebulan, jadi 60
-// sudah lima tahun ke depan.
-const MAKS_BATCH = 60;
 
 // Batas jumlah catatan perubahan harga. Harga jarang berubah, jadi 40
 // entri sudah sangat longgar.
@@ -197,6 +199,15 @@ module.exports = async function handler(req, res) {
 
     // Catatan batch. Dinormalkan dan dibatasi dengan alasan yang sama
     // seperti dua array di atas.
+    //
+    // WARISAN. Sejak pengelolaan batch dipindah ke /batch, tidak ada lagi
+    // yang mengirim `batchDaftar` ke sini; yang ditulis sekarang
+    // `batchList` lewat api/_lib/handler-batch.js. Penjagaan ini
+    // dibiarkan hidup supaya tab admin lama yang masih terbuka tidak bisa
+    // menyimpan bentuk yang rusak, TAPI nilainya cuma dibaca sebagai asal
+    // migrasi (lihat daftarTersimpan() di api/_lib/batch.js) dan berhenti
+    // dipakai begitu `batchList` terisi. Menulis ke sini tidak akan
+    // mengubah apa pun di /batch.
     if (filtered.batchDaftar !== undefined) {
       if (!Array.isArray(filtered.batchDaftar)) {
         return res.status(400).json({ ok: false, reason: 'batch_bukan_array' });

@@ -1,7 +1,8 @@
 const { requireAdmin } = require('./_lib/admin-guard');
 const { panggilAppsScript } = require('./_lib/apps-script');
 const { readOverrides } = require('./_lib/global-config-store');
-const { bacaBaris, KOLOM_BERLAKU_SAMPAI } = require('./_lib/form-schema');
+const { bacaBaris, KOLOM_BERLAKU_SAMPAI, KOLOM_BATCH } = require('./_lib/form-schema');
+const { daftarTersimpan, batchAktif } = require('./_lib/batch');
 const DEFAULTS = require('./_lib/site-defaults');
 const { kirimAksesDibuka } = require('./_lib/kirim-email');
 const { kerjakanDiLatar } = require('./_lib/kerja-latar');
@@ -67,18 +68,54 @@ module.exports = async function handler(req, res) {
       if (aksi === 'approve') {
         const overrides = await readOverrides().catch(() => ({}));
         overridesSetuju = overrides;
+
+        /* BATCH.
+           Selama daftar batch masih kosong, fitur ini dianggap belum
+           dipakai dan seluruh blok ini tidak melakukan apa-apa: tanggal
+           tetap diambil dari setelan global, tidak ada label yang
+           ditulis, dan persetujuan berperilaku persis seperti sebelum
+           fitur batch ada.
+
+           Begitu ada MINIMAL SATU batch, persetujuan menuntut ada batch
+           yang terbuka. Sengaja menolak, bukan menyetujui tanpa label:
+           baris tanpa label tidak akan pernah ikut tercabut waktu
+           batch-nya dibersihkan, dan itu baru ketahuan berbulan-bulan
+           kemudian sebagai orang yang masih bisa masuk padahal
+           angkatannya sudah lama selesai. */
+        const daftarBatch = daftarTersimpan(overrides);
+        const aktif = daftarBatch.length > 0 ? batchAktif(daftarBatch) : null;
+
+        if (daftarBatch.length > 0 && !aktif) {
+          return res.status(409).json({ ok: false, reason: 'batch_belum_dibuka' });
+        }
+
+        // Tanggal milik batch menang atas setelan global. Setelan global
+        // tetap jadi cadangan supaya batch yang dibuka tanpa tanggal
+        // tidak diam-diam menghapus batas waktu yang selama ini berlaku.
         const tanggal = String(
-          overrides.aksesBerakhirPada !== undefined
-            ? overrides.aksesBerakhirPada
-            : DEFAULTS.aksesBerakhirPada
+          (aktif && aktif.aksesBerakhir) ||
+            (overrides.aksesBerakhirPada !== undefined
+              ? overrides.aksesBerakhirPada
+              : DEFAULTS.aksesBerakhirPada)
         ).trim();
+
+        if (aktif) {
+          isiTambahan = Object.assign({}, isiTambahan, { [KOLOM_BATCH]: aktif.nama });
+        }
+
         // Cuma format yang benar-benar dikenali yang ditulis. Nilai
         // setengah jadi di kolom itu lebih berbahaya daripada kolom
         // kosong: verify-access mengabaikan yang tidak terbaca, jadi
         // hasilnya akan terlihat seperti batas waktu terpasang padahal
         // tidak pernah berlaku.
+        //
+        // MENGGABUNG, bukan menimpa. Sempat ditulis sebagai penugasan
+        // biasa di sini, dan akibatnya label batch yang baru saja disetel
+        // di atas terhapus tanpa jejak -- barisnya masuk roster dengan
+        // tanggal yang benar tapi tanpa batch, jadi tidak akan pernah
+        // ikut tercabut waktu angkatannya dibersihkan.
         if (/^\d{4}-\d{2}-\d{2}$/.test(tanggal)) {
-          isiTambahan = { [KOLOM_BERLAKU_SAMPAI]: tanggal };
+          isiTambahan = Object.assign({}, isiTambahan, { [KOLOM_BERLAKU_SAMPAI]: tanggal });
         }
       }
 

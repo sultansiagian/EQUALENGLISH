@@ -54,7 +54,7 @@
       ]
     },
     {
-      "source": "/(admin|analitik|pendaftar|atur-form|atur-kelas)",
+      "source": "/(admin|analitik|pendaftar|batch|atur-form|atur-kelas)",
       "headers": [
         {
           "key": "X-Robots-Tag",

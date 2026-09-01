@@ -29,6 +29,10 @@ var HALAMAN = [
   { href: '/atur-kelas', label: 'Ruang Kelas', ikon: 'papan' },
   { href: '/atur-form', label: 'Formulir', ikon: 'formulir' },
   { href: '/pendaftar', label: 'Pendaftar', ikon: 'orang' },
+  // Tepat di bawah Pendaftar, dan itu disengaja: keduanya mengurus orang
+  // yang sama pada dua tahap berbeda hidupnya di sini -- yang satu
+  // memberi akses, yang satu mengelompokkan lalu mencabutnya.
+  { href: '/batch', label: 'Batch', ikon: 'lapis' },
   { href: '/analitik', label: 'Analitik', ikon: 'grafik' },
 ];
 
@@ -56,6 +60,11 @@ var IKON = {
   grafik:
     '<path d="M3 3v16a2 2 0 0 0 2 2h16"/>' +
     '<path d="M18 17V9"/><path d="M13 17V5.5"/><path d="M8 17v-3.5"/>',
+  // Tumpukan lempeng: angkatan yang menumpuk satu di atas yang lain.
+  lapis:
+    '<path d="m12 2.5 9 4.75-9 4.75-9-4.75z"/>' +
+    '<path d="m3 12 9 4.75L21 12"/>' +
+    '<path d="m3 16.75 9 4.75 9-4.75"/>',
   keluar:
     '<path d="M15 3h6v6"/><path d="M10.5 13.5 21 3"/>' +
     '<path d="M18 13.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5.5"/>',

@@ -86,6 +86,36 @@ const KOLOM_BERLAKU_SAMPAI = 22; // W
 // yang sudah dipesan di atas.
 const KOLOM_TAMBAHAN_MULAI = 23;
 
+/**
+ * Dua kolom lagi yang dipesan, jauh di kanan: label batch dan penanda
+ * pencabutan dari halaman /batch.
+ *
+ * KENAPA JAUH DI KANAN, BUKAN DI SEBELAH KOLOM W.
+ * Kolom X ke kanan itu jatah pertanyaan tambahan buatan admin, dan
+ * jumlahnya tumbuh tiap kali ada pertanyaan baru, sampai batas
+ * MAKS_FIELD di bawah. Menaruh penanda batch di X+1 berarti pertanyaan
+ * tambahan kesekian nanti akan menimpanya, dan gejalanya jahat: label
+ * batch berubah jadi jawaban seseorang, atau sebaliknya jawaban
+ * seseorang terbaca sebagai nama batch. Tidak ada yang error, cuma
+ * datanya diam-diam salah.
+ *
+ * ANGKANYA DIHITUNG, BUKAN DIKIRA-KIRA. Pertanyaan tambahan mulai di
+ * KOLOM_TAMBAHAN_MULAI (23) dan bertambah satu kolom per pertanyaan,
+ * dibatasi MAKS_FIELD (40), jadi kolom terjauh yang mungkin dipakainya
+ * adalah 23 + 40 - 1 = 62.
+ *
+ * Percobaan pertama menaruhnya di 63 -- tepat satu kolom di sebelahnya,
+ * yang secara teknis benar hari ini tapi langsung bertabrakan begitu
+ * MAKS_FIELD dinaikkan seorang pun. 70 memberi jarak tujuh kolom, dan
+ * test/batch.test.js menjaga jarak itu supaya kalau MAKS_FIELD naik
+ * sampai mendekat, tesnya gagal duluan sebelum ada data yang tertimpa.
+ *
+ * Angkanya ditulis ulang di apps-script.gs (KOLOM_BATCH/KOLOM_CABUT) dan
+ * HARUS sama; kalau salah satunya diubah, yang lain ikut.
+ */
+const KOLOM_BATCH = 70;  // BS
+const KOLOM_CABUT = 71;  // BT
+
 const TIPE_SAH = ['teks', 'teksPanjang', 'email', 'telepon', 'pilihan', 'upload', 'paket', 'peserta'];
 
 /**
@@ -511,6 +541,8 @@ module.exports = {
   KOLOM,
   KOLOM_TAMBAHAN_MULAI,
   KOLOM_BERLAKU_SAMPAI,
+  KOLOM_BATCH,
+  KOLOM_CABUT,
   TIPE_SAH,
   MAKS_FIELD,
   normalisasiFields,

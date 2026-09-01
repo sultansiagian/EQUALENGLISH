@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Halaman privat, sama seperti /admin dan /pendaftar. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Batch · EQUAL English</title>
+    <link rel="icon" type="image/png" href="/EDITS/favicon.png" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+      /* Dipasang sebelum CSS dibaca supaya kartu ber-data-reveal tidak
+         sempat terlihat lalu menghilang. Fallback 2,5 detik: kalau
+         admin-motion.js gagal dimuat, semua isi tetap muncul dan panel
+         ini tidak pernah berakhir kosong. */
+      document.documentElement.classList.add('js');
+      setTimeout(function () {
+        if (!window.__equalRevealReady) {
+          document.documentElement.classList.add('reveal-fallback');
+        }
+      }, 2500);
+    </script>
+    <link rel="preload" href="/fonts/syne-600-800-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/dm-sans-400-700-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/fonts.css" />
+    <link rel="stylesheet" href="/tokens.css" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/admin.css" />
+  </head>
+  <body>
+    <div class="admin-shell">
+      <a class="admin-lompat" href="#admin-panel-dashboard">Lompat ke isi halaman</a>
+
+      <header class="admin-topbar">
+        <button
+          type="button"
+          id="admin-menu"
+          class="admin-menu"
+          aria-label="Buka menu"
+          aria-expanded="false"
+          aria-controls="admin-sidebar"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M4 6h16" />
+            <path d="M4 12h16" />
+            <path d="M4 18h16" />
+          </svg>
+        </button>
+        <span class="admin-topbar-brand"
+          ><span class="admin-topbar-nama">EQUAL English </span><em>Admin</em></span
+        >
+        <span id="admin-user" class="admin-topbar-user" hidden></span>
+      </header>
+
+      <nav id="admin-sidebar" class="admin-sidebar" data-nav-admin aria-label="Halaman admin"></nav>
+      <div id="admin-scrim" class="admin-scrim"></div>
+
+      <!-- Empat panel state di bawah bentuknya harus sama dengan admin.html,
+           karena admin-auth.js yang mengaturnya lewat id yang sama. -->
+      <section id="admin-panel-signin" class="admin-panel admin-panel-center">
+        <h1>Masuk dulu</h1>
+        <p class="admin-hint">
+          Pakai akun Google yang sudah didaftarkan sebagai admin.
+        </p>
+        <div class="admin-signin-box">
+          <div
+            id="g_id_onload"
+            data-client_id="367439644430-4t8r204v4h6ufouinpd2ctdftgndbehf.apps.googleusercontent.com"
+            data-callback="handleAdminCredential"
+            data-auto_prompt="false"
+          ></div>
+          <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline"></div>
+        </div>
+        <p id="admin-signin-error" class="admin-signin-error" hidden></p>
+      </section>
+
+      <section id="admin-panel-loading" class="admin-panel admin-panel-center" hidden>
+        <p class="admin-status"><span class="admin-spinner" aria-hidden="true"></span> Memeriksa akses…</p>
+      </section>
+
+      <section id="admin-panel-denied" class="admin-panel admin-panel-center" hidden>
+        <h1>Bukan akun admin.</h1>
+        <p class="admin-hint">
+          Email <strong id="admin-denied-email"></strong> belum terdaftar di
+          <code>ADMIN_EMAILS</code>.
+        </p>
+        <button type="button" class="admin-btn admin-btn-ghost" onclick="trySwitchAdminAccount()">
+          Coba akun lain
+        </button>
+      </section>
+
+      <section id="admin-panel-error" class="admin-panel admin-panel-center" hidden>
+        <h1>Gagal memuat.</h1>
+        <p class="admin-hint" id="admin-error-detail">
+          Ada masalah menghubungi server. Coba muat ulang halaman.
+        </p>
+        <button type="button" class="admin-btn admin-btn-ghost" onclick="location.reload()">
+          Muat ulang
+        </button>
+      </section>
+
+      <main id="admin-panel-dashboard" class="admin-panel" tabindex="-1" hidden>
+        <header class="admin-judul" data-reveal>
+          <h1>Batch</h1>
+          <p>Angkatan peserta, dan tombol untuk menutup atau mencabut aksesnya.</p>
+        </header>
+
+        <!-- ============================================================
+             01 / BATCH YANG SEDANG MENERIMA
+             ============================================================
+             Ditaruh paling atas karena inilah yang menentukan ke mana
+             persetujuan berikutnya jatuh di /pendaftar. Kalau tidak ada
+             yang terbuka, tombol Setujui di sana menolak, dan kartu ini
+             yang menjelaskan kenapa. -->
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>01</b> / SEDANG MENERIMA ANGGOTA</p>
+          <div class="admin-pendaftar-topbar">
+            <div>
+              <h2>Batch Aktif <span class="admin-card-note" id="batch-aktif-nama"></span></h2>
+              <p class="admin-hint" id="batch-aktif-hint">Memuat…</p>
+            </div>
+            <button type="button" id="batch-refresh" class="admin-btn admin-btn-ghost">
+              Muat Ulang
+            </button>
+          </div>
+
+          <div id="batch-aktif-aksi" class="batch-aksi"></div>
+        </section>
+
+        <!-- ============================================================
+             02 / DAFTAR ANGGOTA PER BATCH
+             ============================================================ -->
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>02</b> / SIAPA SAJA DI TIAP ANGKATAN</p>
+          <div class="admin-pendaftar-topbar">
+            <div>
+              <h2>Anggota <span class="admin-card-note" id="batch-jumlah"></span></h2>
+              <p class="admin-hint">
+                Satu baris bisa berisi dua sampai tiga orang untuk paket Pair dan
+                Group. Mencabut akses berlaku <strong>sebaris</strong>, jadi
+                temannya ikut terkena.
+              </p>
+            </div>
+          </div>
+
+          <!-- Pemilih batch. Satu halaman dengan pemilih, bukan satu menu
+               sidebar per batch: sidebar akan memanjang terus tiap
+               angkatan baru dan setelah dua tahun jadi belasan menu. -->
+          <div id="batch-pilih" class="batch-pilih" role="tablist" aria-label="Pilih batch"></div>
+
+          <div id="batch-info" class="batch-info" hidden></div>
+
+          <label class="admin-field admin-pendaftar-cari">
+            <span>Cari</span>
+            <input
+              type="search"
+              id="batch-cari"
+              placeholder="Ketik nama, email, fakultas, atau paket…"
+            />
+          </label>
+
+          <div id="batch-list" class="admin-pendaftar-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/admin-motion.js"></script>
+    <script src="/admin-auth.js"></script>
+    <script src="/admin-nav.js"></script>
+    <script src="/batch.js"></script>
+  </body>
+</html>

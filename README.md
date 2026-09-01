@@ -46,7 +46,10 @@ Untuk menguji hasil penyisipannya, panggil `renderHtml()` dari
 | `api/_lib/materi.js` | Materi kelas: nilai bawaan, isi dari `/atur-kelas`, pembacaan sheet materi. |
 | `api/_lib/lapor-masalah.js` | Email peringatan ke admin waktu `/api/daftar` gagal menyimpan atau kuota Gmail menipis. Direm satu per jam per jenis. |
 | `api/_lib/rem-laju.js` | Rem laju untuk `/api/daftar`, satu-satunya endpoint publik. Tiga lapisan: per IP (longgar, karena wifi kampus membuat banyak orang terlihat sebagai satu IP), per alamat email tujuan, dan jatah total tanda terima per jam. Yang dilindungi terutama kuota Gmail, bukan baris sheet -- lihat penjelasan di dalam filenya. |
-| `analitik.html` / `analitik.js` | Halaman `/analitik`: jumlah pendaftar, komposisi paket, dan pendapatan per batch. Chart digambar sendiri dengan SVG, tanpa library. |
+| `batch.html` / `batch.js` | Halaman `/batch`: angkatan peserta. Buka/tutup batch, lihat anggotanya, cabut dan pulihkan akses per orang atau seluruh batch. **Tutup ≠ cabut**: menutup cuma mengunci daftar anggotanya, akses mereka tidak berubah sama sekali. |
+| `api/_lib/handler-batch.js` | Isi endpoint `/batch`. Bukan rute sendiri, dipasang lewat `api/admin-data.js` sebagai bagian `batch` supaya tidak menghabiskan slot Serverless Function (lihat batas 12 di bawah). |
+| `api/_lib/batch.js` | Aturan batch: normalisasi daftar, hanya satu batch boleh terbuka, penomoran otomatis, pemeriksaan tanggal. Sengaja TIDAK menentukan siapa boleh masuk kelas -- itu tetap `roster.js` sendirian. |
+| `analitik.html` / `analitik.js` | Halaman `/analitik`: jumlah pendaftar, komposisi paket, dan pendapatan per batch. Chart digambar sendiri dengan SVG, tanpa library. **Cuma membaca batch** -- pengelolaannya di `/batch`. |
 | `api/_lib/statistik.js` | Perhitungan angka analitik. Membaca sheet yang sama dengan gerbang login siswa, jadi tidak mungkin ada dua angka berbeda untuk hal yang sama. |
 | `api/_lib/csv.js` | Parser CSV bersama, plus penebak format tanggal kolom Timestamp (sheet bisa berisi `bulan/tanggal` dan `tanggal/bulan` sekaligus). |
 | `api/kelas-testimoni.js` | Siswa mengirim testimoni dari `/kelas` untuk membuka sertifikat. Cuma tayang di beranda kalau siswanya mencentang izin DAN admin menayangkannya. Isinya disimpan di spreadsheet, bukan di Global Config yang dibatasi 1 MB. |
@@ -150,6 +153,86 @@ dari luar akun Google pemiliknya:
 Untuk memastikan sekarang tanpa menunggu besok: pilih `backupHarian` di
 editor lalu tekan Run, dan cek folder `Backup EQUAL` di Drive.
 
+## Batch (angkatan peserta)
+
+Halaman `/batch` mengelompokkan peserta per angkatan dan menyediakan
+tombol untuk mencabut aksesnya waktu masanya habis.
+
+Sebelumnya ada **dua** daftar batch yang hidup berdampingan tanpa saling
+tahu: `batchDaftar` yang ditulis tombol di `/analitik` (untuk memisahkan
+pendapatan per angkatan) dan daftar milik `/batch` (untuk melabeli peserta
+dan mencabut aksesnya). Keduanya sama-sama disebut "batch" di layar, jadi
+menutup batch di satu halaman meninggalkan halaman lain mengira batch itu
+masih menerima anggota. Sekarang **`/batch` satu-satunya yang menulis**,
+dan `/analitik` cuma membaca.
+
+Daftar lama tidak dihapus: `daftarTersimpan()` di `api/_lib/batch.js`
+membacanya sebagai asal migrasi, jadi riwayat pendapatan per batch yang
+sudah tercatat tidak hilang. Begitu ada penulisan pertama dari `/batch`,
+nilai lama berhenti dipakai dengan sendirinya.
+
+**Yang perlu dipahami sekali, supaya tidak salah pencet:**
+
+| Tindakan | Yang berubah | Akses peserta |
+|---|---|---|
+| **Tutup batch** | Batch berhenti menerima anggota baru, rentang pendapatannya ditutup | **Tidak berubah** |
+| **Buka batch baru** | Persetujuan berikutnya masuk ke batch itu; yang lama ikut tertutup | Tidak berubah |
+| **Ganti nama** | Nama di layar berubah | Tidak berubah |
+| **Cabut akses** | Kata `done` ditulis di baris peserta | **Mati** |
+| **Pulihkan akses** | Kata `done` dibersihkan dari barisnya | Hidup lagi |
+
+Menutup dan mencabut sengaja dipisah karena masanya beda: batch ditutup
+begitu pendaftaran ditutup, tapi aksesnya baru dicabut enam bulan
+kemudian.
+
+**Cara akses ditentukan TIDAK berubah.** `api/_lib/roster.js` tetap satu-
+satunya penentu, dan aturannya tetap dua yang lama: ada sel berisi persis
+`done`, atau tanggal kolom W sudah lewat. Fitur batch cuma menumpang
+keduanya, jadi kalau seluruh halaman ini dimatikan besok, gerbang kelasnya
+berperilaku persis seperti sebelum fitur ini ada.
+
+**Dua kolom baru di tab roster**, jauh di kanan supaya tidak pernah
+tertabrak pertanyaan tambahan buatan admin:
+
+- **BS (70)** -- nama batch, ditulis otomatis waktu kamu menekan Setujui
+- **BT (71)** -- tempat baku penanda `done` dari tombol Cabut
+
+`done` yang kamu ketik sendiri di sel mana pun tetap berlaku seperti dulu,
+dan tombol Pulihkan membersihkan `done` dari SELURUH sel di baris itu,
+bukan cuma kolom BT.
+
+**Peserta lama tanpa label batch** muncul sebagai kelompok "Tanpa batch"
+dan tetap bisa dicabut/dipulihkan seperti yang lain.
+
+**Mengganti nama batch tidak menulis ulang kolom BS** baris-baris yang
+sudah terlanjur berlabel nama lama. Menulis ulang puluhan baris demi
+kosmetik menukar risiko besar dengan manfaat kecil, dan kegagalan separuh
+jalan memecah satu batch jadi dua kelompok bernama beda. Halaman `/batch`
+mengatakan ini terus terang sebelum tombolnya ditekan, dan menyebut berapa
+baris yang akan terpisah.
+
+**Batch pertama sengaja `mulai: null`**, artinya menghitung pendapatan
+sejak awal. Kalau ia dimulai dari sekarang, semua pendaftar yang sudah ada
+tidak masuk batch mana pun dan hilang dari rincian di `/analitik`. Aturan
+ini diwarisi apa adanya dari tombol lama di halaman itu.
+
+**Kalau tidak ada batch yang terbuka, tombol Setujui di `/pendaftar`
+menolak** dengan alasan `batch_belum_dibuka`. Itu disengaja: baris tanpa
+label tidak akan pernah ikut tercabut waktu angkatannya dibersihkan.
+Selama daftar batch masih kosong sama sekali, penjagaan ini tidak aktif
+dan persetujuan berjalan seperti biasa.
+
+**Memulihkan tidak cukup kalau tanggal kolom W sudah lewat.** Halaman
+`/batch` memperingatkan ini waktu tombol Pulihkan ditekan, karena
+`roster.js` menolak baris kedaluwarsa tanpa melihat ada tidaknya `done`.
+Perpanjang dulu tanggalnya di spreadsheet, atau kosongkan selnya.
+
+> **Butuh Apps Script versi baru.** Dua aksi (`rosterList` dan
+> `rosterTandai`) ditambahkan di `apps-script.gs`. Tempel ulang isinya ke
+> editor Apps Script lalu **Deploy > Manage deployments > pensil >
+> Version: New version**. Sebelum itu, halaman `/batch` bisa dibuka tapi
+> daftarnya gagal dimuat.
+
 ## Kalau ada yang perlu dicabut atau diganti cepat
 
 ### Mencabut akses admin (SEC-09)
@@ -200,8 +283,12 @@ menyebut penyebabnya langsung, termasuk kalau URL-nya berakhiran `/dev`.
 
 Vercel Hobby membatasi **12 Serverless Function per deployment**, dan
 melampauinya membuat SELURUH build gagal tanpa gejala apa pun di situs.
-Sekarang ada **11** berkas di `api/` (berkas di `api/_lib/` tidak dihitung
-karena namanya berawalan garis bawah).
+Sekarang ada **10** berkas di `api/` (berkas di `api/_lib/` tidak dihitung
+karena namanya berawalan garis bawah). Hitung ulang dengan:
+
+```bash
+ls api/*.js | wc -l
+```
 
 Karena itu `/status` tidak berdiri sebagai `api/status.js` sendiri,
 melainkan menumpang `api/verify-access.js` lewat `mode:'status'` di badan
@@ -209,8 +296,13 @@ permintaan. Selain menghemat slot, di sanalah verifikasi token Google dan
 pembacaan roster sudah ada, jadi tidak perlu disalin ulang.
 
 **Kalau nanti butuh endpoint baru**, gabungkan dulu yang sudah ada
-daripada menambah berkas. Kandidat paling wajar: `atur-form.js` dan
-`daftar-schema.js` masuk ke `admin-data.js`.
+daripada menambah berkas. Halaman `/batch` dibuat begitu: handler-nya di
+`api/_lib/handler-batch.js`, didaftarkan sebagai bagian `batch` di
+`admin-data.js`, jadi menambah halaman penuh itu memakai **nol** slot.
+
+Kandidat berikutnya kalau masih perlu: `daftar-schema.js` masuk ke
+`admin-data.js`. (`atur-form.js` sudah digabung ke sana pada 2026-08-25,
+jadi jangan cari berkasnya lagi.)
 
 ## Security header
 

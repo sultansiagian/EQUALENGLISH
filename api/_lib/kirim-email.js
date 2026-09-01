@@ -185,6 +185,33 @@ async function kirimAksesDibuka(overrides, daftarTujuan, nama) {
  * pengiriman email masih hidup adalah menunggu ada pendaftar asli, lalu
  * baru bertanya-tanya kenapa orangnya tidak menerima apa-apa.
  */
+/**
+ * Pemberitahuan "masa akses sudah berakhir", dikirim waktu admin
+ * mencabut akses lewat /batch.
+ *
+ * Bentuknya sengaja sama dengan kirimAksesDibuka di atas: satu BARIS
+ * roster bisa berisi dua sampai tiga orang (paket Pair dan Group), dan
+ * pencabutan memang berlaku sebaris. Jadi yang dioper daftar email, dan
+ * semuanya dapat kabar yang sama.
+ *
+ * TIDAK ada {link} di sini. Email ini justru memberitahu bahwa tautannya
+ * sudah tidak bisa dibuka, jadi menyodorkan tombol ke ruang kelas cuma
+ * mengundang orang mengklik sesuatu yang akan menolaknya.
+ */
+async function kirimAksesBerakhir(overrides, daftarTujuan, nama) {
+  const unik = [];
+  (daftarTujuan || []).forEach(function (t) {
+    const bersih = String(t || '').trim().toLowerCase();
+    if (emailSah(bersih) && unik.indexOf(bersih) === -1) unik.push(bersih);
+  });
+
+  const hasil = [];
+  for (const tujuan of unik) {
+    hasil.push(await kirim(overrides, 'emailCabut', tujuan, { nama: nama || 'peserta' }));
+  }
+  return { terkirim: hasil.filter((h) => h.ok).length, total: unik.length };
+}
+
 async function kirimUji(overrides, jenis, tujuan) {
   if (jenis !== 'emailTerima' && jenis !== 'emailSetuju') {
     return { ok: false, alasan: 'jenis_tidak_dikenal' };
@@ -207,4 +234,4 @@ async function kirimUji(overrides, jenis, tujuan) {
   });
 }
 
-module.exports = { kirimTandaTerima, kirimAksesDibuka, kirimUji, isiPenanda };
+module.exports = { kirimTandaTerima, kirimAksesDibuka, kirimAksesBerakhir, kirimUji, isiPenanda };

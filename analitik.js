@@ -398,7 +398,6 @@ async function simpanDasar() {
 
 document.addEventListener('DOMContentLoaded', function () {
   el('stat-simpan').addEventListener('click', simpanDasar);
-  pasangTombolBatch();
 });
 
 // ============================================================
@@ -440,12 +439,6 @@ function gambarBatch(data) {
   el('batch-kosong').hidden = daftar.length > 0;
   chartWrap.hidden = daftar.length < 2;
 
-  // Tombolnya saling menggantikan, bukan dua-duanya tampil: sebelum ada
-  // batch cuma "mulai" yang masuk akal, sesudahnya cuma "tutup".
-  var adaAktif = daftar.some(function (b) { return b.aktif; });
-  el('batch-mulai').hidden = daftar.length > 0;
-  el('batch-tutup').hidden = !adaAktif;
-
   // Terbaru di atas: batch yang sedang berjalan yang paling sering dilihat.
   var urut = daftar.slice().reverse();
 
@@ -477,13 +470,6 @@ function gambarBatch(data) {
     periode.className = 'batch-periode';
     periode.textContent = periodeBatch(b);
     kepala.appendChild(periode);
-
-    var ganti = document.createElement('button');
-    ganti.type = 'button';
-    ganti.className = 'batch-ganti-nama';
-    ganti.textContent = 'Ganti nama';
-    ganti.addEventListener('click', function () { gantiNamaBatch(asli, b.nama); });
-    kepala.appendChild(ganti);
 
     var angka = document.createElement('div');
     angka.className = 'batch-angka';
@@ -550,64 +536,17 @@ function gambarBatchBars(daftar) {
   });
 }
 
-async function aksiBatch(aksi, isi) {
-  var status = el('batch-status');
-  var tombol = [el('batch-mulai'), el('batch-tutup')];
+/* Tombol mulai/tutup/ganti-nama batch DIHAPUS dari halaman ini.
+   Semuanya pindah ke /batch.
 
-  tombol.forEach(function (t) { t.disabled = true; });
-  status.removeAttribute('data-state');
-  status.textContent = 'Menyimpan…';
+   Kenapa: dulu halaman ini menulis daftar batch-nya sendiri
+   (`batchDaftar` di Global Config), sementara /batch menulis daftar
+   lain untuk melabeli peserta dan mencabut aksesnya. Dua daftar,
+   dua tombol "tutup batch", dan sama-sama disebut batch di layar --
+   jadi menutup batch di sini meninggalkan /batch mengira batch itu
+   masih menerima anggota, dan persetujuan berikutnya jatuh ke
+   angkatan yang salah tanpa ada yang memberi tahu.
 
-  try {
-    var res = await fetch('/api/admin-data', {
-      method: 'POST',
-      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
-      body: JSON.stringify(Object.assign({ bagian: 'statistik', aksi: aksi }, isi || {})),
-    });
-    var data = await res.json();
+   Sekarang halaman ini cuma membaca. Angkanya tetap dihitung ulang
+   dari spreadsheet tiap kali dibuka, jadi tidak ada yang hilang. */
 
-    if (res.status === 401) return handleUnauthorized(data.reason);
-
-    if (res.ok && data.ok) {
-      status.dataset.state = 'ok';
-      status.textContent = 'Tersimpan. Menghitung ulang…';
-      // Angkanya dihitung ulang server, jadi halaman ini memuat ulang
-      // datanya daripada menebak sendiri hasilnya.
-      await muatStatistik();
-      return;
-    }
-
-    status.dataset.state = 'error';
-    status.textContent = data.pesan || data.reason || 'Gagal (' + res.status + ').';
-  } catch (err) {
-    status.dataset.state = 'error';
-    status.textContent = 'Gagal: ' + err.message;
-  } finally {
-    tombol.forEach(function (t) { t.disabled = false; });
-  }
-}
-
-function gantiNamaBatch(indeks, namaSekarang) {
-  var nama = window.prompt('Nama batch ini:', namaSekarang);
-  if (nama === null) return;
-  nama = nama.trim();
-  if (!nama) return;
-  aksiBatch('ganti-nama', { indeks: indeks, nama: nama });
-}
-
-function pasangTombolBatch() {
-  el('batch-mulai').addEventListener('click', function () {
-    aksiBatch('mulai');
-  });
-  el('batch-tutup').addEventListener('click', function () {
-    if (
-      !window.confirm(
-        'Tutup batch yang sedang berjalan dan mulai batch baru?\n\n' +
-          'Pendaftar setelah ini masuk ke batch baru. Angka batch lama tidak berubah.'
-      )
-    ) {
-      return;
-    }
-    aksiBatch('tutup');
-  });
-}
