@@ -142,7 +142,21 @@ const FIELD_BAWAAN = [
   {
     id: 'emailDiri', label: 'Email', tipe: 'email', wajib: true, aktif: true,
     inti: true, kolom: KOLOM.emailDiri,
-    bantuan: 'Pakai email Google yang aktif. Email ini yang jadi kunci masuk ruang kelas nanti.',
+    /* Kalimatnya menyebut SYARATNYA, bukan cuma anjuran.
+       Versi sebelumnya berbunyi "Pakai email Google yang aktif", dan itu
+       terbaca sebagai saran, bukan keharusan. Akibatnya ada yang mengisi
+       alamat yang tidak pernah didaftarkan sebagai akun Google, lalu
+       sampai di ruang kelas dan menemukan tombol masuknya tidak bisa
+       ditekan sama sekali -- bukan ditolak dengan pesan, tapi memang
+       tidak ada jalan masuk. Satu-satunya penyelesaian saat itu adalah
+       lewat WhatsApp satu per satu.
+       Mencegahnya di sini jauh lebih murah daripada menanganinya di
+       belakang. Alamat non-Gmail tetap boleh: yang menentukan bukan
+       domainnya, melainkan apakah alamat itu punya akun Google
+       (@ui.ac.id lewat Workspace sudah terbukti jalan). */
+    bantuan:
+      'WAJIB email yang punya akun Google, karena ini yang dipakai masuk ruang kelas. ' +
+      'Boleh selain Gmail (misalnya @ui.ac.id), asal alamatnya bisa dipakai login Google.',
   },
   {
     id: 'paket', label: 'Pilihan paket', tipe: 'paket', wajib: true, aktif: true,

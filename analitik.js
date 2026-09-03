@@ -37,6 +37,9 @@ window.onAdminReady = function (data) {
         ? ''
         : data.values.heroSiswaDasar;
   }
+  var unduh = el('stat-unduh-csv');
+  if (unduh) unduh.addEventListener('click', unduhRekap);
+
   muatStatistik();
 };
 
@@ -550,3 +553,114 @@ function gambarBatchBars(daftar) {
    Sekarang halaman ini cuma membaca. Angkanya tetap dihitung ulang
    dari spreadsheet tiap kali dibuka, jadi tidak ada yang hilang. */
 
+
+// ============================================================
+// UNDUH REKAP CSV
+// ============================================================
+/**
+ * Rekap dibuat DI BROWSER dari data yang sudah tampil, bukan lewat
+ * endpoint baru. Dua alasannya:
+ *
+ *   1. Endpoint baru berarti satu slot Serverless Function terpakai, dan
+ *      batas Vercel Hobby-nya 12 (lihat catatan panjang di
+ *      api/admin-data.js soal build yang gagal seluruhnya waktu
+ *      terlampaui).
+ *   2. Angkanya sudah ada di memori halaman ini. Menghitung ulang di
+ *      server justru membuka kemungkinan berkas yang diunduh TIDAK SAMA
+ *      dengan yang sedang dibaca di layar -- roster bisa berubah di
+ *      antara dua permintaan itu.
+ */
+
+// Titik koma, bukan koma. Excel berbahasa Indonesia memakai koma sebagai
+// pemisah DESIMAL, jadi berkas berkoma terbuka sebagai satu kolom
+// berisi teks panjang -- terlihat seperti berkasnya rusak.
+var CSV_PEMISAH = ';';
+
+function selCsv(nilai) {
+  var teks = String(nilai === undefined || nilai === null ? '' : nilai);
+  // Kutip kalau ada pemisah, kutip, atau baris baru di dalamnya.
+  if (teks.indexOf(CSV_PEMISAH) !== -1 || teks.indexOf('"') !== -1 || /[\r\n]/.test(teks)) {
+    return '"' + teks.replace(/"/g, '""') + '"';
+  }
+  return teks;
+}
+
+function barisCsv(kolom) {
+  return kolom.map(selCsv).join(CSV_PEMISAH);
+}
+
+function tanggalBerkas() {
+  // Tanggal WIB, bukan UTC: nama berkas yang tanggalnya mundur sehari
+  // membingungkan waktu beberapa rekap ditumpuk di satu folder.
+  return new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10);
+}
+
+function susunRekapCsv(data) {
+  var baris = [];
+  var semua = data.sepanjangWaktu || {};
+
+  baris.push(barisCsv(['Rekap EQUAL English']));
+  baris.push(barisCsv(['Diunduh', tanggalBerkas() + ' WIB']));
+  baris.push('');
+
+  baris.push(barisCsv(['SEPANJANG WAKTU']));
+  baris.push(barisCsv(['Keterangan', 'Nilai']));
+  baris.push(barisCsv(['Pendaftaran', semua.totalPendaftaran || 0]));
+  baris.push(barisCsv(['Siswa', semua.totalOrang || 0]));
+  baris.push(barisCsv(['Pendapatan', semua.totalPendapatan || 0]));
+  baris.push('');
+
+  baris.push(barisCsv(['PER PAKET (sepanjang waktu)']));
+  baris.push(barisCsv(['Paket', 'Pendaftaran', 'Siswa', 'Pendapatan']));
+  (semua.perPaket || []).forEach(function (p) {
+    baris.push(barisCsv([p.nama || p.label, p.pendaftaran || 0, p.orang || 0, p.pendapatan || 0]));
+  });
+  baris.push('');
+
+  baris.push(barisCsv(['PER BATCH']));
+  baris.push(barisCsv(['Batch', 'Mulai', 'Selesai', 'Pendaftaran', 'Siswa', 'Pendapatan']));
+  (data.batchList || []).forEach(function (b) {
+    var s = b.statistik || {};
+    baris.push(
+      barisCsv([
+        b.nama,
+        b.mulai ? String(b.mulai).slice(0, 10) : 'sejak awal',
+        b.selesai ? String(b.selesai).slice(0, 10) : 'masih berjalan',
+        s.totalPendaftaran || 0,
+        s.totalOrang || 0,
+        s.totalPendapatan || 0,
+      ])
+    );
+  });
+
+  return baris.join('\r\n');
+}
+
+function unduhRekap() {
+  var catatan = el('stat-unduh-catatan');
+  if (!dataTerakhir) {
+    catatan.textContent = 'Angkanya belum selesai dimuat. Tunggu sebentar lalu coba lagi.';
+    return;
+  }
+
+  try {
+    // BOM di depan. Tanpa itu Excel di Windows membaca berkasnya sebagai
+    // ANSI, dan huruf beraksen maupun "Rp" pada nama paket muncul rusak.
+    var isi = '\ufeff' + susunRekapCsv(dataTerakhir);
+    var blob = new Blob([isi], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'rekap-equal-' + tanggalBerkas() + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    // Dilepas setelah jeda: sebagian peramban masih membaca URL-nya
+    // beberapa saat setelah klik, dan mencabutnya langsung membuat
+    // unduhannya kosong tanpa pesan apa pun.
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    catatan.textContent = 'Terunduh.';
+  } catch (err) {
+    catatan.textContent = 'Gagal menyusun berkasnya: ' + err.message;
+  }
+}

@@ -95,4 +95,78 @@ async function laporMasalah(jenis, ringkas, rinci) {
   }
 }
 
-module.exports = { laporMasalah };
+/**
+ * Kabar ke admin bahwa ada pendaftar baru yang menunggu persetujuan.
+ *
+ * ------------------------------------------------------------
+ * KENAPA MENUMPANG BERKAS INI
+ * ------------------------------------------------------------
+ * Isinya kabar baik, bukan masalah, jadi sekilas tidak cocok di sini.
+ * Tapi seluruh mesinnya sama persis: alamat admin dari ADMIN_EMAILS,
+ * pengiriman lewat action 'email' di Apps Script, dan kegagalan yang
+ * ditelan supaya tidak pernah menggagalkan pendaftaran. Menyalinnya ke
+ * berkas baru berarti dua tempat yang harus dijaga tetap sama.
+ *
+ * PENTING: memakai action 'email' yang SUDAH ADA di Apps Script, jadi
+ * fitur ini tidak menuntut skripnya ditempel dan di-deploy ulang.
+ *
+ * ------------------------------------------------------------
+ * BATASNYA LEBIH LONGGAR DARIPADA LAPORAN MASALAH
+ * ------------------------------------------------------------
+ * laporMasalah dibatasi satu per jam karena sepuluh kabar tentang
+ * kerusakan yang sama tidak menambah apa pun. Di sini kebalikannya:
+ * tiap pendaftar adalah orang yang berbeda dan uang yang berbeda, jadi
+ * yang tertelan berarti ada yang menunggu tanpa kamu tahu.
+ *
+ * Tetap dibatasi, karena kuota Gmail 100 penerima per hari dipakai
+ * bersama email tanda terima ke pendaftarnya sendiri -- tiap pendaftaran
+ * sudah memakai satu. 20 per jam jauh di atas laju wajar di sini, dan
+ * menyisakan ruang kalau ada lonjakan.
+ */
+const MAKS_KABAR_PENDAFTAR = 20;
+
+async function kabarPendaftarBaru(ringkasan) {
+  try {
+    const ke = alamatAdmin();
+    if (!ke) return;
+
+    const laju = remLaju('kabar:pendaftar-baru', MAKS_KABAR_PENDAFTAR, JENDELA_MS);
+    if (!laju.boleh) {
+      console.error(
+        'lapor-masalah: kabar pendaftar baru dilewati, sudah ' + MAKS_KABAR_PENDAFTAR +
+          ' dalam sejam terakhir. Pendaftarnya TETAP tersimpan, cek /pendaftar.'
+      );
+      return;
+    }
+
+    const r = ringkasan || {};
+    const baris = [
+      r.nama ? 'Nama: ' + r.nama : '',
+      r.fakultas ? 'Fakultas: ' + r.fakultas : '',
+      r.paket ? 'Paket: ' + r.paket : '',
+      r.email ? 'Email: ' + r.email : '',
+    ].filter(Boolean);
+
+    const asal = String(r.asal || '').replace(/\/+$/, '');
+
+    await panggilAppsScript('email', {
+      ke: ke,
+      subjek: '[EQUAL] Pendaftar baru' + (r.nama ? ': ' + String(r.nama).slice(0, 60) : ''),
+      isi:
+        'Ada pendaftar baru yang menunggu persetujuanmu.\n\n' +
+        baris.join('\n') + '\n\n' +
+        'Waktu: ' + new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) + ' WIB\n\n' +
+        'Cek bukti pembayarannya, lalu Setujui di:\n' +
+        (asal ? asal + '/pendaftar\n\n' : '/pendaftar di situsmu\n\n') +
+        'Dia BELUM bisa membuka ruang kelas sampai kamu menyetujuinya.',
+      html: '',
+    });
+  } catch (err) {
+    // Sama seperti laporMasalah: jalur kabarnya sendiri yang rusak.
+    // Pendaftarnya sudah tersimpan, jadi tidak ada yang hilang selain
+    // pemberitahuannya.
+    console.error('lapor-masalah: kabar pendaftar baru gagal dikirim: ' + err.message);
+  }
+}
+
+module.exports = { laporMasalah, kabarPendaftarBaru };

@@ -6,7 +6,8 @@ const { statusForm } = require('./_lib/form-status');
 const { kirimTandaTerima } = require('./_lib/kirim-email');
 const { kerjakanDiLatar } = require('./_lib/kerja-latar');
 const { bolehKirimForm, bolehKirimTandaTerima } = require('./_lib/rem-laju');
-const { laporMasalah } = require('./_lib/lapor-masalah');
+const { laporMasalah, kabarPendaftarBaru } = require('./_lib/lapor-masalah');
+const { asalDari } = require('./_lib/email-html');
 const { periksaGambar } = require('./_lib/periksa-gambar');
 
 /**
@@ -221,6 +222,34 @@ module.exports = async function handler(req, res) {
         'tanda terima /daftar'
       );
     }
+
+    /* Kabar ke admin bahwa ada yang menunggu persetujuan.
+       Tanpa ini, satu-satunya cara tahu ada pendaftar baru adalah rajin
+       membuka /pendaftar sendiri, dan orang yang sudah transfer menunggu
+       tanpa ada yang menyadarinya.
+
+       Dikirim SETELAH barisnya tersimpan dan setelah tanda terima ke
+       pendaftarnya, karena urutan itu yang menentukan siapa yang lebih
+       dulu dilayani kalau kuota Gmail mepet: pendaftarnya lebih penting
+       daripada kabar ke kita sendiri.
+
+       Kegagalannya ditelan di dalam kabarPendaftarBaru, jadi tidak ada
+       jalan bagi pemberitahuan ini untuk menggagalkan pendaftaran. */
+    await kerjakanDiLatar(
+      () =>
+        kabarPendaftarBaru({
+          nama: jawaban.nama,
+          fakultas: jawaban.fakultas,
+          paket: jawaban.paket,
+          email: jawaban.emailDiri,
+          asal: asalDari(
+            overrides.linkRuangKelas !== undefined
+              ? overrides.linkRuangKelas
+              : DEFAULTS.linkRuangKelas
+          ),
+        }),
+      'kabar pendaftar baru'
+    );
 
     return res.status(200).json({ ok: true, id: hasil.id });
   } catch (err) {

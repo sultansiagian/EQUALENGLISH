@@ -130,6 +130,20 @@
         <p id="stat-gagal" class="admin-hint stat-gagal" role="alert" hidden></p>
 
         <div id="stat-isi" hidden>
+          <!-- Unduh rekap. Ditaruh di atas supaya tidak perlu menggulung
+               ke bawah dulu, dan dibuat DI BROWSER dari angka yang sudah
+               tampil di layar -- bukan lewat endpoint baru, yang akan
+               menghabiskan satu slot Serverless Function dan menghitung
+               ulang hal yang sama. -->
+          <div class="stat-unduh">
+            <button type="button" id="stat-unduh-csv" class="admin-btn admin-btn-ghost">
+              Unduh rekap CSV
+            </button>
+            <span class="admin-hint" id="stat-unduh-catatan">
+              Angka yang sedang tampil, siap dibuka di Excel.
+            </span>
+          </div>
+
           <!-- Angka kumulatif, tidak pernah di-reset. Ditaruh paling atas
                karena ini angka yang paling sering dicari. -->
           <section class="admin-card stat-kartu-total" data-reveal>

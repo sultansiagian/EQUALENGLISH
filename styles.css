@@ -586,7 +586,11 @@ button.text-link:focus-visible {
 
 .mini-avatars span:nth-child(1) { background: var(--pink); }
 .mini-avatars span:nth-child(2) { background: #d9d9d9; }
-.mini-avatars span:nth-child(3) { background: #8d8d8d; color: var(--white); }
+/* #767676, bukan #8d8d8d. Abu yang lama cuma memberi 3,32:1 untuk huruf
+   putih di atasnya -- di bawah ambang baca, padahal isinya inisial nama
+   orang. Digelapkan seperlunya sampai 4,54:1; masih terbaca sebagai abu
+   menengah di antara dua lingkaran tetangganya, bukan hitam. */
+.mini-avatars span:nth-child(3) { background: #767676; color: var(--white); }
 .mini-avatars span:nth-child(4) { background: var(--black); color: var(--white); border-color: var(--white); }
 
 .hero-art {
@@ -1558,15 +1562,13 @@ section[id] {
 
 .value-card,
 .program-card,
-.proof-mentor,
-.proof-quote {
+.proof-mentor {
   transition: transform 420ms var(--ease-out);
 }
 
 .value-card:hover,
 .program-card:hover,
-.proof-mentor:hover,
-.proof-quote:hover {
+.proof-mentor:hover {
   transform: translateY(-6px);
 }
 
@@ -1851,13 +1853,7 @@ section[id] {
 }
 
 .proof-mentors,
-.proof-quotes {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-}
 
-.proof-quotes { margin-top: 1rem; }
 
 /* Hanya ada satu mentor, jadi kartunya melebar, bukan grid tiga kolom. */
 .proof-mentors-single {
@@ -1922,51 +1918,6 @@ section[id] {
   color: var(--black);
   font-size: 0.92rem;
   font-weight: 600;
-}
-
-.proof-quote {
-  display: flex;
-  padding: 1.5rem;
-  flex-direction: column;
-  justify-content: space-between;
-  background: var(--white);
-  border: 1px solid var(--line);
-  border-radius: var(--r-kecil);
-}
-
-.proof-quote blockquote { margin: 0; }
-
-.proof-quote blockquote p {
-  margin: 0;
-  font-family: var(--display);
-  font-size: 1.12rem;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1.35;
-}
-
-.proof-byline {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  margin: 1.8rem 0 0;
-}
-
-.proof-tag {
-  padding: 0.32rem 0.5rem;
-  background: var(--pink);
-  border-radius: 3px;
-  font-family: var(--label);
-  font-size: 0.55rem;
-  letter-spacing: 0.1em;
-}
-
-.proof-byline cite {
-  color: var(--ink-muted);
-  font-family: var(--label);
-  font-size: 0.63rem;
-  font-style: normal;
 }
 
 /* ============================================================
@@ -2096,7 +2047,11 @@ section[id] {
 }
 
 .plan-card-top span:last-child { color: var(--ink-muted); }
-.plan-card-best .plan-card-top span:last-child { color: rgba(0, 0, 0, 0.55); }
+/* Label "3 ORANG" di kartu paket terbaik, yang latarnya --pink. Alpha
+   0,55 cuma mencapai 4,10:1 di atas pink -- meleset tipis, dan tipis pun
+   tetap di bawah ambang. Dipakaikan token yang memang dibuat untuk teks
+   redup di atas --pink (5,70:1), sekalian menghapus satu warna mentah. */
+.plan-card-best .plan-card-top span:last-child { color: var(--ink-di-pink-lembut); }
 
 .plan-people {
   display: flex;
@@ -2385,19 +2340,6 @@ section[id] {
   letter-spacing: 0.14em;
 }
 
-.proof-tag {
-  font-family: var(--body);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-}
-
-.proof-byline cite {
-  font-family: var(--body);
-  font-size: 0.72rem;
-  font-weight: 600;
-}
-
 .bootcamp-list span {
   font-family: var(--body);
   font-size: 0.7rem;
@@ -2451,7 +2393,7 @@ section[id] {
   .gap-chart { --gap-label: 92px; }
   .proof-section { padding: 6.4rem 0; }
   .proof-head { grid-template-columns: 1fr; gap: 1.8rem; }
-  .proof-mentors, .proof-quotes { grid-template-columns: 1fr 1fr; }
+  .proof-mentors { grid-template-columns: 1fr 1fr; }
   .proof-mentor-note { min-height: 0; grid-column: span 2; }
   .proof-mentors-single { grid-template-columns: 1fr; }
   .proof-mentors-single .proof-mentor-note { grid-column: auto; }
@@ -2574,7 +2516,7 @@ section[id] {
   .gap-score { font-size: 0.76rem; }
   .gap-note { font-size: 0.9rem; }
   .proof-section { padding: 5.5rem 0; }
-  .proof-mentors, .proof-quotes { grid-template-columns: 1fr; }
+  .proof-mentors { grid-template-columns: 1fr; }
   .proof-mentor { min-height: 0; }
   .proof-mentor-note { grid-column: auto; }
   .proof-mentor h3 { margin-top: 1.5rem; }

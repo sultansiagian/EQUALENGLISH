@@ -2343,3 +2343,19 @@ a.admin-nav-item:focus-visible {
   margin: 10px 0 0;
   font-size: 0.82rem;
 }
+
+/* Baris unduh rekap di /analitik. Ditaruh di atas kartu angka, jadi
+   perlu jarak bawahnya sendiri supaya tidak menempel ke kartu pertama. */
+.stat-unduh {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.stat-unduh .admin-hint {
+  margin: 0;
+  flex: 1;
+  min-width: 14rem;
+}

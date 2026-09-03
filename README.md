@@ -82,6 +82,46 @@ Variables** (selain yang sudah ada untuk `kelas.html`):
 - `VERCEL_TEAM_ID` -- OPSIONAL, cuma diperlukan kalau project ini ada di
   bawah sebuah Team di Vercel (bukan akun personal biasa).
 
+### Env var untuk gerbang kelas, pendaftaran, dan email
+
+Yang di atas cuma untuk panel admin. Tujuh berikut ini yang menghidupkan
+ruang kelas dan pendaftaran, dan sebelumnya tidak pernah didaftarkan di
+sini -- akibatnya pemasangan ulang gagal dengan cara yang tidak dijelaskan
+di mana pun.
+
+- `ROSTER_CSV_URLS` -- **paling menentukan.** Alamat "Publish to web" (CSV)
+  tab roster dan sheet manual, pisah koma. Inilah yang menentukan siapa
+  boleh masuk ruang kelas. Kosong atau kedaluwarsa = TIDAK ADA yang bisa
+  masuk. Kalau link publikasinya dicabut, Google membalas HTML berstatus
+  200, bukan error -- `api/_lib/statistik.js` sengaja menangkap kasus itu
+  supaya tidak terbaca sebagai roster kosong.
+- `GOOGLE_CLIENT_ID` -- Client ID dari Google Cloud Console, dipakai server
+  untuk memverifikasi token login siswa. Nilai yang SAMA juga tertulis di
+  atribut `data-client_id` di delapan halaman HTML; kalau diganti, semua
+  harus ikut. Ada tes yang menjaga kedelapannya tetap seragam
+  (`test/client-id.test.js`), tapi tes itu tidak tahu isi env var-nya.
+- `APPS_SCRIPT_URL` -- Web app URL dari Apps Script, HARUS yang berakhiran
+  `/exec`. Yang berakhiran `/dev` cuma bisa dibuka pemilik skrip lewat
+  peramban, dan kalau dipanggil server, Google membalas halaman login
+  berstatus 200 -- gejalanya membingungkan karena bukan error.
+- `APPS_SCRIPT_SECRET` -- harus sama persis dengan `var SECRET` di dalam
+  skripnya. Lihat prosedur menggantinya di bawah (SEC-10).
+- `MATERIALS_CSV_URL` -- OPSIONAL. Sheet materi kelas. Boleh dikosongkan
+  begitu semuanya diisi lewat `/atur-kelas`; isian di sana MENANG atas
+  sheet, dan mengosongkan env var ini menghilangkan satu pengambilan ke
+  Google dari jalur login.
+- `SCHEDULE_CSV_URL` -- OPSIONAL. Sheet jadwal sesi. Sama seperti di atas:
+  boleh dikosongkan setelah jadwal dipindah ke `/atur-kelas`.
+- `BATCH_CUTOFF_DATE` -- OPSIONAL dan **sebaiknya dibiarkan kosong.**
+  Mekanisme lama untuk membatasi akses per angkatan lewat kolom Timestamp.
+  Halaman `/batch` sekarang menggantikan gunanya dengan cara yang jauh
+  lebih bisa ditelusuri, jadi env var ini praktis pensiun. Mengisinya
+  menambah cara kedua orang kehilangan akses, dan dua mekanisme yang bisa
+  berselisih lebih berbahaya daripada satu yang jelas.
+- `EDGE_CONFIG` -- cadangan untuk `GLOBAL_CONFIG`, dibaca kalau project ini
+  masih memakai connection string versi lama sebelum Edge Config berganti
+  nama. Tidak perlu diisi kalau `GLOBAL_CONFIG` sudah ada.
+
 Blob store WAJIB dibuat dengan access **Public** (bukan Private) -- pilihan
 ini tidak bisa diubah setelah store dibuat, jadi kalau salah pilih Private,
 buat store baru, jangan coba mengubah yang sudah ada.
