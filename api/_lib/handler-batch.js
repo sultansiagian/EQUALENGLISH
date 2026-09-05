@@ -65,7 +65,16 @@ function ringkasBaris(fields, baris) {
 async function ambilRoster(overrides) {
   const hasil = await panggilAppsScript('rosterList');
   const baris = Array.isArray(hasil.baris) ? hasil.baris : [];
-  return baris.map((b) => ringkasBaris(overrides.formFields, b));
+  return {
+    anggota: baris.map((b) => ringkasBaris(overrides.formFields, b)),
+    // Apps Script cuma membaca sebagian baris terakhir kalau sheet-nya
+    // panjang (lihat MAKS_BARIS di apps-script.gs). Angka aslinya dibawa
+    // sampai ke layar supaya halaman admin bisa menyebutnya terus terang;
+    // menampilkan sebagian tanpa memberi tahu adalah cara paling halus
+    // untuk membuat orang salah mengira satu angkatan sudah kosong.
+    total: Number.isFinite(hasil.total) ? hasil.total : baris.length,
+    terpotong: hasil.terpotong === true,
+  };
 }
 
 module.exports = async function handler(req, res) {
@@ -76,9 +85,15 @@ module.exports = async function handler(req, res) {
     try {
       const overrides = await readOverrides().catch(() => ({}));
       const daftarBatch = daftarTersimpan(overrides);
-      const anggota = await ambilRoster(overrides);
+      const roster = await ambilRoster(overrides);
 
-      return res.status(200).json({ ok: true, batch: daftarBatch, anggota });
+      return res.status(200).json({
+        ok: true,
+        batch: daftarBatch,
+        anggota: roster.anggota,
+        total: roster.total,
+        terpotong: roster.terpotong,
+      });
     } catch (err) {
       console.error('admin-batch GET:', err.message);
       return res.status(502).json({ ok: false, reason: 'gagal_baca', pesan: err.message });
@@ -133,8 +148,8 @@ module.exports = async function handler(req, res) {
       // daftar batch yang baru berganti nama.
       let terdampak = 0;
       try {
-        const anggota = await ambilRoster(overrides);
-        terdampak = anggota.filter((a) => a.batch === hasil.namaLama).length;
+        const roster = await ambilRoster(overrides);
+        terdampak = roster.anggota.filter((a) => a.batch === hasil.namaLama).length;
       } catch (err) {
         terdampak = -1; // tidak terbaca; halaman admin yang menjelaskan
       }

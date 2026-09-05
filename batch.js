@@ -29,6 +29,11 @@ var batchDipilih = null; // id batch, atau '' untuk kelompok tanpa label
 // yang masuk sebelum fitur ini ada (Google Form lama dan sheet manual).
 var TANPA_LABEL = '';
 
+// Diisi dari balasan server: jumlah baris sebenarnya di sheet, dan apakah
+// yang terkirim cuma sebagian terakhir.
+var rosterTotal = 0;
+var rosterTerpotong = false;
+
 // Pemisah paragraf di dalam dialog confirm/prompt. Ditulis sebagai
 // konstanta, bukan escape di tengah kalimat panjang, supaya tidak ada
 // lagi yang tidak sengaja jadi baris baru sungguhan waktu berkas ini
@@ -87,6 +92,8 @@ async function muatBatch() {
 
     semuaBatch = Array.isArray(data.batch) ? data.batch : [];
     semuaAnggota = Array.isArray(data.anggota) ? data.anggota : [];
+    rosterTotal = Number(data.total) || semuaAnggota.length;
+    rosterTerpotong = data.terpotong === true;
 
     // Pilihan sebelumnya dipertahankan kalau batch-nya masih ada, supaya
     // menekan "Muat Ulang" atau mencabut satu orang tidak melemparkan
@@ -437,6 +444,22 @@ function gambarDaftar() {
       aktifSemua.length + ' baris masih punya akses, ' +
       dicabutSemua.length + ' sudah dicabut.';
     info.appendChild(p);
+
+    /* Kalau server cuma mengirim sebagian baris terakhir, itu HARUS
+       disebut. Tanpa peringatan ini, angkatan lama akan terlihat kosong
+       dan tombol "Cabut akses seluruh batch" terlihat sudah selesai
+       padahal ada baris yang tidak pernah ikut terkirim. */
+    if (rosterTerpotong) {
+      const potong = document.createElement('p');
+      potong.className = 'admin-hint';
+      potong.dataset.state = 'error';
+      potong.textContent =
+        'Sheet-nya panjang (' + rosterTotal + ' baris), jadi yang dimuat cuma ' +
+        semuaAnggota.length + ' baris terbaru. Peserta yang lebih lama tidak ikut ' +
+        'tampil di sini dan tidak ikut tercabut oleh tombol di bawah. Cabut yang lama ' +
+        'langsung di spreadsheet dengan mengetik "done" di barisnya.';
+      info.appendChild(potong);
+    }
 
     const aksi = document.createElement('div');
     aksi.className = 'batch-aksi';

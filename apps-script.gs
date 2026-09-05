@@ -361,6 +361,15 @@ function handleApprove(id, isiTambahan) {
 // Kalau salah satunya diubah tanpa yang lain, situs akan menulis label
 // batch ke kolom yang tidak dibaca skrip ini, dan tombol cabut akan
 // menandai kolom yang salah.
+/* Jumlah baris terakhir yang dibaca dari tab roster.
+
+   Bukan pembatasan yang mengada-ada: tab ini sering memuat seluruh
+   riwayat sejak zaman Google Form, sementara yang dikelola di /batch cuma
+   angkatan yang masih berjalan. 400 jauh di atas kebutuhan wajar satu
+   bootcamp, dan menjaga waktu baca tetap di bawah batas yang dipasang
+   api/_lib/apps-script.js. */
+var MAKS_BARIS = 400;
+
 // Lebar maksimum yang DIKIRIM ke situs. Sisi Node tidak pernah membaca
 // melewati KOLOM_CABUT (71), jadi kolom di kanannya cuma menambah ukuran
 // balasan tanpa dipakai. Angkanya 72 = indeks 71 ditambah satu.
@@ -378,32 +387,44 @@ var KOLOM_CABUT = 71;   // BT -- tempat baku penanda "done" dari /batch
  * handleList() untuk tab Pendaftar Web.
  */
 function handleRosterList() {
+  var mulaiMs = Date.now();
   var sh = sheetRoster();
   if (!sh) return rosterTidakKetemu();
 
   var barisTerakhir = sh.getLastRow();
   var kolomTerakhir = sh.getLastColumn();
-  if (barisTerakhir < 2 || kolomTerakhir < 1) return jsonOut({ ok: true, baris: [] });
+  if (barisTerakhir < 2 || kolomTerakhir < 1) {
+    return jsonOut({ ok: true, baris: [], total: 0, terpotong: false });
+  }
 
-  // getRange yang dibatasi, bukan getDataRange(). Keduanya mengembalikan
-  // isi yang sama di sheet normal, tapi yang ini menyebutkan batasnya
-  // sendiri sehingga tidak ikut membesar kalau ada pemformatan yang
-  // tersisa jauh di bawah data.
-  var nilai = sh.getRange(1, 1, barisTerakhir, kolomTerakhir).getValues();
+  /* HANYA SEBAGIAN BARIS TERAKHIR YANG DIBACA.
+
+     Tab roster ini sering berisi SELURUH riwayat sejak masih memakai
+     Google Form biasa, jadi jumlah barisnya tidak ada hubungannya dengan
+     jumlah peserta yang sedang aktif. Membaca semuanya sekali jalan
+     membuat skrip ini kehabisan waktu, dan gejalanya di situs adalah
+     halaman /batch yang menggantung tanpa pernah selesai.
+
+     Yang dibaca: MAKS_BARIS terakhir. Peserta terbaru selalu ada di
+     bawah, jadi yang terpotong adalah angkatan paling lama -- yang
+     aksesnya hampir pasti sudah lama berakhir. Jumlah sebenarnya tetap
+     dikirim lewat `total` supaya situs bisa mengatakannya terus terang,
+     bukan diam-diam menampilkan sebagian. */
+  var barisAwal = Math.max(2, barisTerakhir - MAKS_BARIS + 1);
+  var jumlahDibaca = barisTerakhir - barisAwal + 1;
+  var lebarBaca = Math.min(kolomTerakhir, MAKS_KOLOM_KIRIM);
+
+  var nilai = sh.getRange(barisAwal, 1, jumlahDibaca, lebarBaca).getValues();
+  var msBaca = Date.now() - mulaiMs;
   var hasil = [];
 
-  for (var i = 1; i < nilai.length; i++) {
+  for (var i = 0; i < nilai.length; i++) {
     var baris = nilai[i];
     var isi = [];
     var kosong = true;
     var dicabut = false;
     var isiTerakhir = -1;
 
-    // SELURUH lebar baris diperiksa untuk kata "done", bukan cuma bagian
-    // yang nanti dikirim. Aturannya harus sama persis dengan
-    // api/_lib/roster.js, yang memang memindai semua sel -- kalau di sini
-    // lebih sempit, halaman /batch akan menampilkan "Akses aktif" untuk
-    // orang yang sebenarnya sudah dicabut, dan itu layar yang berbohong.
     for (var c = 0; c < baris.length; c++) {
       var sel = baris[c];
       var teks = sel === null || sel === undefined ? '' : String(sel);
@@ -411,26 +432,36 @@ function handleRosterList() {
         kosong = false;
         isiTerakhir = c;
       }
+      // Aturan yang sama persis dengan api/_lib/roster.js: SELURUH isi
+      // sel harus tepat "done", bukan sekadar mengandung kata itu.
       if (teks.trim().toLowerCase() === 'done') dicabut = true;
-      if (c < MAKS_KOLOM_KIRIM) isi.push(teks);
+      isi.push(teks);
     }
 
     // Baris kosong di tengah sheet (bekas hapus manual) dilewati supaya
     // tidak muncul sebagai peserta hantu tanpa nama di halaman admin.
     if (kosong) continue;
 
-    // Sel kosong di ujung kanan dibuang sebelum dikirim. Sheet respons
-    // Google Form gampang punya puluhan kolom kosong di kanan, dan
-    // mengirimnya berarti mengalikan ukuran balasan dengan jumlah baris
-    // tanpa menambah satu pun informasi. Sisi Node aman menerima baris
+    // Sel kosong di ujung kanan dibuang. Sisi Node aman menerima baris
     // yang lebih pendek: bacaBaris() memperlakukan indeks yang tidak ada
     // sebagai teks kosong.
-    isi.length = Math.min(isiTerakhir + 1, MAKS_KOLOM_KIRIM);
+    isi.length = isiTerakhir + 1;
 
-    hasil.push({ nomorBaris: i + 1, isi: isi, dicabut: dicabut });
+    hasil.push({ nomorBaris: barisAwal + i, isi: isi, dicabut: dicabut });
   }
 
-  return jsonOut({ ok: true, baris: hasil });
+  return jsonOut({
+    ok: true,
+    baris: hasil,
+    // Jumlah baris data sebenarnya di sheet (tanpa baris judul).
+    total: barisTerakhir - 1,
+    terpotong: barisAwal > 2,
+    // Waktu baca dan waktu total, dalam milidetik. Dipakai buat menelusuri
+    // kalau suatu saat halaman /batch lambat lagi: dari sini kelihatan
+    // apakah yang lambat pembacaan sheet-nya atau perjalanan jaringannya.
+    msBaca: msBaca,
+    msTotal: Date.now() - mulaiMs,
+  });
 }
 
 /**
