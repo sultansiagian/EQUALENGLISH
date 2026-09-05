@@ -13,6 +13,7 @@ const {
   daftarTersimpan,
   gantiNamaBatch,
   stempelSah,
+  aturTanggalBatch,
 } = require('../api/_lib/batch');
 const { KOLOM_BATCH, KOLOM_CABUT, KOLOM_BERLAKU_SAMPAI, KOLOM_TAMBAHAN_MULAI, MAKS_FIELD } =
   require('../api/_lib/form-schema');
@@ -391,5 +392,53 @@ describe('apps-script.gs harus sepakat dengan form-schema.js', () => {
     assert.ok(aksi.length >= 13, 'aksi terbaca cuma ' + aksi.length + ', pola pembacaannya mungkin usang');
     const kurang = aksi.filter(([, , fn]) => !gs.includes('function ' + fn + '(')).map((a) => a[1]);
     assert.deepStrictEqual(kurang, [], 'aksi tanpa handler: ' + kurang.join(', '));
+  });
+});
+
+describe('aturTanggalBatch', () => {
+  /**
+   * Tanggal ini yang disalin ke kolom W tiap peserta waktu disetujui,
+   * dan kolom W itu yang menutup akses. Nilai setengah jadi yang lolos
+   * ke sana TERLIHAT seperti batas waktu terpasang padahal roster.js
+   * mengabaikannya -- kesalahan yang tidak pernah memunculkan error.
+   */
+  test('menyetel tanggal pada batch yang sudah ada', () => {
+    const awal = [{ id: 'b1', nama: 'Batch 1', selesai: null }];
+    const hasil = aturTanggalBatch(awal, 'b1', '2027-03-31');
+    assert.ok(hasil.ok);
+    assert.strictEqual(hasil.daftar[0].aksesBerakhir, '2027-03-31');
+  });
+
+  test('mengosongkan tanggal DITERIMA, artinya tanpa batas waktu', () => {
+    const awal = [{ id: 'b1', nama: 'Batch 1', aksesBerakhir: '2027-03-31', selesai: null }];
+    const hasil = aturTanggalBatch(awal, 'b1', '');
+    assert.ok(hasil.ok);
+    assert.strictEqual(hasil.daftar[0].aksesBerakhir, '');
+  });
+
+  test('tanggal yang tidak terbaca DITOLAK, bukan diam-diam jadi kosong', () => {
+    // Menyimpannya sebagai kosong berarti pemiliknya mengira batas
+    // waktunya terpasang padahal tidak pernah berlaku.
+    const awal = [{ id: 'b1', nama: 'Batch 1', selesai: null }];
+    ['31/03/2027', '2027-13-01', '2026-02-31', 'besok'].forEach((t) => {
+      assert.strictEqual(
+        aturTanggalBatch(awal, 'b1', t).reason,
+        'tanggal_tidak_terbaca',
+        'harusnya ditolak: ' + t
+      );
+    });
+  });
+
+  test('batch yang tidak ada ditolak', () => {
+    assert.strictEqual(
+      aturTanggalBatch([{ id: 'b1', nama: 'Batch 1' }], 'b9', '2027-03-31').reason,
+      'batch_tidak_ketemu'
+    );
+  });
+
+  test('daftar asal tidak disunting di tempat', () => {
+    const awal = [{ id: 'b1', nama: 'Batch 1', aksesBerakhir: '', selesai: null }];
+    aturTanggalBatch(awal, 'b1', '2027-03-31');
+    assert.strictEqual(awal[0].aksesBerakhir, '');
   });
 });

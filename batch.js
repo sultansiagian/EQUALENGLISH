@@ -182,6 +182,13 @@ function gambarBatchAktif() {
       tombol('Buka batch baru', 'admin-btn-ghost', bukaBatchBaru)
     );
     aksi.appendChild(
+      tombol(
+        aktif.aksesBerakhir ? 'Ubah tanggal berakhir' : 'Atur tanggal berakhir',
+        'admin-btn-ghost',
+        () => aturTanggal(aktif)
+      )
+    );
+    aksi.appendChild(
       tombol('Ganti nama', 'admin-btn-ghost', () => gantiNama(aktif))
     );
     return;
@@ -265,6 +272,57 @@ async function tutupBatch(batch) {
 }
 
 /**
+ * Setel atau ubah tanggal berakhirnya akses batch.
+ *
+ * Sebelumnya tanggal ini CUMA bisa diisi pada saat batch dibuka, lewat
+ * satu pertanyaan yang lewat sekali lalu hilang. Batch yang terlanjur
+ * dibuka tanpa tanggal jadi tidak punya jalan sama sekali untuk
+ * mengaturnya, dan tidak ada satu tombol pun di layar yang menyebut
+ * tanggal.
+ */
+async function aturTanggal(batch) {
+  const jumlah = anggotaBatch(batch.nama).length;
+
+  const jawab = window.prompt(
+    'Akses ' + batch.nama + ' berlaku sampai kapan?' + BARIS_BARU +
+      'Tulis YYYY-MM-DD, misalnya 2027-03-31.' + BARIS_BARU +
+      'Kosongkan kalau tidak mau dibatasi waktu.',
+    batch.aksesBerakhir || ''
+  );
+  if (jawab === null) return;
+
+  const bersih = String(jawab).trim();
+  if (bersih && !/^\d{4}-\d{2}-\d{2}$/.test(bersih)) {
+    window.alert(
+      'Tanggalnya harus ditulis YYYY-MM-DD, misalnya 2027-03-31.' + BARIS_BARU +
+        'Tidak ada yang diubah.'
+    );
+    return;
+  }
+
+  /* Peringatan yang paling gampang terlewat, dan cuma ditampilkan kalau
+     batch-nya SUDAH punya anggota.
+
+     Tanggal ini disalin ke kolom W tiap orang pada saat dia disetujui,
+     jadi mengubahnya sekarang cuma berlaku untuk persetujuan berikutnya.
+     Tanpa peringatan ini, wajar sekali mengira seluruh angkatan ikut
+     diperpanjang -- lalu baru tahu kebalikannya berbulan-bulan kemudian
+     waktu ada yang mengeluh aksesnya mati. */
+  if (jumlah > 0) {
+    const setuju = window.confirm(
+      batch.nama + ' sudah punya ' + jumlah + ' baris anggota.' + BARIS_BARU +
+        'Tanggal ini CUMA berlaku untuk yang kamu setujui SETELAH ini. Anggota yang ' +
+        'sudah masuk tetap memakai tanggal yang berlaku waktu mereka disetujui.' + BARIS_BARU +
+        'Untuk mengubah punya mereka, ganti kolom W barisnya langsung di spreadsheet. ' +
+        'Lanjutkan?'
+    );
+    if (!setuju) return;
+  }
+
+  await kirimAksi({ aksi: 'tanggal', id: batch.id, aksesBerakhir: bersih });
+}
+
+/**
  * Ganti nama batch.
  *
  * Pindah ke sini dari /analitik, yang dulu punya tombolnya sendiri.
@@ -324,6 +382,8 @@ var PESAN_GAGAL = {
   batch_tidak_ketemu: 'Batch itu tidak ditemukan. Coba muat ulang halaman.',
   batch_sudah_tertutup: 'Batch itu memang sudah tertutup.',
   nama_kosong: 'Nama batch tidak boleh kosong.',
+  tanggal_tidak_terbaca:
+    'Tanggalnya tidak terbaca. Tulis YYYY-MM-DD, misalnya 2027-03-31, atau kosongkan supaya tidak dibatasi waktu.',
   terlalu_banyak_batch: 'Jumlah batch sudah mencapai batas.',
   terlalu_banyak_baris: 'Terlalu banyak baris sekaligus. Cabut per batch yang lebih kecil.',
   baris_tidak_lengkap: 'Tidak ada baris yang dipilih.',
@@ -536,34 +596,60 @@ function kartuAnggota(a, namaBatch) {
 
   const info = document.createElement('div');
   info.className = 'admin-pendaftar-grid';
-  [
-    ['Paket', a.paket],
-    ['Fakultas', a.fakultas],
-    ['Email', a.email.join(', ')],
-    ['Berlaku sampai', a.berlakuSampai ? tanggalTerbaca(a.berlakuSampai) : 'Tanpa batas waktu'],
-  ].forEach(([label, isi]) => {
-    if (!isi) return;
+
+  /* NAMA PESERTA DIPERLAKUKAN SEPERTI EMAIL: satu kolom sendiri, satu
+     nama per baris.
+
+     Sebelumnya nama teman-temannya cuma disebut di dalam satu kalimat
+     panjang di bawah kartu. Kalimat itu terbaca sebagai keterangan, bukan
+     sebagai data, jadi nama orangnya tenggelam -- padahal justru merekalah
+     yang ikut kehilangan akses waktu tombol Cabut ditekan. Yang paling
+     penting diketahui sebelum menekan tombol tidak boleh jadi bagian
+     paling tidak terlihat di kartunya. */
+  const daftarKolom = [
+    ['Paket', [a.paket]],
+    ['Fakultas', [a.fakultas]],
+  ];
+  if (a.anggota.length > 1) daftarKolom.push(['Peserta', a.anggota]);
+  daftarKolom.push(['Email', a.email]);
+  daftarKolom.push([
+    'Berlaku sampai',
+    [a.berlakuSampai ? tanggalTerbaca(a.berlakuSampai) : 'Tanpa batas waktu'],
+  ]);
+
+  daftarKolom.forEach(([label, nilai]) => {
+    const isi = (nilai || []).filter(Boolean);
+    if (isi.length === 0) return;
+
     const baris = document.createElement('div');
     baris.className = 'admin-pendaftar-info';
+
     const s = document.createElement('span');
-    s.textContent = label;
-    const st = document.createElement('strong');
-    st.textContent = isi;
+    s.textContent = isi.length > 1 ? label + ' (' + isi.length + ')' : label;
     baris.appendChild(s);
+
+    // Tiap nilai jadi barisnya sendiri, bukan digabung dengan koma.
+    // Nama dan email sama-sama panjang; digabung, keduanya membungkus di
+    // tengah kata dan jadi sulit dibaca sebagai daftar.
+    const st = document.createElement('strong');
+    isi.forEach((v, i) => {
+      if (i > 0) st.appendChild(document.createElement('br'));
+      st.appendChild(document.createTextNode(v));
+    });
     baris.appendChild(st);
+
     info.appendChild(baris);
   });
   kartu.appendChild(info);
 
-  // Satu baris bisa berisi beberapa orang. Disebut terang-terangan di
-  // kartunya, bukan cuma di tombol, supaya jelas sebelum tombolnya
-  // ditekan siapa saja yang ikut terkena.
+  // Catatannya dipersingkat: siapa saja orangnya sudah terbaca di kolom
+  // Peserta di atas, jadi di sini tinggal AKIBATNYA.
   if (a.anggota.length > 1) {
     const catatan = document.createElement('p');
     catatan.className = 'admin-hint batch-catatan';
     catatan.textContent =
-      'Satu baris berisi ' + a.anggota.length + ' orang: ' + a.anggota.join(', ') +
-      '. Mencabut atau memulihkan berlaku untuk mereka semua.';
+      'Mencabut atau memulihkan berlaku untuk ' + a.anggota.length +
+      ' orang di baris ini sekaligus, tidak bisa satu per satu.';
     kartu.appendChild(catatan);
   }
 

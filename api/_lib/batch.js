@@ -275,6 +275,45 @@ function tutupBatch(daftar, id, sekarang) {
 }
 
 /**
+ * Setel atau ubah tanggal berakhirnya akses satu batch.
+ *
+ * Tanpa ini, tanggal cuma bisa diisi PADA SAAT batch dibuka, lewat
+ * pertanyaan yang muncul sekali. Batch yang terlanjur dibuka tanpa
+ * tanggal jadi tidak punya jalan sama sekali untuk mengaturnya, dan itu
+ * persis yang terjadi -- tidak ada tombolnya di mana pun.
+ *
+ * YANG BERUBAH DAN YANG TIDAK. Nilai ini disalin ke kolom W tiap orang
+ * PADA SAAT dia disetujui, jadi mengubahnya di sini cuma berlaku untuk
+ * persetujuan BERIKUTNYA. Anggota yang sudah terlanjur masuk tetap
+ * memegang tanggal yang berlaku waktu mereka disetujui, dan itu memang
+ * disengaja: tanggal di kolom W terlihat dan bisa diubah manual per
+ * orang di spreadsheet, sehingga perpanjangan untuk satu orang tidak
+ * pernah menuntut seluruh batch ikut digeser. Pemanggil yang harus
+ * mengatakan ini ke pemakainya.
+ *
+ * Tanggal kosong DITERIMA dan berarti "tidak dibatasi waktu" -- itu cara
+ * mencabut batas waktu yang terlanjur dipasang.
+ */
+function aturTanggalBatch(daftar, id, tanggal) {
+  const bersih = normalisasiBatch(daftar);
+  const target = bersih.find((b) => b.id === teks(id, 40));
+  if (!target) return { ok: false, reason: 'batch_tidak_ketemu' };
+
+  const mentah = String(tanggal === undefined || tanggal === null ? '' : tanggal).trim();
+  const sah = tanggalSah(mentah);
+  // Kosong berarti sengaja dihapus. Tapi isian yang TIDAK KOSONG dan
+  // tidak terbaca harus ditolak, bukan diam-diam jadi kosong: menyimpan
+  // "31/03/2027" sebagai tanpa-batas-waktu berarti pemiliknya mengira
+  // batas waktunya terpasang padahal tidak pernah berlaku.
+  if (mentah && !sah) return { ok: false, reason: 'tanggal_tidak_terbaca' };
+
+  return {
+    ok: true,
+    daftar: bersih.map((b) => (b.id === target.id ? Object.assign({}, b, { aksesBerakhir: sah }) : b)),
+  };
+}
+
+/**
  * Ganti nama satu batch.
  *
  * Ada di sini, bukan di /analitik seperti dulu, karena seluruh
@@ -325,6 +364,7 @@ module.exports = {
   daftarTersimpan,
   batchAktif,
   gantiNamaBatch,
+  aturTanggalBatch,
   stempelSah,
   namaBatchBerikutnya,
   bukaBatch,

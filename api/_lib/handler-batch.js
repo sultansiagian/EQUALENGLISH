@@ -2,7 +2,9 @@ const { requireAdmin } = require('./admin-guard');
 const { panggilAppsScript } = require('./apps-script');
 const { readOverrides, writeOverrides } = require('./global-config-store');
 const { bacaBaris, KOLOM_BATCH, KOLOM_BERLAKU_SAMPAI } = require('./form-schema');
-const { daftarTersimpan, bukaBatch, tutupBatch, gantiNamaBatch, labelBatchBaris } = require('./batch');
+const {
+  daftarTersimpan, bukaBatch, tutupBatch, gantiNamaBatch, aturTanggalBatch, labelBatchBaris,
+} = require('./batch');
 const { kirimAksesBerakhir } = require('./kirim-email');
 const { kerjakanDiLatar } = require('./kerja-latar');
 
@@ -130,6 +132,18 @@ module.exports = async function handler(req, res) {
 
       await writeOverrides({ batchList: hasil.daftar });
       console.log('admin-batch: ' + admin.email + ' -> tutup ' + body.id);
+      return res.status(200).json({ ok: true, daftar: hasil.daftar });
+    }
+
+    if (aksi === 'tanggal') {
+      const hasil = aturTanggalBatch(daftarSekarang, body.id, body.aksesBerakhir);
+      if (!hasil.ok) return res.status(400).json({ ok: false, reason: hasil.reason });
+
+      await writeOverrides({ batchList: hasil.daftar });
+      console.log(
+        'admin-batch: ' + admin.email + ' -> tanggal ' + body.id + ' = ' +
+          (body.aksesBerakhir || '(dikosongkan)')
+      );
       return res.status(200).json({ ok: true, daftar: hasil.daftar });
     }
 
