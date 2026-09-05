@@ -7,6 +7,16 @@
  * baris ke spreadsheet pendaftaran.
  */
 
+/**
+ * Batas waktu satu panggilan ke Apps Script.
+ *
+ * HARUS lebih kecil daripada maxDuration fungsi Vercel yang memanggilnya
+ * (lihat vercel.json). Kalau Vercel yang menyerah duluan, balasannya
+ * halaman error platform, bukan JSON, dan pesan yang sampai ke admin
+ * tidak menjelaskan apa pun.
+ */
+const BATAS_MS = 20000;
+
 function konfigurasi() {
   const url = (process.env.APPS_SCRIPT_URL || '').trim();
   const secret = (process.env.APPS_SCRIPT_SECRET || '').trim();
@@ -109,11 +119,44 @@ async function panggilAppsScript(action, payload) {
     );
   }
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(Object.assign({ secret, action }, payload || {})),
-  });
+  /* BATAS WAKTU. Sebelumnya tidak ada sama sekali, dan itu bukan
+     kelalaian kecil: fetch tanpa batas waktu menunggu SELAMANYA kalau
+     Apps Script lambat atau tidak pernah membalas.
+
+     Gejalanya di layar admin adalah yang paling buruk dari semua jenis
+     kegagalan: halamannya berhenti di "Memuat..." tanpa pernah berubah,
+     tanpa pesan, tanpa error di konsol. Tidak ada yang bisa dilakukan
+     orang yang melihatnya selain menunggu atau menutup tab. Ketahuan
+     waktu /batch dipakai pertama kali dengan roster sungguhan.
+
+     20 detik dipilih supaya SELALU lebih dulu daripada batas fungsi
+     Vercel (lihat maxDuration di vercel.json). Kalau Vercel yang
+     menghentikan duluan, yang sampai ke browser adalah halaman error
+     platform yang bukan JSON, dan pesannya tidak menjelaskan apa pun.
+     Dengan berhenti sendiri lebih dulu, kegagalannya tetap berupa
+     kalimat yang bisa ditindaklanjuti. */
+  let res;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ secret, action }, payload || {})),
+      signal: AbortSignal.timeout(BATAS_MS),
+    });
+  } catch (err) {
+    // TimeoutError dan AbortError dibedakan dari kegagalan jaringan biasa,
+    // karena penyebab dan tindak lanjutnya berbeda jauh.
+    if (err && (err.name === 'TimeoutError' || err.name === 'AbortError')) {
+      throw new Error(
+        'Apps Script tidak membalas dalam ' + Math.round(BATAS_MS / 1000) + ' detik ' +
+          '(action "' + action + '"). Penyebab tersering: spreadsheet-nya terlalu besar ' +
+          'untuk dibaca sekali jalan, atau skripnya sedang menunggu izin akses. Coba lagi; ' +
+          'kalau terus begini, kurangi baris di tab roster atau cek Executions di editor ' +
+          'Apps Script untuk melihat skripnya berhenti di mana.'
+      );
+    }
+    throw err;
+  }
 
   const teks = await res.text();
   let data;

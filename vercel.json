@@ -66,6 +66,12 @@
   "functions": {
     "api/render-home.js": {
       "includeFiles": "home-template.html"
+    },
+    "api/admin-data.js": {
+      "maxDuration": 30
+    },
+    "api/admin-pendaftar.js": {
+      "maxDuration": 30
     }
   }
 }

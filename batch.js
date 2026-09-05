@@ -46,6 +46,10 @@ window.onAdminReady = function () {
 // MENGAMBIL DATA
 // ============================================================
 
+function el(id) {
+  return document.getElementById(id);
+}
+
 function statusDaftar(teks, state) {
   const list = document.getElementById('batch-list');
   list.textContent = '';
@@ -56,10 +60,28 @@ function statusDaftar(teks, state) {
   list.appendChild(p);
 }
 
+/* Batas waktu di sisi browser.
+
+   Lebih besar daripada batas di server (20 detik, lihat BATAS_MS di
+   api/_lib/apps-script.js) supaya yang menyerah duluan SELALU server --
+   dia yang tahu penyebabnya dan bisa menjelaskannya. Batas di sini cuma
+   jaring terakhir untuk keadaan yang tidak pernah sampai ke server sama
+   sekali: jaringan putus di tengah jalan, atau fungsi Vercel dihentikan
+   platform tanpa sempat membalas apa pun.
+
+   Sebelumnya tidak ada batas di kedua sisi, dan akibatnya halaman ini
+   berhenti di "Memuat..." selamanya tanpa satu pun pesan. */
+var BATAS_MUAT_MS = 35000;
+
 async function muatBatch() {
-  statusDaftar('Memuat…');
+  statusDaftar('Memuat daftar peserta dari spreadsheet…');
+  el('batch-aktif-hint').textContent = 'Memuat…';
+
   try {
-    const res = await fetch('/api/admin-data?bagian=batch', { headers: authHeaders() });
+    const res = await fetch('/api/admin-data?bagian=batch', {
+      headers: authHeaders(),
+      signal: AbortSignal.timeout(BATAS_MUAT_MS),
+    });
     const data = await res.json();
     if (!res.ok || !data.ok) throw new Error(data.pesan || data.reason || 'gagal');
 
@@ -78,13 +100,38 @@ async function muatBatch() {
     gambarPemilih();
     gambarDaftar();
   } catch (err) {
-    // Diterjemahkan lewat peta yang sama dengan tombol-tombolnya. Server
-    // meneruskan alasan dari Apps Script apa adanya, dan kode mentah
-    // seperti "action_tidak_dikenal" tidak memberi tahu siapa pun apa
-    // yang harus dikerjakan -- padahal justru itu kegagalan yang paling
-    // mungkin terjadi waktu halaman ini pertama kali dibuka.
-    statusDaftar('Gagal memuat daftar batch. ' + pesanGagal({ reason: err.message }), 'error');
+    gagalMuat(err);
   }
+}
+
+/**
+ * Satu tempat untuk menggambarkan kegagalan pemuatan.
+ *
+ * Menulis ke DUA tempat, dan itu yang dulu terlewat: kartu "Batch Aktif"
+ * di atas punya teksnya sendiri, dan jalur error lama cuma menyentuh
+ * daftar di bawah. Akibatnya kartu atas berhenti di "Memuat..." selamanya
+ * walaupun pemuatannya sudah jelas gagal -- dua pesan yang bertentangan
+ * di satu layar, dan yang paling menonjol justru yang bohong.
+ */
+function gagalMuat(err) {
+  var pesan;
+  if (err && (err.name === 'TimeoutError' || err.name === 'AbortError')) {
+    pesan =
+      'Tidak ada balasan dalam ' + Math.round(BATAS_MUAT_MS / 1000) + ' detik. ' +
+      'Biasanya berarti spreadsheet-nya besar dan Apps Script kehabisan waktu membacanya. ' +
+      'Coba Muat Ulang; kalau terus begini, buka Extensions > Apps Script > Executions di ' +
+      'spreadsheet untuk melihat skripnya berhenti di mana.';
+  } else {
+    pesan = pesanGagal({ reason: err && err.message });
+  }
+
+  statusDaftar('Gagal memuat daftar batch. ' + pesan, 'error');
+
+  el('batch-aktif-nama').textContent = '';
+  el('batch-aktif-hint').textContent = 'Gagal memuat. Tekan Muat Ulang untuk mencoba lagi.';
+  el('batch-aktif-aksi').textContent = '';
+  el('batch-pilih').textContent = '';
+  el('batch-info').hidden = true;
 }
 
 /**

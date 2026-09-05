@@ -361,6 +361,11 @@ function handleApprove(id, isiTambahan) {
 // Kalau salah satunya diubah tanpa yang lain, situs akan menulis label
 // batch ke kolom yang tidak dibaca skrip ini, dan tombol cabut akan
 // menandai kolom yang salah.
+// Lebar maksimum yang DIKIRIM ke situs. Sisi Node tidak pernah membaca
+// melewati KOLOM_CABUT (71), jadi kolom di kanannya cuma menambah ukuran
+// balasan tanpa dipakai. Angkanya 72 = indeks 71 ditambah satu.
+var MAKS_KOLOM_KIRIM = 72;
+
 var KOLOM_BATCH = 70;   // BS -- label batch, ditulis waktu Setujui
 var KOLOM_CABUT = 71;   // BT -- tempat baku penanda "done" dari /batch
 
@@ -375,29 +380,52 @@ var KOLOM_CABUT = 71;   // BT -- tempat baku penanda "done" dari /batch
 function handleRosterList() {
   var sh = sheetRoster();
   if (!sh) return rosterTidakKetemu();
-  if (sh.getLastRow() < 2) return jsonOut({ ok: true, baris: [] });
 
-  var nilai = sh.getDataRange().getValues();
+  var barisTerakhir = sh.getLastRow();
+  var kolomTerakhir = sh.getLastColumn();
+  if (barisTerakhir < 2 || kolomTerakhir < 1) return jsonOut({ ok: true, baris: [] });
+
+  // getRange yang dibatasi, bukan getDataRange(). Keduanya mengembalikan
+  // isi yang sama di sheet normal, tapi yang ini menyebutkan batasnya
+  // sendiri sehingga tidak ikut membesar kalau ada pemformatan yang
+  // tersisa jauh di bawah data.
+  var nilai = sh.getRange(1, 1, barisTerakhir, kolomTerakhir).getValues();
   var hasil = [];
 
   for (var i = 1; i < nilai.length; i++) {
+    var baris = nilai[i];
     var isi = [];
     var kosong = true;
     var dicabut = false;
+    var isiTerakhir = -1;
 
-    for (var c = 0; c < nilai[i].length; c++) {
-      var sel = nilai[i][c];
+    // SELURUH lebar baris diperiksa untuk kata "done", bukan cuma bagian
+    // yang nanti dikirim. Aturannya harus sama persis dengan
+    // api/_lib/roster.js, yang memang memindai semua sel -- kalau di sini
+    // lebih sempit, halaman /batch akan menampilkan "Akses aktif" untuk
+    // orang yang sebenarnya sudah dicabut, dan itu layar yang berbohong.
+    for (var c = 0; c < baris.length; c++) {
+      var sel = baris[c];
       var teks = sel === null || sel === undefined ? '' : String(sel);
-      isi.push(teks);
-      if (teks.trim() !== '') kosong = false;
-      // Sama persis dengan aturan di api/_lib/roster.js: SELURUH isi sel
-      // harus tepat "done", bukan sekadar mengandung kata itu.
+      if (teks.trim() !== '') {
+        kosong = false;
+        isiTerakhir = c;
+      }
       if (teks.trim().toLowerCase() === 'done') dicabut = true;
+      if (c < MAKS_KOLOM_KIRIM) isi.push(teks);
     }
 
     // Baris kosong di tengah sheet (bekas hapus manual) dilewati supaya
     // tidak muncul sebagai peserta hantu tanpa nama di halaman admin.
     if (kosong) continue;
+
+    // Sel kosong di ujung kanan dibuang sebelum dikirim. Sheet respons
+    // Google Form gampang punya puluhan kolom kosong di kanan, dan
+    // mengirimnya berarti mengalikan ukuran balasan dengan jumlah baris
+    // tanpa menambah satu pun informasi. Sisi Node aman menerima baris
+    // yang lebih pendek: bacaBaris() memperlakukan indeks yang tidak ada
+    // sebagai teks kosong.
+    isi.length = Math.min(isiTerakhir + 1, MAKS_KOLOM_KIRIM);
 
     hasil.push({ nomorBaris: i + 1, isi: isi, dicabut: dicabut });
   }
