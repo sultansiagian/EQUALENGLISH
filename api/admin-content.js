@@ -30,6 +30,10 @@ const MAKS_SESI = 60;
 // entri sudah sangat longgar.
 const MAKS_RIWAYAT_HARGA = 40;
 
+// Batas panjang instruksi pembayaran di /daftar. Isinya nomor rekening
+// dan satu dua kalimat, jadi 800 karakter sudah sangat longgar.
+const MAKS_BAYAR_INFO = 800;
+
 /**
  * Ubah nilai apa pun jadi teks untuk dicatat di riwayat.
  *
@@ -126,6 +130,17 @@ module.exports = async function handler(req, res) {
         // memutuskan item mana yang layak tampil di halaman publik adalah
         // renderTestimonials() di api/render-home.js, bukan di sini.
         .filter((t) => t.nama || t.pesan || t.fakultas || t.skorEpt || t.fotoUrl);
+    }
+
+    // Instruksi pembayaran di /daftar. Teks bebas beberapa baris, jadi
+    // panjangnya dibatasi dengan alasan yang sama seperti array-array di
+    // sini: Global Config berjatah 1 MB untuk SELURUH konten situs.
+    // 800 karakter jauh di atas kebutuhan wajar (nomor rekening dan satu
+    // dua kalimat), tapi tetap ada batasnya. Kosong TETAP disimpan
+    // sebagai kosong, karena kosong itu berarti sesuatu di sini:
+    // bagiannya tidak digambar sama sekali di halaman.
+    if (filtered.daftarBayarInfo !== undefined) {
+      filtered.daftarBayarInfo = trimTo(filtered.daftarBayarInfo, MAKS_BAYAR_INFO);
     }
 
     // FAQ, sama seperti testimonials: isinya array, jadi allowlist kunci

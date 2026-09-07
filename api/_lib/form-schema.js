@@ -217,26 +217,61 @@ const PILIHAN_PAKET = [
 const DEFAULTS_PAKET = require('./site-defaults');
 
 const PAKET_SLOT = [
-  { id: 'individual', orang: 1, kunciNama: 'pkg1Name', kunciAktif: 'pkg1Available' },
-  { id: 'pair', orang: 2, kunciNama: 'pkg2Name', kunciAktif: 'pkg2Available' },
-  { id: 'group', orang: 3, kunciNama: 'pkg3Name', kunciAktif: 'pkg3Available' },
+  { id: 'individual', orang: 1, kunciNama: 'pkg1Name', kunciAktif: 'pkg1Available', kunciHarga: 'pkg1Price' },
+  { id: 'pair', orang: 2, kunciNama: 'pkg2Name', kunciAktif: 'pkg2Available', kunciHarga: 'pkg2Price' },
+  { id: 'group', orang: 3, kunciNama: 'pkg3Name', kunciAktif: 'pkg3Available', kunciHarga: 'pkg3Price' },
 ];
 
 /**
+ * Harga satu paket, dibaca dari kunci Global Config yang SAMA dengan yang
+ * dipakai kartu harga di beranda. Jadi mengubah harga di /admin mengubah
+ * dua-duanya sekaligus, dan tidak ada angka yang perlu diketik dua kali.
+ *
+ * Cara membacanya sengaja disamakan dengan ambilHarga() di statistik.js:
+ * semua yang bukan angka dibuang, jadi "59000", "59.000", dan "Rp59.000"
+ * dibaca sama. Nilai yang tidak masuk akal (kosong, huruf semua, negatif)
+ * jadi 0, dan 0 itu yang dipakai pemanggilnya sebagai tanda "jangan
+ * tampilkan harga" -- lebih baik tidak menyebut angka sama sekali
+ * daripada menyebut Rp0 kepada orang yang sebentar lagi transfer.
+ */
+function hargaSlot(overrides, kunci) {
+  const mentah = overrides[kunci] !== undefined ? overrides[kunci] : DEFAULTS_PAKET[kunci];
+  const n = Number(String(mentah === undefined || mentah === null ? '' : mentah).replace(/[^\d]/g, ''));
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+/**
  * Paket yang boleh dipilih pendaftar, sudah disaring yang dimatikan.
- * Bentuknya { id, nama, jumlah } -- id itu yang dikirim browser dan
- * disimpan server, nama cuma untuk dibaca manusia.
+ *
+ * Bentuknya { id, nama, jumlah, orang, harga, total } -- id itu yang
+ * dikirim browser dan disimpan server, sisanya untuk dibaca manusia.
+ *
+ * `harga` itu harga PER ORANG (persis yang tertulis di beranda), `total`
+ * itu harga yang benar-benar ditransfer sekali untuk seluruh anggota
+ * baris ini. Dua-duanya dikirim, bukan cuma totalnya, supaya halaman
+ * pendaftaran bisa memperlihatkan hitungannya dan bukan cuma hasilnya.
+ *
+ * Perkaliannya memakai angka orang yang sama dengan yang dipakai
+ * api/_lib/statistik.js menghitung pendapatan (satu baris Group = 3 x
+ * harga Group). Kalau suatu saat keduanya berbeda, yang tertulis di
+ * formulir dan yang tercatat sebagai pendapatan akan berselisih.
  */
 function pilihanPaket(overrides) {
   const o = overrides || {};
-  return PAKET_SLOT.filter((s) => o[s.kunciAktif] !== false).map((s, i) => ({
-    id: s.id,
-    nama:
-      String(
-        o[s.kunciNama] !== undefined ? o[s.kunciNama] : DEFAULTS_PAKET[s.kunciNama]
-      ).trim() || s.id,
-    jumlah: s.orang === 1 ? '1 orang' : s.orang + ' orang',
-  }));
+  return PAKET_SLOT.filter((s) => o[s.kunciAktif] !== false).map((s) => {
+    const harga = hargaSlot(o, s.kunciHarga);
+    return {
+      id: s.id,
+      nama:
+        String(
+          o[s.kunciNama] !== undefined ? o[s.kunciNama] : DEFAULTS_PAKET[s.kunciNama]
+        ).trim() || s.id,
+      jumlah: s.orang === 1 ? '1 orang' : s.orang + ' orang',
+      orang: s.orang,
+      harga: harga,
+      total: harga * s.orang,
+    };
+  });
 }
 
 /**

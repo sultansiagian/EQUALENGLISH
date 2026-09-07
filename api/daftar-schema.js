@@ -49,8 +49,15 @@ module.exports = async function handler(req, res) {
       // Cuma paket yang sedang TERSEDIA yang dikirim. Setelan
       // tersedia/tidaknya sama dengan yang dipakai kartu harga di
       // beranda, jadi mematikan paket di satu tempat mematikannya di
-      // kedua tempat.
+      // kedua tempat. Harganya pun dari kunci yang sama, jadi kartu di
+      // sini tidak bisa menyebut angka yang berbeda dari beranda.
       pilihanPaket: pilihanPaket(overrides),
+      // Cara membayar. Boleh kosong, dan kosong berarti bagian itu tidak
+      // digambar sama sekali di halaman.
+      bayarInfo:
+        overrides.daftarBayarInfo !== undefined
+          ? overrides.daftarBayarInfo
+          : DEFAULTS.daftarBayarInfo,
     });
   } catch (err) {
     console.error('daftar-schema error:', err.message);

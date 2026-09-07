@@ -250,6 +250,20 @@ module.exports = {
     'dikonfirmasi kamu akan dapat akses ke ruang kelas memakai akun Google yang ' +
     'emailnya kamu isi di sini.',
 
+  // Cara membayar, tampil di /daftar tepat di bawah rincian harga yang
+  // muncul begitu satu paket dipilih.
+  //
+  // KOSONG BAWAANNYA, DAN KOSONG BERARTI TIDAK MUNCUL SAMA SEKALI. Ini
+  // satu-satunya tempat di situs yang menyebut ke mana uang dikirim, dan
+  // isinya harus datang dari pemilik lewat /atur-form. Nomor rekening
+  // yang salah jauh lebih merugikan daripada tidak ada nomor rekening,
+  // jadi jangan pernah diisi nilai contoh di sini.
+  //
+  // Boleh beberapa baris. Ditampilkan sebagai teks apa adanya (baris baru
+  // dipertahankan, HTML tidak dijalankan), lihat gambarRincian() di
+  // daftar.js.
+  daftarBayarInfo: '',
+
   // Nama folder di Google Drive tempat semua file unggahan pendaftar
   // disimpan. Dibuat otomatis oleh Apps Script kalau belum ada. Diubah
   // dari /admin; mengubahnya TIDAK memindahkan file lama, cuma menentukan

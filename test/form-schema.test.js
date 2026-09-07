@@ -8,6 +8,7 @@ const {
   fieldAktif,
   pilihanPaket,
 } = require('../api/_lib/form-schema');
+const DEFAULTS = require('../api/_lib/site-defaults');
 
 /**
  * ============================================================
@@ -210,5 +211,103 @@ describe('fieldAktif dan pilihanPaket', () => {
     const tersedia = pilihanPaket({ pkg2Available: false }).map((p) => p.id);
     assert.ok(!tersedia.includes('pair'));
     assert.ok(tersedia.includes('individual'));
+  });
+});
+
+/**
+ * ============================================================
+ * HARGA DI FORMULIR = HARGA DI BERANDA
+ * ============================================================
+ * Rincian harga di /daftar dan kartu harga di beranda membaca kunci
+ * Global Config yang sama. Tes di bawah menjaga jalur itu tetap satu:
+ * kalau suatu saat formulir diberi kunci harganya sendiri, dua angka
+ * untuk satu harga akan berselisih tanpa ada yang menyadarinya sampai
+ * ada yang mentransfer nominal yang salah.
+ */
+describe('harga di pilihanPaket', () => {
+  test('harga diambil dari kunci yang sama dengan kartu harga beranda', () => {
+    const hasil = pilihanPaket({ pkg1Price: 75000, pkg2Price: 70000, pkg3Price: 65000 });
+    assert.strictEqual(hasil.find((p) => p.id === 'individual').harga, 75000);
+    assert.strictEqual(hasil.find((p) => p.id === 'pair').harga, 70000);
+    assert.strictEqual(hasil.find((p) => p.id === 'group').harga, 65000);
+  });
+
+  test('tanpa override, harga jatuh ke bawaan site-defaults', () => {
+    const hasil = pilihanPaket({});
+    assert.strictEqual(hasil.find((p) => p.id === 'individual').harga, DEFAULTS.pkg1Price);
+    assert.strictEqual(hasil.find((p) => p.id === 'pair').harga, DEFAULTS.pkg2Price);
+    assert.strictEqual(hasil.find((p) => p.id === 'group').harga, DEFAULTS.pkg3Price);
+  });
+
+  test('total = harga per orang x jumlah orang, sama seperti hitungan pendapatan', () => {
+    const hasil = pilihanPaket({ pkg1Price: 59000, pkg2Price: 53000, pkg3Price: 47000 });
+    const individual = hasil.find((p) => p.id === 'individual');
+    const pair = hasil.find((p) => p.id === 'pair');
+    const group = hasil.find((p) => p.id === 'group');
+
+    assert.strictEqual(individual.orang, 1);
+    assert.strictEqual(individual.total, 59000);
+    assert.strictEqual(pair.orang, 2);
+    assert.strictEqual(pair.total, 106000);
+    assert.strictEqual(group.orang, 3);
+    assert.strictEqual(group.total, 141000);
+  });
+
+  test('jumlah orang per paket sama persis dengan yang dipakai statistik.js', () => {
+    // Dua berkas menghitung "satu baris Group = 3 orang" secara terpisah.
+    // Kalau salah satunya digeser, total yang tertulis di formulir dan
+    // pendapatan yang tercatat di /analitik akan berselisih diam-diam.
+    const { hitungStatistik } = require('../api/_lib/statistik');
+    const stat = hitungStatistik('', {});
+    const dariStatistik = {};
+    stat.perPaket.forEach((p) => {
+      dariStatistik[p.id] = p.orangPerPendaftaran;
+    });
+
+    pilihanPaket({}).forEach((p) => {
+      assert.strictEqual(
+        p.orang,
+        dariStatistik[p.id],
+        'jumlah orang paket ' + p.id + ' beda antara form-schema.js dan statistik.js'
+      );
+    });
+  });
+
+  test('harga boleh ditulis "Rp59.000" atau "59.000", dibaca sama', () => {
+    assert.strictEqual(pilihanPaket({ pkg1Price: 'Rp59.000' })[0].harga, 59000);
+    assert.strictEqual(pilihanPaket({ pkg1Price: '59.000' })[0].harga, 59000);
+    assert.strictEqual(pilihanPaket({ pkg1Price: '59000' })[0].harga, 59000);
+  });
+
+  test('harga yang tidak terbaca jadi 0, bukan NaN', () => {
+    // 0 itu tanda "jangan tampilkan harga" buat daftar.js. NaN akan lolos
+    // sampai ke layar sebagai "RpNaN" di depan orang yang mau transfer.
+    [null, '', 'gratis', {}, []].forEach((buruk) => {
+      const harga = pilihanPaket({ pkg1Price: buruk })[0].harga;
+      assert.strictEqual(harga, 0,
+        'nilai ' + JSON.stringify(buruk) + ' seharusnya tidak lolos jadi angka');
+    });
+    // undefined artinya "tidak di-override", jadi jatuh ke bawaan.
+    assert.strictEqual(pilihanPaket({ pkg1Price: undefined })[0].harga, DEFAULTS.pkg1Price);
+  });
+
+  test('harga tidak pernah negatif dan tidak pernah NaN', () => {
+    // Angka minus dibaca sebagai angkanya saja ("-5000" -> 5000), persis
+    // seperti ambilHarga() di statistik.js -- keduanya sengaja cuma
+    // memungut digitnya. Bukan kasus nyata (harga tidak pernah minus),
+    // yang dijaga di sini cuma bahwa hasilnya selalu angka wajar dan
+    // tidak pernah sampai ke layar sebagai "Rp-5.000" atau "RpNaN".
+    ['-5000', 'abc', '1e5', '  ', '59.000,00'].forEach((aneh) => {
+      const p = pilihanPaket({ pkg1Price: aneh })[0];
+      assert.ok(Number.isFinite(p.harga), aneh + ' menghasilkan harga bukan angka');
+      assert.ok(p.harga >= 0, aneh + ' menghasilkan harga negatif');
+      assert.ok(Number.isFinite(p.total) && p.total >= 0);
+    });
+  });
+
+  test('paket yang dimatikan tidak menyeret harganya ikut terkirim', () => {
+    const hasil = pilihanPaket({ pkg3Available: false });
+    assert.ok(!hasil.some((p) => p.id === 'group'));
+    hasil.forEach((p) => assert.ok(p.harga > 0));
   });
 });

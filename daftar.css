@@ -180,6 +180,27 @@
   font-size: 0.8rem;
 }
 
+/* Harga per orang di kartu paket. Diberi jarak dari nama paket supaya
+   terbaca sebagai keterangan tersendiri, bukan sambungan "1 orang".
+
+   tabular-nums, bukan font monospace: angka jadi selebar sama sehingga
+   tiga harga bersebelahan tetap sejajar, tanpa memasukkan keluarga font
+   keempat ke situs ini. */
+.daftar-plan-harga {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  margin-top: 8px;
+}
+
+.daftar-plan-satuan {
+  /* Ukurannya lebih kecil dari .daftar-plan-box small biasa supaya
+     "per orang" jelas menempel ke harga di atasnya, bukan berdiri
+     sendiri sebagai baris keterangan baru. */
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
 /* Kartu paket yang TERPILIH berlatar pink, dan pink tetap warna terang
    di mode gelap. Jadi isinya tidak boleh mewarisi warna teks halaman:
    di mode gelap warna itu terang, dan terang di atas pink terang berarti
@@ -207,6 +228,79 @@
 .daftar-plan input:focus-visible + .daftar-plan-box {
   outline: 2px solid var(--ink);
   outline-offset: 2px;
+}
+
+/* ============================================================
+   RINCIAN HARGA
+   ============================================================
+   Muncul di bawah kartu paket begitu satu paket dipilih. Warnanya
+   sengaja mengikuti pola kotak draf di bawah (.daftar-draf): latar
+   --pink-light dengan garis --pink dan teks --ink.
+
+   Kenapa --ink dan bukan --ink-di-pink: --pink-light IKUT membalik per
+   mode (pink muda di mode terang, cokelat gelap di mode gelap), jadi
+   teksnya harus ikut membalik juga. Yang TIDAK boleh pakai --ink adalah
+   kotak berlatar --pink biasa, karena pink itu tetap terang di kedua
+   mode. Bedanya ditulis lengkap di tokens.css. */
+.daftar-rincian {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--pink);
+  border-radius: var(--r-panel);
+  background: var(--pink-light);
+  color: var(--ink);
+}
+
+.daftar-rincian-judul {
+  margin: 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-di-pink-redup);
+}
+
+.daftar-rincian-hitung {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-di-pink-redup);
+}
+
+.daftar-rincian-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--pink);
+}
+
+.daftar-rincian-total strong {
+  font-family: var(--display);
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.daftar-rincian-catatan {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--ink-di-pink-redup);
+}
+
+/* Instruksi pembayaran yang diisi pemilik lewat /atur-form. Dipisah
+   dengan garis supaya jelas ini bagian lain, bukan sambungan catatan di
+   atasnya. Isinya boleh beberapa baris; word-break menjaga nomor
+   rekening panjang tanpa spasi tidak menerobos keluar kotak di layar
+   HP. */
+.daftar-rincian-bayar {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--pink);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .daftar-person {

@@ -27,6 +27,7 @@ var LABEL_TIPE = {
 window.onAdminReady = function (data) {
   document.querySelector('[data-key="daftarTitle"]').value = data.values.daftarTitle || '';
   document.querySelector('[data-key="daftarDesc"]').value = data.values.daftarDesc || '';
+  document.querySelector('[data-key="daftarBayarInfo"]').value = data.values.daftarBayarInfo || '';
   document.querySelector('[data-key="driveFolder"]').value = data.values.driveFolder || '';
   document.querySelector('[data-key="formBukaPada"]').value = data.values.formBukaPada || '';
   document.querySelector('[data-key="formTutupPada"]').value = data.values.formTutupPada || '';
@@ -374,6 +375,7 @@ async function simpan() {
           formFields: kirim,
           daftarTitle: document.querySelector('[data-key="daftarTitle"]').value,
           daftarDesc: document.querySelector('[data-key="daftarDesc"]').value,
+          daftarBayarInfo: document.querySelector('[data-key="daftarBayarInfo"]').value,
           driveFolder: document.querySelector('[data-key="driveFolder"]').value,
           formMode: modeTerpilih(),
           formBukaPada: document.querySelector('[data-key="formBukaPada"]').value,

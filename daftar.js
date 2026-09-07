@@ -14,7 +14,7 @@
  * bagi pendaftarnya.
  */
 
-var skema = null; // { judul, deskripsi, fields, pilihanPaket }
+var skema = null; // { judul, deskripsi, fields, pilihanPaket, bayarInfo }
 var unggahan = {}; // { idField: dataUrl hasil kompresi }
 
 // Bukti transfer harus tetap terbaca (nominal, nama, waktu), jadi
@@ -39,6 +39,17 @@ function escapeHtml(t) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+/**
+ * "Rp59.000", bentuk yang sama persis dengan kartu harga di beranda
+ * (lihat formatRupiah() di content-sheet.js dan api/render-home.js).
+ * Dua tempat menyebut angka yang sama, jadi bentuknya tidak boleh beda:
+ * "Rp59.000" di satu halaman dan "Rp 59,000" di halaman lain bikin orang
+ * bertanya-tanya apakah itu harga yang sama.
+ */
+function rupiah(n) {
+  return 'Rp' + Number(n).toLocaleString('id-ID');
 }
 
 // ============================================================
@@ -101,16 +112,30 @@ function gambarField(f) {
           // id-nya tetap, jadi arti pilihannya tidak ikut berubah waktu
           // namanya diganti. Server yang menerjemahkan id itu jadi teks
           // baku yang ditulis ke spreadsheet.
+
+          // Harga cuma digambar kalau angkanya masuk akal. Server
+          // mengirim 0 untuk harga yang tidak terbaca, dan "Rp0" kepada
+          // orang yang sebentar lagi transfer lebih buruk daripada tidak
+          // menyebut angka sama sekali.
+          var harga = p.harga > 0
+            ? '<b class="daftar-plan-harga">' + escapeHtml(rupiah(p.harga)) + '</b>' +
+              '<small class="daftar-plan-satuan">per orang</small>'
+            : '';
           return (
             '<label class="daftar-plan">' +
             '<input type="radio" name="paket" value="' + escapeHtml(p.id) + '" />' +
             '<span class="daftar-plan-box"><strong>' + escapeHtml(p.nama) + '</strong>' +
-            '<small>' + escapeHtml(p.jumlah) + '</small></span>' +
+            '<small>' + escapeHtml(p.jumlah) + '</small>' + harga + '</span>' +
             '</label>'
           );
         })
         .join('') +
-      '</div>';
+      '</div>' +
+      // Kotak rincian harga. Digambar kosong dan tersembunyi di sini,
+      // isinya diisi perbaruiRincian() tiap kali paketnya berubah --
+      // termasuk waktu draf lama dipulihkan, karena pemulihan draf
+      // memanggil perbaruiPaket() yang memanggil ini juga.
+      '<div id="daftar-rincian" class="daftar-rincian" hidden></div>';
     return wrap;
   }
 
@@ -406,29 +431,110 @@ function gambarForm() {
 // ============================================================
 
 function perbaruiPaket() {
-  var blok = el('daftar-teman');
-  if (!blok) return;
-
   var dipilih = document.querySelector('input[name="paket"]:checked');
   var paket = dipilih ? dipilih.value : '';
   var butuhTeman = /pair|group/i.test(paket);
   var butuhTiga = /group/i.test(paket);
 
-  blok.hidden = !butuhTeman;
-  var p3 = el('daftar-person-3');
-  if (p3) p3.hidden = !butuhTiga;
+  // Rincian harga diperbarui LEBIH DULU dan di luar penjagaan blok teman
+  // di bawah. Blok "Data teman kamu" bisa dimatikan admin lewat
+  // /atur-form, dan versi sebelumnya berhenti di situ dengan `return`
+  // -- kalau rinciannya ikut di belakang penjagaan itu, mematikan satu
+  // pertanyaan diam-diam ikut mematikan tampilan harga.
+  perbaruiRincian(paket);
 
-  // Field yang tersembunyi juga DIKOSONGKAN, supaya orang yang tadinya
-  // pilih Group lalu ganti ke Individual tidak diam-diam ikut mengirim
-  // data teman yang sudah terlanjur diketik.
-  if (!butuhTeman) kosongkan(['p2Nama', 'p2Telepon', 'p2Email']);
-  if (!butuhTiga) kosongkan(['p3Nama', 'p3Telepon', 'p3Email']);
+  var blok = el('daftar-teman');
+  if (blok) {
+    blok.hidden = !butuhTeman;
+    var p3 = el('daftar-person-3');
+    if (p3) p3.hidden = !butuhTiga;
+
+    // Field yang tersembunyi juga DIKOSONGKAN, supaya orang yang tadinya
+    // pilih Group lalu ganti ke Individual tidak diam-diam ikut mengirim
+    // data teman yang sudah terlanjur diketik.
+    if (!butuhTeman) kosongkan(['p2Nama', 'p2Telepon', 'p2Email']);
+    if (!butuhTiga) kosongkan(['p3Nama', 'p3Telepon', 'p3Email']);
+  }
 
   // Ganti paket mengubah JUMLAH isian wajib, bukan cuma yang terisi, jadi
   // penanda kemajuan harus dihitung ulang di sini. Tanpa ini, memilih
   // Individual setelah Group menyisakan batang yang menghitung isian
   // teman yang sudah tidak diminta lagi.
   perbaruiKemajuan();
+}
+
+/**
+ * ============================================================
+ * RINCIAN HARGA
+ * ============================================================
+ * Yang ditampilkan bukan cuma totalnya, tapi hitungannya: harga per
+ * orang, dikali berapa orang, sama dengan berapa. Orang yang sedang
+ * memutuskan mau mengajak teman atau tidak butuh melihat keduanya.
+ *
+ * Untuk Pair/Group, satu orang membayar SEKALIAN untuk semuanya -- itu
+ * yang cocok dengan formulir ini (satu baris pendaftaran, satu unggahan
+ * bukti bayar) dan dengan cara /analitik menghitung pendapatan (satu
+ * baris Group = 3 x harga Group). Kalimat itu ditulis terang-terangan,
+ * karena "Rp47.000 per orang" gampang terbaca sebagai "aku transfer
+ * Rp47.000" oleh orang yang mendaftar bertiga.
+ *
+ * Kotaknya hilang sama sekali kalau belum ada paket terpilih, atau kalau
+ * harganya tidak terbaca. Kotak harga yang isinya "Rp0" atau tanda tanya
+ * lebih menakutkan daripada tidak ada kotak sama sekali.
+ */
+function perbaruiRincian(paket) {
+  var kotak = el('daftar-rincian');
+  if (!kotak) return;
+
+  var p = null;
+  if (paket && skema && skema.pilihanPaket) {
+    for (var i = 0; i < skema.pilihanPaket.length; i++) {
+      if (skema.pilihanPaket[i].id === paket) p = skema.pilihanPaket[i];
+    }
+  }
+
+  if (!p || !(p.harga > 0)) {
+    kotak.hidden = true;
+    kotak.innerHTML = '';
+    return;
+  }
+
+  var orang = Number(p.orang) > 0 ? Number(p.orang) : 1;
+  var total = Number(p.total) > 0 ? Number(p.total) : p.harga * orang;
+
+  // Hitungannya cuma ditulis kalau memang ada yang dihitung. Untuk
+  // Individual, "Rp59.000 per orang x 1 orang" tidak menambah apa pun
+  // di atas baris Total yang angkanya sama persis.
+  var baris = orang > 1
+    ? '<p class="daftar-rincian-hitung">' +
+      escapeHtml(rupiah(p.harga)) + ' per orang &times; ' + orang + ' orang' +
+      '</p>'
+    : '';
+
+  var catatan = orang > 1
+    ? '<p class="daftar-rincian-catatan">Ditransfer sekali untuk ' + orang +
+      ' orang, bukan masing-masing. Unggah satu bukti pembayaran saja.</p>'
+    : '';
+
+  // Instruksi pembayaran diisi pemilik lewat /atur-form. Sengaja
+  // dimasukkan lewat escapeHtml lalu baris barunya diubah jadi <br>:
+  // isinya boleh beberapa baris, tapi tidak boleh jadi HTML.
+  var info = skema && skema.bayarInfo ? String(skema.bayarInfo).trim() : '';
+  var infoHtml = info
+    ? '<div class="daftar-rincian-bayar">' +
+      escapeHtml(info).replace(/\r?\n/g, '<br />') +
+      '</div>'
+    : '';
+
+  kotak.innerHTML =
+    '<p class="daftar-rincian-judul">Yang kamu bayar</p>' +
+    baris +
+    '<div class="daftar-rincian-total">' +
+    '<span>Total</span><strong>' + escapeHtml(rupiah(total)) + '</strong>' +
+    '</div>' +
+    catatan +
+    infoHtml;
+  kotak.hidden = false;
 }
 
 function kosongkan(nama) {
