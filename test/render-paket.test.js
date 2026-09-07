@@ -134,3 +134,67 @@ describe('tidak ada penimpa client-side di beranda', () => {
     );
   });
 });
+
+/**
+ * ============================================================
+ * SEMBUNYIKAN SELURUH SECTION HARGA
+ * ============================================================
+ * Beda dari mematikan "Tersedia" per paket, yang tetap menampilkan
+ * kartunya dengan tanda "Tidak Tersedia". Yang ini menghilangkan
+ * sectionnya sama sekali.
+ *
+ * Tiga hal harus hilang bersamaan, dan dua di antaranya gampang
+ * terlupakan: tautan "Harga" di menu (kalau tertinggal, menu utama
+ * menunjuk ke tempat yang tidak ada) dan blok "offers" di schema.org
+ * (kalau tertinggal, halaman menjanjikan harga yang tidak tertulis di
+ * mana pun padanya).
+ */
+function schemaDari(html) {
+  const m = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(html);
+  if (!m) return null;
+  return JSON.parse(m[1]);
+}
+
+describe('section harga bisa disembunyikan seluruhnya', () => {
+  test('bawaannya TAMPIL, kunci yang belum pernah diisi tidak menghilangkan apa pun', () => {
+    const html = rh.renderHtml(TEMPLATE, {});
+    assert.ok(html.includes('id="harga"'));
+    assert.ok(html.includes('href="#harga"'));
+    assert.ok(schemaDari(html).offers, 'blok offers hilang padahal sectionnya tampil');
+  });
+
+  test('dimatikan: section, tautan menu, dan blok offers hilang bersamaan', () => {
+    const html = rh.renderHtml(TEMPLATE, { pkgSectionTampil: false });
+    assert.ok(!html.includes('id="harga"'), 'sectionnya masih ada');
+    assert.ok(!html.includes('href="#harga"'), 'tautan menu masih menunjuk ke section yang sudah tidak ada');
+    assert.ok(!schemaDari(html).offers, 'schema masih menjanjikan harga di halaman yang tidak menyebut harga');
+  });
+
+  test('schema.org tetap JSON yang sah di KEDUA keadaan', () => {
+    // Penanda komentar HTML sempat ditaruh di dalam blok ld+json untuk
+    // menyembunyikan offers, dan itu membuat JSON-nya gagal diurai
+    // SELALU, bukan cuma waktu disembunyikan. Tidak terlihat sama sekali
+    // di layar; yang menangkapnya cuma pengurai JSON seperti di sini.
+    assert.doesNotThrow(() => schemaDari(rh.renderHtml(TEMPLATE, {})));
+    assert.doesNotThrow(() => schemaDari(rh.renderHtml(TEMPLATE, { pkgSectionTampil: true })));
+    assert.doesNotThrow(() => schemaDari(rh.renderHtml(TEMPLATE, { pkgSectionTampil: false })));
+  });
+
+  test('menyembunyikan section tidak menyentuh sisa halaman', () => {
+    const html = rh.renderHtml(TEMPLATE, { pkgSectionTampil: false });
+    // Section tetangganya harus utuh -- penanda yang salah tempat bisa
+    // menelan lebih banyak dari yang dimaksud.
+    assert.ok(html.includes('id="mentor"') || html.includes('MENTORNYA'), 'section mentor ikut hilang');
+    assert.ok(html.includes('id="mulai"'), 'section CTA ikut hilang');
+    assert.ok(html.includes('href="#mentor"'), 'menu lain ikut hilang');
+  });
+
+  test('"Tersedia" per paket dan sakelar section adalah dua hal berbeda', () => {
+    // Mematikan ketiga paket TETAP menampilkan sectionnya.
+    const html = rh.renderHtml(TEMPLATE, {
+      pkg1Available: false, pkg2Available: false, pkg3Available: false,
+    });
+    assert.ok(html.includes('id="harga"'));
+    assert.ok(html.includes('Tidak Tersedia'));
+  });
+});

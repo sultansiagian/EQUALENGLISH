@@ -2497,3 +2497,17 @@ a.admin-nav-item:focus-visible {
   border-radius: var(--r-sedang);
   background: var(--surface);
 }
+
+/* Sakelar yang mengendalikan SELURUH section, bukan satu isian di
+   dalamnya. Dibuat lebih tegas daripada .admin-checkbox biasa supaya
+   tidak terbaca sebagai centang kecil sederajat dengan "Tersedia" di
+   tiap paket -- akibat menekan keduanya sangat berbeda. */
+.admin-checkbox-utama {
+  gap: 0.6rem;
+  margin-bottom: 0.8rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface-2);
+  font-weight: 600;
+}

@@ -49,6 +49,68 @@ function fillForm(values) {
       el.value = value;
     }
   });
+
+  // Dipasang di sini, bukan di DOMContentLoaded: isian harga baru berisi
+  // nilai sungguhan setelah fillForm jalan, dan peringatan yang dihitung
+  // sebelum itu selalu melihat kotak kosong.
+  perbaruiPeringatanHargaNol();
+  [1, 2, 3].forEach((n) => {
+    ['pkg' + n + 'Price', 'pkg' + n + 'Name'].forEach((k) => {
+      const input = document.querySelector('[data-key="' + k + '"]');
+      if (input) input.addEventListener('input', perbaruiPeringatanHargaNol);
+    });
+  });
+}
+
+/**
+ * Peringatkan kalau ada harga paket yang bernilai 0.
+ *
+ * Kenapa perlu diteriakkan: isian harga bertipe number, dan
+ * collectFormItems() di bawah membacanya lewat Number(el.value). Isian
+ * yang DIKOSONGKAN menghasilkan Number('') === 0, jadi menghapus isi
+ * kotak harga lalu menekan Simpan menyimpan harga Rp0 tanpa satu pun
+ * tanda bahaya.
+ *
+ * Akibatnya jauh dari sekadar tampilan. Rp0 masuk ke kartu beranda, ke
+ * rincian "Yang kamu bayar" di /daftar, dan yang paling mahal: begitu
+ * ada yang mendaftar, pendapatan orang itu tercatat Rp0 SELAMANYA,
+ * karena tiap baris dihargai memakai harga yang berlaku pada tanggal
+ * dia mendaftar (lihat hargaRiwayat di api/_lib/statistik.js).
+ * Membetulkan harganya belakangan tidak memperbaiki baris yang sudah
+ * terlanjur tercatat.
+ *
+ * Tidak memblokir penyimpanan: mungkin saja sedang disengaja sebentar.
+ * Yang penting keputusannya diambil sadar, bukan tanpa disadari.
+ */
+function perbaruiPeringatanHargaNol() {
+  const el = document.getElementById('harga-nol-peringatan');
+  if (!el) return;
+
+  const nol = [1, 2, 3].filter((n) => {
+    const input = document.querySelector('[data-key="pkg' + n + 'Price"]');
+    return input && Number(input.value) <= 0;
+  });
+
+  if (nol.length === 0) {
+    el.hidden = true;
+    el.textContent = '';
+    return;
+  }
+
+  const nama = nol
+    .map((n) => {
+      const input = document.querySelector('[data-key="pkg' + n + 'Name"]');
+      return (input && input.value.trim()) || 'Paket ' + n;
+    })
+    .join(', ');
+
+  el.hidden = false;
+  el.dataset.state = 'tutup';
+  el.textContent =
+    'Harga ' + nama + ' bernilai 0. Kalau disimpan begini, beranda dan formulir ' +
+    'pendaftaran menyebut Rp0, dan pendaftar yang masuk setelah ini tercatat ' +
+    'berpendapatan Rp0 di Analitik untuk selamanya. Kalau maksudmu menyembunyikan ' +
+    'harga, matikan sakelar di atas, jangan kosongkan angkanya.';
 }
 
 function collectFormItems() {

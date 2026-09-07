@@ -170,6 +170,29 @@
         <section class="admin-card" data-reveal>
           <p class="admin-kicker"><b>02</b> / YANG DIBAYAR</p>
           <h2>Pilihan Paket <span class="admin-card-note">section 07</span></h2>
+          <!-- Sakelar seluruh section. Ditaruh PALING ATAS di kartu ini,
+               sebelum isian harga: kalau sectionnya sedang disembunyikan,
+               itu hal pertama yang perlu diketahui sebelum bingung kenapa
+               harga yang diubah tidak muncul di beranda. -->
+          <label class="admin-checkbox admin-checkbox-utama">
+            <input type="checkbox" data-key="pkgSectionTampil" />
+            <span>Tampilkan section harga di beranda</span>
+          </label>
+          <p class="admin-hint">
+            Dimatikan berarti <strong>seluruh section "07 / Pilihan Paket"
+            hilang</strong> dari beranda, berikut tautan "Harga" di menu atas.
+            Beda dari centang "Tersedia" di tiap paket di bawah, yang
+            <strong>tetap menampilkan kartunya</strong> dengan tanda "Tidak
+            Tersedia".
+          </p>
+          <p class="admin-hint">
+            Ini <strong>tidak menutup pendaftaran</strong>. Formulir di /daftar
+            punya sakelarnya sendiri di
+            <a href="/atur-form">halaman Formulir</a>.
+          </p>
+
+          <p id="harga-nol-peringatan" class="form-status-pratinjau" hidden></p>
+
           <p class="admin-hint">
             Badge "Hemat RpX.000 per orang" di Pair &amp; Group dihitung otomatis
             dari selisih ke harga Individual, tidak perlu diisi manual.

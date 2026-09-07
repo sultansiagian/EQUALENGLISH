@@ -115,7 +115,7 @@
           <a href="#program">Materi</a>
           <a href="#cara-belajar">Cara belajar</a>
           <a href="#mentor">Mentor</a>
-          <a href="#harga">Harga</a>
+          <!--HARGANAV:MULAI--><a href="#harga">Harga</a><!--HARGANAV:SELESAI-->
           <!--FAQNAV:MULAI--><!--FAQNAV:SELESAI-->
           <a href="/kelas">Ruang Kelas</a>
           <a class="nav-cta" href="#mulai">Mulai belajar <span aria-hidden="true">↗</span></a>
@@ -544,6 +544,15 @@
         </div>
       </section>
 
+      <!-- SECTION PILIHAN PAKET.
+           Bisa disembunyikan seluruhnya lewat sakelar di /admin (kunci
+           pkgSectionTampil). Waktu disembunyikan, TIGA hal ikut hilang
+           bersamanya: section ini, tautan "Harga" di menu atas, dan blok
+           "offers" di schema.org pada <head>. Menyembunyikan sectionnya
+           saja akan menyisakan menu yang menunjuk ke tempat yang tidak
+           ada, dan data terstruktur yang menjanjikan harga yang tidak
+           tertulis di mana pun di halaman ini. -->
+      <!--HARGA:MULAI-->
       <section class="plan-section" id="harga" aria-labelledby="plan-title">
         <div class="page-shell">
           <div class="plan-head">
@@ -622,6 +631,7 @@
           </div>
         </div>
       </section>
+      <!--HARGA:SELESAI-->
 
       <!-- SECTION FAQ.
            Kosong di sini, digambar api/render-home.js dari isi yang

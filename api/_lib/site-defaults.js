@@ -65,6 +65,22 @@ module.exports = {
   // bermasalah. Angka promosi tidak sepadan dengan risiko itu.
   heroSiswaOtomatis: 0,
 
+  // Tampil atau tidaknya SELURUH section "07 / PILIHAN PAKET" di
+  // beranda. Beda dari pkgNAvailable di bawah:
+  //
+  //   pkgNAvailable false -> kartunya TETAP TAMPIL, ditandai
+  //                          "Tidak Tersedia". Dipakai waktu satu paket
+  //                          penuh tapi yang lain masih dijual.
+  //   pkgSectionTampil false -> sectionnya HILANG sama sekali, berikut
+  //                          tautan "Harga" di menu dan blok "offers" di
+  //                          schema.org. Dipakai waktu memang sedang
+  //                          tidak menjual apa pun.
+  //
+  // Ini TIDAK menyentuh /daftar. Formulir pendaftaran punya sakelar
+  // sendiri (formMode di bawah), karena menyembunyikan harga dari
+  // beranda dan menutup pendaftaran adalah dua keputusan berbeda.
+  pkgSectionTampil: true,
+
   pkg1Name: 'INDIVIDUAL',
   pkg1Price: 59000,
   pkg1Available: true,

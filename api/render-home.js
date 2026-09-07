@@ -431,7 +431,60 @@ function renderHtml(raw, overrides) {
     faqHtml ? '<a href="#faq">FAQ</a>' : ''
   );
 
+  html = terapkanSectionHarga(html, overrides);
+
   return html;
+}
+
+/**
+ * Sembunyikan SELURUH section "07 / PILIHAN PAKET" kalau pemiliknya
+ * mematikannya di /admin.
+ *
+ * TIGA hal hilang bersamaan, dan ketiganya perlu:
+ *
+ *   1. Sectionnya sendiri.
+ *   2. Tautan "Harga" di menu atas. Menu yang menunjuk ke section yang
+ *      tidak ada terasa seperti tautan rusak, dan itu justru di menu
+ *      utama. Pola yang sama sudah dipakai FAQ tepat di atas.
+ *   3. Blok "offers" di schema.org pada <head>. Data terstruktur harus
+ *      cocok dengan yang tertulis di halaman; menjanjikan harga
+ *      Rp59.000 dan availability InStock di halaman yang tidak menyebut
+ *      harga sama sekali adalah klaim yang tidak bisa dibuktikan
+ *      pembacanya, mesin maupun manusia.
+ *
+ * Bawaannya TAMPIL. Kunci yang belum pernah diisi tidak boleh
+ * menghilangkan section yang sudah ada, jadi cuma nilai `false` yang
+ * benar-benar menyembunyikan.
+ */
+function terapkanSectionHarga(html, overrides) {
+  const nilai = overrides.pkgSectionTampil;
+  const tampil = nilai === undefined ? DEFAULTS.pkgSectionTampil : nilai;
+  if (tampil !== false) return html;
+
+  let out = replaceBetweenMarkers(html, '<!--HARGA:MULAI-->', '<!--HARGA:SELESAI-->', '');
+  out = replaceBetweenMarkers(out, '<!--HARGANAV:MULAI-->', '<!--HARGANAV:SELESAI-->', '');
+  out = buangOffersSchema(out);
+  return out;
+}
+
+/**
+ * Buang blok "offers" dari schema.org di <head>, berikut koma di
+ * depannya supaya JSON-nya tetap sah.
+ *
+ * TIDAK memakai penanda komentar seperti dua blok di atas, dan itu
+ * bukan pilihan gaya: JSON tidak punya sintaks komentar, jadi
+ * `<!--...-->` di dalam <script type="application/ld+json"> membuat
+ * seluruh bloknya gagal diurai -- bukan cuma waktu disembunyikan, tapi
+ * SELALU. Sempat ditulis begitu, dan tes yang mengurai JSON-nya
+ * langsung menangkapnya.
+ *
+ * Pola ini sengaja cuma cocok untuk objek DATAR ([^{}]*). Kalau suatu
+ * saat "offers" diberi objek bersarang, pola ini berhenti cocok dan
+ * blok itu tetap tertinggal -- terlihat oleh tes, bukan diam-diam
+ * membuang separuh JSON.
+ */
+function buangOffersSchema(html) {
+  return html.replace(/,\s*"offers":\s*\{[^{}]*\}/, '');
 }
 
 module.exports = async function handler(req, res) {
