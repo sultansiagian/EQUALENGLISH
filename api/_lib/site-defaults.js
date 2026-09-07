@@ -139,18 +139,65 @@ module.exports = {
 
   // ---- FINAL TEST ----
   //
-  // Kartu terakhir di ruang kelas. Terkunci sampai DUA syarat terpenuhi:
-  //   1. waktunya sudah lewat (kelasFinalTestBukaPada)
+  // Kartu terakhir di ruang kelas, isinya TIGA BAGIAN comprehension
+  // (Listening, Reading, Writing) dalam satu kartu. Tiap bagian punya
+  // link, jam buka, dan jam tutup sendiri, jadi bisa dibuka bergiliran.
+  //
+  // Tiap bagian terkunci sampai DUA syarat terpenuhi:
+  //   1. sekarang ada di antara jam buka dan jam tutup bagian itu
   //   2. siswanya sudah mengisi testimoni
   //
   // Link-nya TIDAK pernah dikirim ke browser sebelum keduanya terpenuhi,
   // sama seperti link Zoom. Menyembunyikan tombol saja tidak menjaga apa
   // pun: isi balasan server bisa dibaca siapa saja yang mau melihatnya.
+  // Begitu jam tutup lewat, link-nya berhenti dikirim lagi.
+  //
+  // Semua waktu di bawah berbentuk WIB "2026-09-09T19:00". Jam buka
+  // kosong berarti bagian itu TIDAK PERNAH terbuka -- lebih baik begitu
+  // daripada terbuka lebih awal tanpa disengaja. Jam tutup kosong
+  // berarti tidak pernah tutup sendiri.
+  //
+  // Aturan lengkapnya di api/_lib/kelas-kartu.js.
+  kelasFinalListeningUrl: '',
+  kelasFinalListeningBuka: '',
+  kelasFinalListeningTutup: '',
+  kelasFinalReadingUrl: '',
+  kelasFinalReadingBuka: '',
+  kelasFinalReadingTutup: '',
+  kelasFinalWritingUrl: '',
+  kelasFinalWritingBuka: '',
+  kelasFinalWritingTutup: '',
+
+  // ---- FINAL TEST, BENTUK LAMA ----
+  // Dulu seluruh Final Test cuma satu link dan satu jam buka. Sejak ada
+  // tiga bagian di atas, kedua kunci ini jadi CADANGAN: dipakai bagian
+  // yang link atau jam bukanya belum diisi sendiri, supaya pengaturan
+  // yang sudah terlanjur ada tidak mati begitu versi ini dipasang.
+  //
+  // Tidak dihapus, dan tidak perlu diisi untuk pemasangan baru. Begitu
+  // ketiga bagian di atas diisi, kedua kunci ini berhenti berpengaruh.
   kelasFinalTestUrl: '',
-  // Waktu WIB, bentuk "2026-09-09T19:00". Kosong berarti belum dijadwalkan
-  // dan kartunya sengaja TIDAK PERNAH terbuka. Lebih baik begitu daripada
-  // terbuka lebih awal tanpa disengaja.
   kelasFinalTestBukaPada: '',
+
+  // ---- KARTU DI RUANG KELAS ----
+  //
+  // Id kartu BAWAAN yang sedang disembunyikan. Isinya dipilih dari
+  // KARTU_BAWAAN di api/_lib/kelas-kartu.js, dan harus sama dengan
+  // atribut data-kartu di kelas.html.
+  //
+  // Yang disimpan yang DIMATIKAN, bukan yang dinyalakan. Dengan begitu
+  // kartu bawaan yang ditambahkan nanti otomatis tampil, bukan diam-diam
+  // hilang di situs yang pengaturannya sudah pernah disimpan.
+  kelasKartuMati: [],
+
+  // Kartu buatan pemilik sendiri. Tiap item:
+  //   { id, label, judul, deskripsi, ikonUrl, url, bukaPada, lebar }
+  //   judul  : satu-satunya yang wajib, kartu tanpa judul dibuang
+  //   ikonUrl: hasil unggah lewat /api/admin-upload, boleh kosong
+  //   url    : boleh kosong untuk kartu yang isinya cuma keterangan
+  //   bukaPada: waktu WIB, kosong berarti langsung tampil
+  //   lebar  : 'auto', 'sempit', atau 'lebar'
+  kelasKartuTambahan: [],
 
   // Tanggal kuis latihan mulai bisa dibuka, format "2026-09-01".
   // Kosong berarti kuisnya tidak dikunci sama sekali.

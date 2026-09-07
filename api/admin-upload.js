@@ -24,6 +24,19 @@ const SLOT_KEYS = {
 // batal-upload sebelum jadi masalah.
 const TESTIMONIAL_SLOT = 'testimonialPhoto';
 
+// Ikon kartu ruang kelas. Diperlakukan sama seperti foto testimoni di
+// atas dan karena alasan yang sama: fotonya bukan satu nilai tetap
+// dengan kunci sendiri, melainkan satu field di dalam array
+// kelasKartuTambahan yang panjangnya bebas. Endpoint ini cuma
+// mengunggah dan mengembalikan URL-nya; atur-kelas.js yang menaruhnya
+// ke kartu yang benar, dan baru tersimpan waktu tombol Simpan ditekan.
+const KARTU_IKON_SLOT = 'kartuIkon';
+
+// Slot yang cuma mengembalikan URL tanpa menulis kunci Global Config
+// apa pun. Ditulis sebagai daftar, bukan dua perbandingan terpisah,
+// supaya menambah slot serupa nanti tidak menuntut mengubah tiga tempat.
+const SLOT_URL_SAJA = [TESTIMONIAL_SLOT, KARTU_IKON_SLOT];
+
 // Vercel Function punya batas body request 4.5 MB. admin.js mengompres
 // foto di browser dulu (lihat processImage() di sana) sebelum dikirim,
 // jadi dalam praktiknya jauh di bawah ini -- angka ini cuma jaring
@@ -50,9 +63,9 @@ module.exports = async function handler(req, res) {
   const body = req.body || {};
   const slot = body.slot;
   const dataUrl = body.dataUrl;
-  const isTestimonial = slot === TESTIMONIAL_SLOT;
+  const urlSaja = SLOT_URL_SAJA.indexOf(slot) !== -1;
   const key = SLOT_KEYS[slot];
-  if ((!key && !isTestimonial) || !dataUrl) {
+  if ((!key && !urlSaja) || !dataUrl) {
     return res.status(400).json({ ok: false, reason: 'invalid_request' });
   }
 
@@ -68,17 +81,18 @@ module.exports = async function handler(req, res) {
   try {
     const { put } = await import('@vercel/blob');
     const ext = contentType.split('/')[1] || 'jpg';
-    const folder = isTestimonial ? 'testimoni/' : 'site/';
+    const folder =
+      slot === TESTIMONIAL_SLOT ? 'testimoni/' : slot === KARTU_IKON_SLOT ? 'kartu/' : 'site/';
     const blob = await put(folder + slot + '.' + ext, buffer, {
       access: 'public',
       addRandomSuffix: true,
       contentType,
     });
 
-    // Foto testimoni cuma dikembalikan URL-nya (lihat TESTIMONIAL_SLOT di
-    // atas) -- admin.js yang menaruhnya ke item yang benar, lalu tersimpan
-    // bareng seluruh array waktu tombol "Simpan Testimoni" ditekan.
-    if (!isTestimonial) {
+    // Slot di SLOT_URL_SAJA cuma dikembalikan URL-nya -- halaman admin
+    // yang menaruhnya ke item yang benar di dalam array, lalu tersimpan
+    // bareng seluruh array waktu tombol Simpan ditekan.
+    if (!urlSaja) {
       await writeOverrides({ [key]: blob.url });
     }
 

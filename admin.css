@@ -2359,3 +2359,141 @@ a.admin-nav-item:focus-visible {
   flex: 1;
   min-width: 14rem;
 }
+
+/* ============================================================
+   KARTU RUANG KELAS (/atur-kelas)
+   ============================================================ */
+
+/* Blok isian per bagian Final Test (Listening/Reading/Writing). */
+.final-atur-blok {
+  margin-bottom: 1.1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface-2);
+}
+
+.final-atur-blok h3 {
+  margin: 0 0 0.8rem;
+  font-family: var(--display);
+  font-size: 1rem;
+}
+
+/* Pengaturan lama yang dilipat. Tetap bisa dibuka, tapi tidak lagi
+   menuntut perhatian pemilik yang memasang situs ini pertama kali. */
+.admin-lipat {
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.admin-lipat > summary {
+  cursor: pointer;
+  font-size: 0.86rem;
+  color: var(--ink-muted);
+}
+
+.admin-lipat[open] > summary {
+  margin-bottom: 0.9rem;
+}
+
+/* Sakelar nyala/mati tujuh kartu bawaan. */
+.kartu-sakelar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.6rem;
+}
+
+.kartu-sakelar-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+
+.kartu-sakelar-item input {
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+}
+
+.kartu-sakelar-item span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.kartu-sakelar-item strong {
+  font-size: 0.92rem;
+}
+
+.kartu-sakelar-item small {
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+}
+
+/* Kartu yang dimatikan diredupkan, TIDAK disembunyikan: yang perlu
+   dilihat pemilik justru bahwa kartunya masih ada dan sedang mati. */
+.kartu-sakelar-item[data-mati='ya'] {
+  opacity: 0.55;
+}
+
+/* Daftar kartu buatan sendiri. */
+.kartu-daftar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.kartu-item {
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface-2);
+}
+
+.kartu-item-kepala {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.kartu-item-kepala strong {
+  font-family: var(--display);
+  font-size: 0.98rem;
+}
+
+.kartu-item-aksi {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.admin-btn-kecil {
+  padding: 0.32rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+.kartu-ikon-baris {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.kartu-ikon-pratinjau {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sedang);
+  background: var(--surface);
+}

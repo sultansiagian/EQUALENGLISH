@@ -100,6 +100,13 @@ function renderMaterials(materials) {
   renderProgres(materials.progres);
   renderFinalTest(materials);
 
+  // Kartu yang dimatikan pemilik disembunyikan SETELAH semuanya
+  // digambar, bukan sebelum. Kartu Final Test mengatur `hidden`-nya
+  // sendiri di renderFinalTest(), jadi menyembunyikannya lebih dulu
+  // akan langsung dibatalkan lagi.
+  terapkanKartuMati(materials.kartuMati);
+  gambarKartuTambahan(materials.kartuTambahan);
+
   // Default terbuka kalau server belum kirim zoomUnlocked (mis. materials
   // lama yang di-cache) -- gagal terbuka, sama seperti practiceUnlocked.
   const zoomStatus = materials.zoomUnlocked || { unlocked: true, unlocksAt: null };
@@ -572,7 +579,139 @@ if (errorReloadBtn) errorReloadBtn.addEventListener('click', () => window.locati
 // syaratnya terpenuhi, jadi tidak ada yang bisa didapat dengan membuka
 // isi balasan server lebih awal.
 
-var finalPenanda = null; // id setInterval hitung mundur
+// ============================================================
+// KARTU: MANA YANG TAMPIL, DAN KARTU BUATAN PEMILIK
+// ============================================================
+// Tujuh kartu bawaan ditulis tetap di kelas.html dan diberi
+// data-kartu="...". Yang menentukan tampil atau tidak adalah daftar
+// materials.kartuMati dari server (lihat KARTU_BAWAAN di
+// api/_lib/kelas-kartu.js).
+//
+// Kartu bawaan disembunyikan, bukan dibuang dari halaman: isinya diisi
+// fungsi lain di berkas ini lewat getElementById, dan membuangnya akan
+// membuat fungsi-fungsi itu diam-diam menulis ke elemen yang tidak ada.
+
+function terapkanKartuMati(daftar) {
+  var mati = Array.isArray(daftar) ? daftar : [];
+  document.querySelectorAll('[data-kartu]').forEach(function (el) {
+    if (mati.indexOf(el.dataset.kartu) === -1) return;
+    el.hidden = true;
+  });
+}
+
+/**
+ * Gambar kartu buatan pemilik.
+ *
+ * Yang sempit masuk ke grid dua kolom di atas (berbaris dengan Rekaman
+ * dan Komunitas), yang lebar masuk ke tumpukan di bawah. Server yang
+ * memutuskan lebarnya, termasuk untuk kartu yang lebarnya "auto" --
+ * supaya aturannya cuma ada di satu tempat, bukan di server dan di
+ * browser sekaligus.
+ *
+ * Kartu yang jadwal bukanya belum tiba tidak pernah sampai ke sini:
+ * server tidak mengirimnya sama sekali.
+ */
+function gambarKartuTambahan(daftar) {
+  var grid = document.querySelector('.kelas-tile-grid');
+  var tumpukan = document.querySelector('.kelas-wide-stack');
+  if (!grid || !tumpukan) return;
+
+  // Kartu dari penggambaran sebelumnya dibuang dulu. Materi bisa dimuat
+  // ulang tanpa halaman ikut dimuat ulang (mis. setelah kirim
+  // testimoni), dan tanpa ini kartunya bertambah dua kali lipat.
+  document.querySelectorAll('[data-kartu-tambahan]').forEach(function (el) {
+    el.remove();
+  });
+
+  (Array.isArray(daftar) ? daftar : []).forEach(function (k) {
+    if (!k || !k.judul) return;
+    var lebar = k.lebar === 'lebar';
+    (lebar ? tumpukan : grid).appendChild(kartuTambahanEl(k, lebar));
+  });
+}
+
+function kartuTambahanEl(k, lebar) {
+  var art = document.createElement('article');
+  art.className = 'kelas-tile' + (lebar ? ' kelas-tile-wide' : '');
+  art.dataset.kartuTambahan = k.id || '';
+
+  var atas = document.createElement('div');
+  atas.className = 'kelas-tile-top';
+
+  // Ikon cuma digambar kalau pemiliknya mengunggahnya. Kotak ikon kosong
+  // membuat kartu terlihat gagal memuat gambar, bukan terlihat rapi.
+  if (k.ikonUrl) {
+    var kotak = document.createElement('div');
+    kotak.className = 'kelas-tile-icon';
+    var img = document.createElement('img');
+    img.src = k.ikonUrl;
+    img.alt = '';
+    img.width = 40;
+    img.height = 40;
+    // Ikon yang gagal dimuat menghapus kotaknya sendiri, daripada
+    // meninggalkan lambang gambar rusak di tengah kartu.
+    img.onerror = function () { kotak.remove(); };
+    kotak.appendChild(img);
+    atas.appendChild(kotak);
+  }
+
+  if (k.label) {
+    var badge = document.createElement('span');
+    badge.className = 'kelas-tile-badge kelas-tile-badge-quiet';
+    badge.textContent = k.label;
+    atas.appendChild(badge);
+  }
+
+  if (atas.childNodes.length > 0) art.appendChild(atas);
+
+  var h = document.createElement('h3');
+  h.textContent = k.judul;
+  art.appendChild(h);
+
+  if (k.deskripsi) {
+    var p = document.createElement('p');
+    p.className = 'kelas-tile-desc';
+    p.textContent = k.deskripsi;
+    art.appendChild(p);
+  }
+
+  if (k.url) {
+    var a = document.createElement('a');
+    a.className = 'kelas-tile-link';
+    // href diisi lewat properti, dan isinya berasal dari pemilik situs
+    // sendiri lewat /atur-kelas, bukan dari siswa. Tetap disaring ke
+    // skema yang aman supaya satu tempelan salah tidak berubah jadi
+    // javascript: yang berjalan di halaman terlindungi ini.
+    a.href = urlAman(k.url);
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.textContent = 'Buka ';
+    var panah = document.createElement('span');
+    panah.setAttribute('aria-hidden', 'true');
+    panah.textContent = '↗';
+    a.appendChild(panah);
+    art.appendChild(a);
+  }
+
+  return art;
+}
+
+/**
+ * Loloskan cuma tautan yang benar-benar menuju tempat lain.
+ *
+ * Yang ditolak dikembalikan sebagai '#', bukan dibiarkan apa adanya:
+ * tombol yang tidak ke mana-mana lebih baik daripada tombol yang
+ * menjalankan sesuatu.
+ */
+function urlAman(mentah) {
+  var t = String(mentah || '').trim();
+  if (/^https?:\/\//i.test(t)) return t;
+  if (t.charAt(0) === '/' && t.charAt(1) !== '/') return t;
+  return '#';
+}
+
+var finalPenanda = null;  // hitung mundur menuju pembukaan berikutnya
+var penandaTutup = [];    // hitung mundur penutupan, satu per bagian terbuka
 
 function renderFinalTest(materials) {
   var kartu = document.getElementById('kelas-final');
@@ -581,23 +720,24 @@ function renderFinalTest(materials) {
   var f = materials.finalTest;
   // materials lama (mis. dari cache) belum punya field ini. Kartunya
   // disembunyikan saja, bukan menampilkan keadaan yang salah.
-  if (!f) {
+  if (!f || !Array.isArray(f.bagian)) {
     kartu.hidden = true;
     return;
   }
 
   var status = document.getElementById('final-status');
   var form = document.getElementById('final-form');
-  var buka = document.getElementById('final-buka');
   var timer = document.getElementById('final-timer');
+  var wadah = document.getElementById('final-bagian');
 
   kartu.hidden = false;
   form.hidden = true;
-  buka.hidden = true;
   timer.hidden = true;
+  wadah.hidden = true;
+  wadah.textContent = '';
   hentikanHitungMundurFinal();
 
-  if (!f.adaJadwal || !f.adaLink) {
+  if (!f.adaYangSiap) {
     // Belum disiapkan admin. Dikatakan apa adanya, bukan dibiarkan
     // seperti tombol yang rusak.
     status.textContent =
@@ -611,27 +751,151 @@ function renderFinalTest(materials) {
   // di menit terakhir saat semua orang mau mulai bersamaan.
   if (!f.sudahTestimoni) form.hidden = false;
 
-  if (!f.sudahWaktunya) {
-    status.textContent = f.sudahTestimoni
-      ? 'Testimonimu sudah masuk, terima kasih. Tinggal menunggu waktunya tiba.'
-      : 'Final Test dibuka ' + waktuFinalTerbaca(f.bukaPada) +
-        '. Sambil menunggu, isi dulu ceritanya di bawah supaya nanti kamu ' +
-        'langsung bisa masuk.';
-    timer.hidden = false;
-    mulaiHitungMundurFinal(f.bukaPada);
-    return;
-  }
+  var siap = f.bagian.filter(function (b) { return b.adaLink && b.adaJadwal; });
+  var terbuka = siap.filter(function (b) { return b.terbuka; });
+  var belumBuka = siap.filter(function (b) { return !b.sudahWaktunya; });
 
   if (!f.sudahTestimoni) {
-    status.textContent =
-      'Final Test sudah dibuka. Tinggal satu langkah: ceritakan pengalamanmu ' +
-      'di bawah, lalu tombol ujiannya langsung muncul.';
-    return;
+    status.textContent = terbuka.length > 0
+      ? 'Ada bagian yang sudah dibuka. Tinggal satu langkah: ceritakan ' +
+        'pengalamanmu di bawah, lalu tombolnya langsung muncul.'
+      : 'Sambil menunggu, isi dulu ceritanya di bawah supaya nanti kamu ' +
+        'langsung bisa masuk.';
+  } else if (terbuka.length > 0) {
+    status.textContent = 'Kerjakan bagian yang sudah terbuka sebelum waktunya habis. Semoga lancar.';
+  } else if (belumBuka.length > 0) {
+    status.textContent = 'Testimonimu sudah masuk, terima kasih. Tinggal menunggu bagian berikutnya dibuka.';
+  } else {
+    status.textContent = 'Semua bagian Final Test sudah ditutup.';
   }
 
-  status.textContent = 'Final Test sudah dibuka. Semoga lancar.';
-  document.getElementById('final-link').href = materials.finalTestUrl || '#';
-  buka.hidden = false;
+  // Hitung mundur besar di atas kartu cuma dipakai kalau BELUM ada yang
+  // terbuka. Begitu ada yang terbuka, dua hitung mundur di satu kartu
+  // (satu ke pembukaan berikutnya, satu ke penutupan yang sedang
+  // berjalan) cuma bikin bingung mana yang sedang dihitung.
+  if (terbuka.length === 0 && belumBuka.length > 0) {
+    var paling = belumBuka.reduce(function (a, b) {
+      return !a || b.bukaPada < a.bukaPada ? b : a;
+    }, null);
+    timer.hidden = false;
+    mulaiHitungMundurFinal(paling.bukaPada);
+  }
+
+  gambarBagianFinal(wadah, f, materials.finalTestUrls || {});
+  wadah.hidden = false;
+}
+
+/**
+ * Tiga baris comprehension di dalam satu kartu.
+ *
+ * Bagian yang belum disiapkan admin (belum ada link atau belum ada
+ * jadwal) TIDAK digambar sama sekali. Menampilkannya sebagai baris
+ * berstatus "belum dijadwalkan" cuma memberi tahu siswa tentang ujian
+ * yang mungkin memang tidak akan pernah ada.
+ */
+function gambarBagianFinal(wadah, f, urls) {
+  f.bagian.forEach(function (b) {
+    if (!b.adaLink || !b.adaJadwal) return;
+
+    var baris = document.createElement('div');
+    baris.className = 'final-bagian-baris';
+
+    var kiri = document.createElement('div');
+    kiri.className = 'final-bagian-teks';
+
+    var nama = document.createElement('strong');
+    nama.textContent = b.nama;
+    kiri.appendChild(nama);
+
+    var ket = document.createElement('span');
+    ket.className = 'final-bagian-ket';
+    kiri.appendChild(ket);
+
+    baris.appendChild(kiri);
+
+    if (b.sudahTutup) {
+      baris.dataset.keadaan = 'tutup';
+      ket.textContent = 'Ditutup ' + waktuFinalTerbaca(b.tutupPada);
+    } else if (!b.sudahWaktunya) {
+      baris.dataset.keadaan = 'nanti';
+      ket.textContent = 'Dibuka ' + waktuFinalTerbaca(b.bukaPada);
+    } else if (!f.sudahTestimoni) {
+      baris.dataset.keadaan = 'terkunci';
+      ket.textContent = 'Sudah dibuka, isi testimoni dulu di bawah';
+    } else {
+      baris.dataset.keadaan = 'buka';
+      // Sisa waktu sampai TUTUP. Inilah yang paling dibutuhkan orang
+      // yang sedang mengerjakan, dan satu-satunya angka yang berubah
+      // arti kalau salah: telat berarti tidak bisa mengumpulkan.
+      if (b.tutupPada) {
+        ket.textContent = 'Ditutup ' + waktuFinalTerbaca(b.tutupPada);
+        pasangHitungMundurTutup(ket, b.tutupPada, baris);
+      } else {
+        ket.textContent = 'Terbuka, tanpa batas waktu';
+      }
+
+      var tombol = document.createElement('a');
+      tombol.className = 'button button-pink';
+      tombol.target = '_blank';
+      tombol.rel = 'noopener';
+      tombol.href = urls[b.id] || '#';
+      tombol.textContent = 'Kerjakan ' + b.nama + ' ';
+      var panah = document.createElement('span');
+      panah.setAttribute('aria-hidden', 'true');
+      panah.textContent = '↗';
+      tombol.appendChild(panah);
+      baris.appendChild(tombol);
+    }
+
+    wadah.appendChild(baris);
+  });
+}
+
+function pasangHitungMundurTutup(el, iso, baris) {
+  var target = new Date(iso).getTime();
+  if (!Number.isFinite(target)) return;
+
+  function perbarui() {
+    var sisa = target - Date.now();
+
+    if (sisa <= 0) {
+      // Waktunya habis. Tombolnya dicabut SEKARANG, tidak menunggu
+      // halaman dimuat ulang: link-nya sudah ada di browser ini, jadi
+      // membiarkannya berarti membiarkan ujian dibuka setelah ditutup.
+      // Server tetap berhenti mengirimnya di permintaan berikutnya.
+      var tombol = baris.querySelector('a');
+      if (tombol) tombol.remove();
+      baris.dataset.keadaan = 'tutup';
+      el.textContent = 'Waktunya sudah habis.';
+      return;
+    }
+
+    el.textContent = 'Sisa ' + sisaTerbaca(sisa);
+  }
+
+  perbarui();
+  penandaTutup.push(window.setInterval(perbarui, 1000));
+}
+
+/**
+ * "2 jam 5 menit" atau "4 menit 12 detik".
+ *
+ * Detik cuma disebut kalau sudah di bawah satu jam, supaya angka yang
+ * berkedip tiap detik tidak mengganggu padahal masih berjam-jam. Aturan
+ * yang sama dipakai hitung mundur menuju pembukaan.
+ */
+function sisaTerbaca(ms) {
+  var detik = Math.floor(ms / 1000);
+  var hari = Math.floor(detik / 86400);
+  var jam = Math.floor((detik % 86400) / 3600);
+  var menit = Math.floor((detik % 3600) / 60);
+
+  var bagian = [];
+  if (hari > 0) bagian.push(hari + ' hari');
+  if (hari > 0 || jam > 0) bagian.push(jam + ' jam');
+  bagian.push(menit + ' menit');
+  if (ms < 3600000) bagian.push((detik % 60) + ' detik');
+  return bagian.join(' ');
 }
 
 function waktuFinalTerbaca(iso) {
@@ -649,6 +913,12 @@ function hentikanHitungMundurFinal() {
     window.clearInterval(finalPenanda);
     finalPenanda = null;
   }
+  // Hitung mundur penutupan tiap bagian ikut dihentikan. Tanpa ini,
+  // menggambar ulang kartunya meninggalkan interval yang terus berjalan
+  // menulis ke baris yang sudah dibuang dari halaman: tidak terlihat di
+  // layar, tapi menumpuk tiap kali materi dimuat ulang.
+  penandaTutup.forEach(function (id) { window.clearInterval(id); });
+  penandaTutup = [];
 }
 
 /**
@@ -673,21 +943,11 @@ function mulaiHitungMundurFinal(iso) {
       return;
     }
 
-    var detik = Math.floor(sisa / 1000);
-    var hari = Math.floor(detik / 86400);
-    var jam = Math.floor((detik % 86400) / 3600);
-    var menit = Math.floor((detik % 3600) / 60);
-
-    var bagian = [];
-    if (hari > 0) bagian.push(hari + ' hari');
-    if (hari > 0 || jam > 0) bagian.push(jam + ' jam');
-    bagian.push(menit + ' menit');
-
-    // Detik cuma ditampilkan kalau sudah dekat, supaya angka yang
-    // berkedip tiap detik tidak mengganggu padahal masih berhari-hari.
-    if (sisa < 3600000) bagian.push((detik % 60) + ' detik');
-
-    el.textContent = bagian.join(' ') + ' lagi';
+    // Bentuk angkanya dipakai bersama hitung mundur penutupan tiap
+    // bagian, lihat sisaTerbaca(). Dua hitung mundur di satu kartu yang
+    // menulis "2 jam 5 menit" dan "2j 5m" akan terbaca seperti dua hal
+    // yang berbeda.
+    el.textContent = sisaTerbaca(sisa) + ' lagi';
   }
 
   perbarui();

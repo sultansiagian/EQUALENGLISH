@@ -190,7 +190,7 @@
         </div>
 
         <div class="kelas-tile-grid" data-reveal-stagger>
-          <article class="kelas-tile kelas-tile-live">
+          <article class="kelas-tile kelas-tile-live" data-kartu="zoom">
             <div class="kelas-tile-icon">
               <img src="/EDITS/logo-zoom.jpg" alt="" width="40" height="40" />
             </div>
@@ -215,7 +215,7 @@
             </div>
           </article>
 
-          <article class="kelas-tile">
+          <article data-kartu="rekaman" class="kelas-tile">
             <div class="kelas-tile-top">
               <div class="kelas-tile-icon">
                 <img src="/EDITS/logo-drive.png" alt="" width="40" height="40" />
@@ -228,7 +228,7 @@
             </a>
           </article>
 
-          <article class="kelas-tile">
+          <article data-kartu="komunitas" class="kelas-tile">
             <div class="kelas-tile-top">
               <div class="kelas-tile-icon">
                 <!-- SVG inline, bukan berkas gambar. Sebelumnya
@@ -258,6 +258,12 @@
               Buka WhatsApp <span aria-hidden="true">↗</span>
             </a>
           </article>
+
+          <!-- Kartu buatan pemilik yang lebarnya sempit menyusul di sini,
+               digambar kelas.js. Ditaruh di DALAM grid dua kolom ini,
+               bukan di wadah sendiri, supaya berbaris rapi bersama kartu
+               Rekaman dan Komunitas di atasnya, bukan memulai baris baru
+               sendirian. -->
         </div>
 
         <!-- Jadwal diambil dari sheet utama EQUAL (SCHEDULE_CSV_URL di
@@ -266,7 +272,7 @@
              var itu kosong atau sheet-nya gagal diparsing, daftar ini
              kosong dan kelas.js otomatis menampilkan pesan fallback. -->
         <div class="kelas-wide-stack" data-reveal-stagger>
-          <article class="kelas-tile kelas-tile-wide">
+          <article data-kartu="jadwal" class="kelas-tile kelas-tile-wide">
             <div class="kelas-tile-top">
               <span class="kelas-tile-badge kelas-tile-badge-quiet">JADWAL</span>
             </div>
@@ -304,7 +310,7 @@
                api/verify-access.js): waktunya sudah lewat DAN siswa ini
                sudah mengisi testimoni. Link ujiannya sendiri tidak pernah
                dikirim ke browser sebelum keduanya terpenuhi. -->
-          <article id="kelas-final" class="kelas-tile kelas-tile-wide" hidden>
+          <article id="kelas-final" class="kelas-tile kelas-tile-wide" data-kartu="final" hidden>
             <div class="kelas-tile-top">
               <span class="kelas-tile-badge kelas-tile-badge-quiet">FINAL TEST</span>
             </div>
@@ -312,8 +318,19 @@
 
             <p id="final-status" class="kelas-tile-desc"></p>
 
-            <!-- Hitung mundur, cuma tampil kalau waktunya belum tiba. -->
+            <!-- Hitung mundur seluruh kartu. Dipakai cuma waktu belum ada
+                 satu pun bagian yang terbuka; begitu ada yang terbuka,
+                 tiap bagian memakai hitung mundurnya sendiri di bawah. -->
             <p id="final-timer" class="final-timer" hidden></p>
+
+            <!-- TIGA BAGIAN COMPREHENSION, satu kartu.
+                 Barisnya digambar kelas.js dari materials.finalTest.bagian,
+                 bukan ditulis tetap di sini: jumlah dan urutannya
+                 ditentukan BAGIAN_FINAL di api/_lib/kelas-kartu.js, dan dua
+                 daftar untuk satu hal cepat atau lambat berbeda isinya.
+                 Link tiap bagian datang terpisah lewat finalTestUrls, dan
+                 cuma bagian yang sedang terbuka yang linknya dikirim. -->
+            <div id="final-bagian" class="final-bagian" hidden></div>
 
             <!-- Tahap 1: form testimoni. Ditampilkan selama siswa ini belum
                  mengisinya, termasuk sebelum waktunya tiba, supaya bisa
@@ -359,18 +376,9 @@
               </div>
             </form>
 
-            <!-- Tahap 2: tombol masuk ujian. -->
-            <div id="final-buka" class="testi-aksi" hidden>
-              <a
-                id="final-link"
-                class="button button-pink"
-                href="#"
-                target="_blank"
-                rel="noopener"
-              >
-                Masuk Final Test <span aria-hidden="true">↗</span>
-              </a>
-            </div>
+            <!-- Tombol masuk ujian dulu ada satu di sini. Sekarang tiap
+                 bagian punya tombolnya sendiri di dalam #final-bagian,
+                 karena ketiganya buka dan tutup di jam yang berbeda. -->
           </article>
 
           <!-- Link Wayground (rebrand dari Quizizz) cuma hidup di server,
@@ -378,7 +386,7 @@
                di api/verify-access.js. Tidak pernah ada di HTML/JS
                statis, baru terkirim ke browser setelah email pengunjung
                terverifikasi. -->
-          <article class="kelas-tile kelas-tile-wide">
+          <article data-kartu="latihan" class="kelas-tile kelas-tile-wide">
             <div class="kelas-tile-top">
               <span class="kelas-tile-badge kelas-tile-badge-quiet">LATIHAN SOAL</span>
             </div>
@@ -430,12 +438,15 @@
             </div>
           </article>
 
-          <article class="kelas-tile kelas-tile-wide kelas-tile-quiet">
+          <article data-kartu="pengumuman" class="kelas-tile kelas-tile-wide kelas-tile-quiet">
             <div class="kelas-tile-top">
               <span class="kelas-tile-badge kelas-tile-badge-quiet">PENGUMUMAN</span>
             </div>
             <p id="kelas-announcement" class="kelas-announcement"></p>
           </article>
+
+          <!-- Kartu buatan pemilik yang lebarnya penuh menyusul di sini,
+               digambar kelas.js. -->
         </div>
       </div>
     </main>

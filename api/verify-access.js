@@ -16,6 +16,15 @@ const { waktuWibKeEpoch } = require('./_lib/form-status');
 // Dipakai HANYA oleh mode status (halaman /status), lihat tanganiStatus().
 const { cariStatus } = require('./_lib/status-pendaftar');
 const { bolehKirimForm } = require('./_lib/rem-laju');
+// Final Test tiga bagian dan kartu yang bisa ditambah/disembunyikan
+// pemilik. Ditaruh di _lib supaya bisa diuji tanpa menjalankan handler,
+// dan supaya berkas ini tidak tumbuh lagi.
+const {
+  hitungFinalTest: hitungFinalTestBagian,
+  urlFinalTest,
+  kartuBawaanMati,
+  kartuTambahanUntukSiswa,
+} = require('./_lib/kelas-kartu');
 const DEFAULTS = require('./_lib/site-defaults');
 
 // ============================================================
@@ -194,25 +203,13 @@ const { DEFAULT_MATERIALS, materiDariConfig, fetchMaterialsOverrides } = require
 // Ketiga practiceXxxUrl mengarah ke kuis latihan EPT UI di Wayground
 // (rebrand dari Quizizz), satu link per kemampuan yang diuji.
 // ============================================================
-function hitungFinalTest(overrides, email) {
-  const o = overrides || {};
-  const url = String(o.kelasFinalTestUrl || '').trim();
-  const bukaMs = waktuWibKeEpoch(o.kelasFinalTestBukaPada);
-
-  const daftar = Array.isArray(o.testimoniSudahIsi) ? o.testimoniSudahIsi : [];
-  const sudahTestimoni = daftar.indexOf(normalisasiEmail(email)) !== -1;
-
-  const adaJadwal = bukaMs !== null;
-  const sudahWaktunya = adaJadwal && Date.now() >= bukaMs;
-
-  return {
-    boleh: Boolean(url) && sudahWaktunya && sudahTestimoni,
-    adaLink: Boolean(url),
-    adaJadwal,
-    sudahWaktunya,
-    sudahTestimoni,
-    bukaPada: adaJadwal ? new Date(bukaMs).toISOString() : null,
-  };
+// Perhitungannya PINDAH ke api/_lib/kelas-kartu.js waktu Final Test
+// dipecah jadi tiga bagian (Listening, Reading, Writing) yang
+// masing-masing punya jam buka dan jam tutup sendiri. Dibungkus di sini
+// supaya api/kelas-testimoni.js dan tes yang sudah ada tetap memanggil
+// nama yang sama.
+function hitungFinalTest(overrides, email, sekarangMs) {
+  return hitungFinalTestBagian(overrides, email, sekarangMs);
 }
 
 
@@ -465,7 +462,11 @@ module.exports = async function handler(req, res) {
     // /atur-kelas belum diisi, keduanya memang masih dibayar; begitu
     // diisi, login jadi lebih ringan daripada sebelum halaman itu ada.
     const progresBatch = hitungProgres(scheduleResult.sessions);
-    const statusFinal = hitungFinalTest(overrides, verified.email);
+    // SATU titik waktu untuk seluruh balasan ini. Kalau tiap bagian
+    // memanggil Date.now() sendiri, dua bagian yang jam tutupnya sama
+    // bisa mendapat jawaban berbeda karena terpisah beberapa milidetik.
+    const kini = Date.now();
+    const statusFinal = hitungFinalTest(overrides, verified.email, kini);
 
     const materials = {
       ...DEFAULT_MATERIALS,
@@ -481,10 +482,17 @@ module.exports = async function handler(req, res) {
       // Dipakai ulang dari perhitungan di atas, bukan dihitung lagi.
       progres: progresBatch,
       finalTest: statusFinal,
-      // Link ujiannya CUMA dikirim kalau kedua syaratnya terpenuhi.
-      // Menyembunyikan tombolnya saja tidak menjaga apa pun: isi balasan
-      // server bisa dibaca siapa saja yang mau melihatnya.
-      finalTestUrl: statusFinal.boleh ? String(overrides.kelasFinalTestUrl || '').trim() : '',
+      // Link tiap bagian ujian CUMA dikirim untuk bagian yang benar-benar
+      // boleh dibuka siswa ini sekarang. Menyembunyikan tombolnya saja
+      // tidak menjaga apa pun: isi balasan server bisa dibaca siapa saja
+      // yang mau melihatnya. Bagian yang belum waktunya, sudah tutup,
+      // atau siswanya belum mengisi testimoni berisi string kosong.
+      finalTestUrls: urlFinalTest(overrides, statusFinal),
+      // Kartu bawaan yang sedang dimatikan pemilik, dan kartu buatannya
+      // sendiri. Kartu tambahan yang jadwal bukanya belum tiba tidak
+      // ikut sama sekali, bukan dikirim lalu disembunyikan browser.
+      kartuMati: kartuBawaanMati(overrides),
+      kartuTambahan: kartuTambahanUntukSiswa(overrides, kini),
     };
 
     return res.status(200).json({ ok: true, materials });

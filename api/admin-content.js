@@ -15,6 +15,10 @@ const { MAKS_BATCH } = require('./_lib/batch');
 // entriRiwayatHarga() untuk apa yang rusak diam-diam kalau kedua sisi
 // berbeda.
 const { PAKET, entriRiwayatHarga } = require('./_lib/statistik');
+// Aturan bentuk kartu ruang kelas. Dipakai fungsi yang SAMA dengan yang
+// menggambar kartunya di api/verify-access.js, supaya yang tersimpan
+// tidak bisa berbeda aturannya dari yang tampil.
+const { ID_BAWAAN, normalisasiKartuTambahan } = require('./_lib/kelas-kartu');
 
 // Batas jumlah testimoni & panjang tiap field. Angkanya dipilih longgar
 // (jauh di atas kebutuhan wajar) tapi tetap terbatas, semata supaya satu
@@ -135,6 +139,32 @@ module.exports = async function handler(req, res) {
         // memutuskan item mana yang layak tampil di halaman publik adalah
         // renderTestimonials() di api/render-home.js, bukan di sini.
         .filter((t) => t.nama || t.pesan || t.fakultas || t.skorEpt || t.fotoUrl);
+    }
+
+    // Kartu ruang kelas. Dua array bebas, jadi allowlist kunci saja
+    // belum cukup untuk menjaga bentuk dalamnya.
+    //
+    // Sakelar kartu bawaan disaring ke id yang benar-benar dikenal. Id
+    // karangan yang lolos tidak akan mematikan apa pun, tapi ikut
+    // memakan jatah 1 MB Global Config dan bikin isinya sulit dibaca
+    // waktu ada yang menelusuri masalah.
+    if (filtered.kelasKartuMati !== undefined) {
+      if (!Array.isArray(filtered.kelasKartuMati)) {
+        return res.status(400).json({ ok: false, reason: 'kartu_mati_bukan_array' });
+      }
+      filtered.kelasKartuMati = filtered.kelasKartuMati
+        .map((id) => trimTo(id, 40))
+        .filter((id) => ID_BAWAAN.indexOf(id) !== -1);
+    }
+
+    // Kartu buatan pemilik. Dinormalkan di _lib/kelas-kartu.js, sama
+    // fungsinya dengan yang dipakai waktu menggambar, supaya yang
+    // tersimpan dan yang tampil tidak bisa berbeda aturannya.
+    if (filtered.kelasKartuTambahan !== undefined) {
+      if (!Array.isArray(filtered.kelasKartuTambahan)) {
+        return res.status(400).json({ ok: false, reason: 'kartu_tambahan_bukan_array' });
+      }
+      filtered.kelasKartuTambahan = normalisasiKartuTambahan(filtered.kelasKartuTambahan);
     }
 
     // Instruksi pembayaran di /daftar. Teks bebas beberapa baris, jadi

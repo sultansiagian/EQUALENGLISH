@@ -225,31 +225,76 @@
           <p class="admin-kicker"><b>04</b> / UJIAN AKHIR</p>
           <h2>Final Test <span class="admin-card-note">ujian akhir di ruang kelas</span></h2>
           <p class="admin-hint">
-            Kartu terakhir di ruang kelas. Terbuka kalau <strong>waktunya sudah
-            lewat</strong> DAN <strong>siswanya sudah mengisi testimoni</strong>.
-            Form testimoninya sendiri sudah muncul sejak sebelum waktunya tiba,
-            supaya siswa bisa menyiapkannya lebih dulu dan tidak menumpuk di
-            menit terakhir.
+            Satu kartu, <strong>tiga bagian comprehension</strong>. Tiap bagian
+            punya link dan jamnya sendiri, jadi bisa dibuka bergiliran. Bagian
+            terbuka kalau <strong>sekarang ada di antara jam buka dan jam
+            tutupnya</strong> DAN <strong>siswanya sudah mengisi
+            testimoni</strong>. Form testimoninya muncul sejak sebelum jam buka,
+            supaya siswa bisa menyiapkannya lebih dulu.
           </p>
-          <label class="admin-field">
-            <span>Link ujian</span>
-            <input type="text" data-key="kelasFinalTestUrl" placeholder="https://…" />
-            <small class="admin-field-bantuan">
-              Link ini tidak pernah dikirim ke browser siswa sebelum kedua
-              syaratnya terpenuhi, jadi tidak bisa didapat lebih awal dengan
-              mengintip isi halaman.
-            </small>
-          </label>
-          <label class="admin-field">
-            <span>Terbuka mulai</span>
-            <input type="datetime-local" data-key="kelasFinalTestBukaPada" />
-            <small class="admin-field-bantuan">
-              Jam memakai WIB. <strong>Dikosongkan berarti kartunya tidak
-              pernah terbuka</strong>, bukan langsung terbuka. Ganti tanggalnya
-              tiap batch.
-            </small>
-          </label>
+          <p class="admin-hint">
+            Link tiap bagian <strong>tidak pernah dikirim ke browser siswa</strong>
+            sebelum syaratnya terpenuhi, dan berhenti dikirim begitu jam tutupnya
+            lewat. Jadi tidak bisa didapat lebih awal dengan mengintip isi
+            halaman, dan tidak bisa dipakai lagi setelah ditutup.
+          </p>
+
+          <div id="final-bagian-atur"></div>
+
           <p id="final-pratinjau" class="form-status-pratinjau"></p>
+
+          <details class="admin-lipat">
+            <summary>Pengaturan lama (satu link untuk semua bagian)</summary>
+            <p class="admin-hint">
+              Dulu seluruh Final Test cuma punya satu link dan satu jam buka.
+              Isian di bawah masih dibaca sebagai <strong>cadangan</strong>:
+              dipakai bagian yang link atau jam bukanya belum diisi sendiri di
+              atas. Untuk pemasangan baru, biarkan kosong dan isi ketiga bagian
+              di atas saja.
+            </p>
+            <label class="admin-field">
+              <span>Link ujian (cadangan)</span>
+              <input type="text" data-key="kelasFinalTestUrl" placeholder="https://…" />
+            </label>
+            <label class="admin-field">
+              <span>Terbuka mulai (cadangan)</span>
+              <input type="datetime-local" data-key="kelasFinalTestBukaPada" />
+            </label>
+          </details>
+        </section>
+
+        <!-- ============================================================
+             KARTU DI RUANG KELAS
+             ============================================================
+             Tujuh kartu bawaan cuma bisa dinyalakan/dimatikan, bukan
+             diubah isinya: masing-masing punya perilaku sendiri (hitung
+             mundur Zoom, daftar sesi, logika kunci Final Test) yang tidak
+             bisa dibuat ulang dari kartu biasa. Isinya diatur di kartu
+             01 sampai 04 di atas. -->
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>05</b> / KARTU YANG TAMPIL</p>
+          <h2>Kartu Bawaan <span class="admin-card-note">nyalakan / matikan</span></h2>
+          <p class="admin-hint">
+            Mematikan kartu <strong>tidak menghapus isinya</strong>. Link, jadwal,
+            dan pengaturannya tetap tersimpan, kartunya cuma berhenti tampil di
+            halaman siswa. Nyalakan lagi kapan saja.
+          </p>
+          <div id="kartu-bawaan-daftar" class="kartu-sakelar"></div>
+        </section>
+
+        <section class="admin-card" data-reveal>
+          <p class="admin-kicker"><b>06</b> / KARTU BUATANMU</p>
+          <h2>Kartu Tambahan <span class="admin-card-note" id="kartu-jumlah"></span></h2>
+          <p class="admin-hint">
+            Kartu bebas isi, muncul di ruang kelas bersama kartu bawaan. Cuma
+            <strong>judul</strong> yang wajib. Kartu yang diberi jadwal buka
+            <strong>tidak dikirim ke browser siswa sama sekali</strong> sebelum
+            tanggalnya tiba, jadi linknya aman ditaruh lebih awal.
+          </p>
+          <div id="kartu-daftar" class="kartu-daftar"></div>
+          <button type="button" id="kartu-tambah" class="admin-btn admin-btn-ghost">
+            + Tambah kartu
+          </button>
         </section>
         <div class="admin-save-bar" data-reveal>
           <button type="button" id="kelas-simpan" class="admin-btn admin-btn-primary">

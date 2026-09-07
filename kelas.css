@@ -1105,6 +1105,97 @@
   color: var(--ink-muted);
 }
 
+/* ============================================================
+   TIGA BAGIAN FINAL TEST DALAM SATU KARTU
+   ============================================================
+   Listening, Reading, dan Writing buka dan tutup di jam yang berbeda,
+   jadi tiap baris membawa keadaannya sendiri lewat data-keadaan:
+   nanti (belum dibuka), buka, terkunci (sudah dibuka tapi testimoninya
+   belum diisi), dan tutup. */
+.final-bagian {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+  margin-bottom: 1.1rem;
+}
+
+.final-bagian-baris {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface-2);
+}
+
+.final-bagian-teks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  /* Supaya keterangan yang panjang membungkus ke bawah, bukan mendorong
+     tombolnya keluar kartu di layar sempit. */
+  min-width: 11rem;
+  flex: 1 1 11rem;
+}
+
+.final-bagian-teks strong {
+  font-family: var(--display);
+  font-size: 1rem;
+}
+
+.final-bagian-ket {
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
+}
+
+/* Bagian yang sedang berjalan diberi garis pink supaya langsung
+   ketahuan mana yang harus dikerjakan sekarang, tanpa harus membaca
+   ketiga barisnya dulu. */
+.final-bagian-baris[data-keadaan='buka'] {
+  border-color: var(--pink);
+  background: var(--pink-light);
+}
+
+/* --ink, bukan --ink-di-pink: latar barisnya --pink-light, yang IKUT
+   menggelap di mode gelap, jadi teksnya harus ikut menerang. Beda dari
+   tombol pink di dalamnya, yang latarnya tetap terang di kedua mode.
+   Bedanya ditulis lengkap di tokens.css. */
+.final-bagian-baris[data-keadaan='buka'] .final-bagian-ket {
+  color: var(--ink-di-pink-redup);
+}
+
+/* Yang sudah lewat dibuat mundur, tapi TIDAK dibuang: siswa perlu bisa
+   melihat bahwa bagian itu memang ada dan memang sudah ditutup, bukan
+   mengira ujiannya tidak pernah dijadwalkan.
+
+   Mundurnya lewat garis putus-putus dan nama yang diredupkan, BUKAN
+   lewat opacity. Sempat memakai opacity: 0.62, dan itu menjatuhkan
+   keterangan "Ditutup 10 September pukul 11.00" ke 2,70:1 -- di bawah
+   ambang baca. Ketahuan waktu kontrasnya dihitung berikut opacity-nya,
+   bukan waktu warnanya saja yang diukur: mengukur warna teks terhadap
+   warna latar memberi 6,22:1 dan terlihat aman, padahal opacity
+   memudarkan keduanya ke arah warna kartu.
+
+   Justru baris inilah yang paling butuh terbaca: yang membacanya adalah
+   siswa yang ketinggalan dan ingin tahu persis kapan ujiannya ditutup. */
+.final-bagian-baris[data-keadaan='tutup'] {
+  border-style: dashed;
+  background: transparent;
+}
+
+.final-bagian-baris[data-keadaan='tutup'] .final-bagian-teks strong {
+  color: var(--ink-muted);
+}
+
+.final-bagian-baris .button {
+  flex-shrink: 0;
+}
+
 
 /* ============================================================
    TEKS DI KARTU LATIHAN YANG BERLATAR PINK
