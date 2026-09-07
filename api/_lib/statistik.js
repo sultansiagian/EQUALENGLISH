@@ -100,6 +100,31 @@ function susunRiwayatHarga(overrides) {
 }
 
 /**
+ * Bentuk satu catatan riwayat harga: { berlakuSejak, pkg1Price, ... }.
+ *
+ * ADA DI SINI, BUKAN DI PENULISNYA. Yang menulis catatan ini adalah
+ * api/admin-content.js waktu harga diubah, yang membacanya adalah
+ * susunRiwayatHarga() tepat di atas. Dua berkas, satu bentuk data, dan
+ * nama kuncinya dulu diketik penuh di kedua tempat.
+ *
+ * Kalau salah satu sisi diganti sendirian, tidak ada yang meledak:
+ * riwayatnya tetap tersimpan, /analitik tetap terbuka, cuma kuncinya
+ * tidak lagi terbaca sehingga SEMUA baris jatuh ke harga paling awal.
+ * Angka pendapatan berubah diam-diam tanpa satu pun pesan galat. Karena
+ * itu bentuknya ditetapkan satu kali di sini, dipakai kedua sisi.
+ *
+ * @param {string|null} berlakuSejak waktu ISO, atau null untuk "sejak awal"
+ * @param {number[]}    nilai        harga per paket, urutannya ikut PAKET
+ */
+function entriRiwayatHarga(berlakuSejak, nilai) {
+  const entri = { berlakuSejak: berlakuSejak };
+  PAKET.forEach((p, i) => {
+    entri[p.kunciHarga] = Number(nilai[i]) || 0;
+  });
+  return entri;
+}
+
+/**
  * Harga satu paket pada tanggal tertentu.
  *
  * Baris yang tanggalnya tidak terbaca dihargai memakai catatan PALING
@@ -261,4 +286,12 @@ function gabungStatistik(daftar) {
   return hasil;
 }
 
-module.exports = { hitungStatistik, gabungStatistik, tebakPaket, PAKET };
+module.exports = {
+  hitungStatistik,
+  gabungStatistik,
+  tebakPaket,
+  entriRiwayatHarga,
+  susunRiwayatHarga,
+  hargaPada,
+  PAKET,
+};

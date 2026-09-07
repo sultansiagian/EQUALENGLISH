@@ -10,6 +10,11 @@ const { kerjakanDiLatar } = require('./_lib/kerja-latar');
 // dan dua angka untuk satu batasan cepat atau lambat dinaikkan sendirian
 // sehingga batasnya bergantung pada pintu mana yang dilewati.
 const { MAKS_BATCH } = require('./_lib/batch');
+// PAKET dan entriRiwayatHarga DIAMBIL dari yang membaca catatannya,
+// bukan diketik ulang di sini. Lihat catatan panjang di dekat
+// entriRiwayatHarga() untuk apa yang rusak diam-diam kalau kedua sisi
+// berbeda.
+const { PAKET, entriRiwayatHarga } = require('./_lib/statistik');
 
 // Batas jumlah testimoni & panjang tiap field. Angkanya dipilih longgar
 // (jauh di atas kebutuhan wajar) tapi tetap terbatas, semata supaya satu
@@ -173,7 +178,13 @@ module.exports = async function handler(req, res) {
     // Kalau riwayatnya masih kosong, harga lama disimpan lebih dulu
     // dengan berlakuSejak null (artinya sejak awal). Tanpa langkah itu,
     // harga lama hilang selamanya begitu diganti sekali.
-    const KUNCI_HARGA = ['pkg1Price', 'pkg2Price', 'pkg3Price'];
+    // Kunci harganya DIAMBIL dari PAKET di statistik.js, bukan diketik
+    // ulang di sini. Alasannya sama dengan MAKS_BATCH di atas: dulu ada
+    // dua daftar kunci yang sama persis di dua berkas, dan yang membaca
+    // catatan ini adalah berkas yang satunya. Kalau salah satu sisi
+    // diganti sendirian, tidak ada yang meledak, cuma seluruh pendapatan
+    // batch lama diam-diam dihitung ulang dengan harga paling awal.
+    const KUNCI_HARGA = PAKET.map((p) => p.kunciHarga);
     const adaHargaBaru = KUNCI_HARGA.some((k) => filtered[k] !== undefined);
 
     if (adaHargaBaru) {
@@ -189,20 +200,10 @@ module.exports = async function handler(req, res) {
         const riwayat = Array.isArray(lama.hargaRiwayat) ? lama.hargaRiwayat.slice(0, MAKS_RIWAYAT_HARGA) : [];
 
         if (riwayat.length === 0) {
-          riwayat.push({
-            berlakuSejak: null,
-            pkg1Price: nilaiLama[0],
-            pkg2Price: nilaiLama[1],
-            pkg3Price: nilaiLama[2],
-          });
+          riwayat.push(entriRiwayatHarga(null, nilaiLama));
         }
 
-        riwayat.push({
-          berlakuSejak: new Date().toISOString(),
-          pkg1Price: nilaiBaru[0],
-          pkg2Price: nilaiBaru[1],
-          pkg3Price: nilaiBaru[2],
-        });
+        riwayat.push(entriRiwayatHarga(new Date().toISOString(), nilaiBaru));
 
         filtered.hargaRiwayat = riwayat.slice(-MAKS_RIWAYAT_HARGA);
         console.log(
