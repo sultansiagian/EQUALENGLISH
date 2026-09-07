@@ -454,14 +454,14 @@
           </div>
 
           <!-- Judul, deskripsi, catatan, dan keempat angka skor di sini
-               bisa ditimpa lewat Google Sheet -- lihat content-sheet.js.
-               ID yang jadi target-nya, jangan dihapus/diganti nama tanpa
-               update content-sheet.js juga. Angka skor (data-target)
-               dianimasikan hitung naik oleh script.js begitu kartu ini
-               discroll ke layar -- content-sheet.js menimpa dataset
-               ITU JUGA (bukan cuma textContent) supaya kalau animasinya
-               belum sempat jalan pas sheet selesai di-fetch, animasinya
-               tetap jalan dengan angka yang baru dari sheet. -->
+               disisipkan api/render-home.js dari isi /admin. ID di sini
+               yang jadi target-nya, jangan dihapus/diganti nama tanpa
+               update replaceById()/replaceCounter() di sana juga.
+               Angka skor (data-target) dianimasikan hitung naik oleh
+               script.js begitu kartu ini discroll ke layar;
+               replaceCounter() menimpa atribut ITU JUGA, bukan cuma isi
+               teksnya, supaya animasinya berjalan menuju angka yang
+               benar. -->
           <div class="proof-mentors proof-mentors-single" data-reveal-stagger>
             <!-- Skor IELTS 8 dari 9 dan EPT UI 673 dari 674, keduanya hasil tes asli. -->
             <article class="proof-mentor">
@@ -531,10 +531,10 @@
             </a>
           </div>
 
-          <!-- Judul, deskripsi di atas, dan 4 poin ini bisa ditimpa lewat
-               Google Sheet -- lihat content-sheet.js. ID di sini yang
-               jadi target-nya, jangan dihapus/diganti nama tanpa update
-               content-sheet.js juga. -->
+          <!-- Judul, deskripsi di atas, dan 4 poin ini disisipkan
+               api/render-home.js dari isi /admin. ID di sini yang jadi
+               target-nya, jangan dihapus/diganti nama tanpa update
+               berkas itu juga. -->
           <ul class="bootcamp-list" data-reveal-stagger>
             <li><span>01</span> <span id="bootcamp-point-1">Listening, reading &amp; writing, setara materi TOEFL</span></li>
             <li><span>02</span> <span id="bootcamp-point-2">Dipandu mentor IELTS 8 dan EPT UI 673</span></li>
@@ -559,11 +559,15 @@
           </div>
 
           <!-- Nama paket, harga, dan status "Tidak Tersedia" tiap kartu
-               bisa ditimpa lewat Google Sheet -- lihat content-sheet.js.
-               ID di sini yang jadi target-nya, jangan dihapus/diganti
-               nama tanpa update content-sheet.js juga. Deskripsi & label
-               "1/2/3 ORANG" sengaja TIDAK ikut jadi target sheet (masih
-               hardcode di sini). -->
+               disisipkan api/render-home.js dari isi /admin, lihat
+               applyPackages() di sana. ID di sini yang jadi target-nya,
+               jangan dihapus/diganti nama tanpa update berkas itu juga.
+               Deskripsi & label "1/2/3 ORANG" sengaja TIDAK ikut diatur
+               (masih hardcode di sini).
+
+               Atribut class="" pada <article> dan <p class="plan-save">
+               dicari lewat regex oleh applyPackages, jadi urutan
+               atributnya jangan dibalik: id harus mendahului class. -->
           <div class="plan-grid" data-reveal-stagger>
             <article id="plan-card-1" class="plan-card">
               <div class="plan-card-top">
@@ -727,7 +731,22 @@
          dan jatuh ke .hero-glow berbasis CSS. Lihat latar-opsional.js. -->
     <script src="/latar-opsional.js" data-latar="/shader-background.js"></script>
     <script src="/script.js"></script>
-    <script src="/content-sheet.js"></script>
+    <!-- content-sheet.js DIHAPUS 2026-09-07, jangan dipasang lagi.
+         Dulu isinya menimpa judul Bootcamp, kartu harga, dan skor mentor
+         dari Google Sheet, lewat browser, SETELAH halaman tampil.
+         Sejak ada /admin, api/render-home.js menyisipkan hal yang sama
+         persis dari sisi server sebelum halaman dikirim.
+         Keduanya sempat hidup berdampingan, dan yang belakangan menang:
+         mematikan "Tersedia" di /admin tidak berpengaruh apa-apa, karena
+         script ini menyalakannya lagi sepersekian detik kemudian. Bukan
+         cuma waktu sheet-nya bilang "Ya" -- barisnya menyalakan ulang
+         tanpa syarat, jadi sheet yang tidak menyebut Tersedia sama
+         sekali pun tetap membatalkannya. Harga dan nama paket menghadapi
+         risiko yang sama.
+         Kalau suatu saat butuh mengedit tanpa membuka /admin, tambahkan
+         pembacaan sheet itu DI DALAM render-home.js, jangan menghidupkan
+         lagi penimpaan dari browser. -->
+
     <!-- Vercel Analytics. Endpoint ini cuma ada kalau situsnya di-serve
          lewat platform Vercel — tidak fungsional di hosting lain (mis.
          GitHub Pages), tapi juga tidak error, cuma diam saja. -->

@@ -27,7 +27,8 @@ async function readOverrides() {
     const all = await getAll();
     return all || {};
   } catch (err) {
-    // Gagal diam-diam, sama filosofinya dengan content-sheet.js yang lama:
+    // Gagal diam-diam, sama filosofinya dengan content-sheet.js yang
+    // lama (sudah dihapus):
     // GLOBAL_CONFIG belum di-connect, package belum ke-install waktu
     // deploy pertama, dll -- semua fallback ke DEFAULTS di pemanggil,
     // bukan bikin index.html error/kosong.

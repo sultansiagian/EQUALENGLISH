@@ -43,7 +43,7 @@ function escapeHtml(t) {
 
 /**
  * "Rp59.000", bentuk yang sama persis dengan kartu harga di beranda
- * (lihat formatRupiah() di content-sheet.js dan api/render-home.js).
+ * (lihat formatRupiah() di api/render-home.js).
  * Dua tempat menyebut angka yang sama, jadi bentuknya tidak boleh beda:
  * "Rp59.000" di satu halaman dan "Rp 59,000" di halaman lain bikin orang
  * bertanya-tanya apakah itu harga yang sama.

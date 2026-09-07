@@ -7,7 +7,7 @@ const { readOverrides } = require('./_lib/global-config-store');
  * Menyajikan halaman utama dari home-template.html, tapi disisipi dulu
  * konten dari Global Config (diisi lewat /admin) SEBELUM dikirim ke
  * browser pengunjung -- bukan ditimpa belakangan oleh JavaScript seperti
- * content-sheet.js yang lama.
+ * content-sheet.js yang lama (dihapus 2026-09-07).
  *
  * Kenapa begini, bukan tetap client-side: teks yang disisipkan lewat
  * JavaScript baru ada SETELAH script-nya jalan di browser pengunjung --
@@ -138,7 +138,8 @@ function applyPackages(html, overrides) {
     );
 
     // Logika badge "Hemat/Harga dasar/Tidak Tersedia" -- port persis dari
-    // applyContent() di content-sheet.js (versi lama, client-side).
+    // applyContent() di content-sheet.js, penimpa client-side yang
+    // dihapus 2026-09-07 karena membatalkan setelan dari /admin.
     let saveText = null;
     let saveClass = 'plan-save';
     if (!pkg.available) {
