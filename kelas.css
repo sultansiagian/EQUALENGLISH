@@ -1153,6 +1153,41 @@
   color: var(--ink-muted);
 }
 
+/* Baris kedua yang menyebut syarat yang belum terpenuhi ("tinggal isi
+   ceritamu di bawah").
+
+   Sengaja TIDAK seredup .final-bagian-ket di atasnya. Yang di atas itu
+   fakta jadwal, yang ini permintaan untuk melakukan sesuatu, dan yang
+   kedua tidak boleh terbaca sebagai keterangan tambahan yang bisa
+   dilewati. Sebelum baris ini ada, syarat ceritanya cuma disebut sekali
+   di kalimat status di atas kartu, dan barisnya sendiri cuma menyebut
+   jadwal -- jadi yang membacanya wajar mengira tinggal menunggu jam
+   segitu, lalu datang tepat waktu dan menemukan tombolnya tetap tidak
+   ada. */
+.final-bagian-syarat {
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* Lencana keadaan, duduk di tempat yang sama dengan tombol "Kerjakan"
+   pada baris yang terbuka. Bentuknya mengikuti .kelas-tile-badge-quiet
+   supaya terbaca sebagai lencana yang sama keluarganya, bukan tombol
+   yang kebetulan tidak bisa diklik. */
+.final-bagian-tanda {
+  flex-shrink: 0;
+  padding: 0.28rem 0.62rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pil);
+  font-family: var(--body);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
 /* Bagian yang sedang berjalan diberi garis pink supaya langsung
    ketahuan mana yang harus dikerjakan sekarang, tanpa harus membaca
    ketiga barisnya dulu. */

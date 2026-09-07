@@ -573,7 +573,13 @@ if (errorReloadBtn) errorReloadBtn.addEventListener('click', () => window.locati
 // ============================================================
 // Syaratnya ditentukan SERVER (hitungFinalTest di
 // api/verify-access.js): waktunya sudah lewat DAN siswa ini sudah
-// mengisi testimoni. File ini cuma menggambarkan keadaannya.
+// mengisi ceritanya. File ini cuma menggambarkan keadaannya.
+//
+// Catatan penamaan: yang dibaca siswa selalu "cerita", tapi nama
+// fungsi, kunci Global Config (testimoniSudahIsi), dan endpoint
+// (/api/kelas-testimoni) tetap memakai "testimoni". Mengganti nama
+// data yang sudah tersimpan tidak menambah kejelasan bagi siapa pun
+// dan berisiko memutus baris yang sudah ada.
 //
 // Link ujiannya juga datang dari server dan CUMA dikirim kalau kedua
 // syaratnya terpenuhi, jadi tidak ada yang bisa didapat dengan membuka
@@ -746,7 +752,7 @@ function renderFinalTest(materials) {
     return;
   }
 
-  // Form testimoni ditampilkan selama belum diisi, TERMASUK sebelum
+  // Form ceritanya ditampilkan selama belum diisi, TERMASUK sebelum
   // waktunya tiba. Supaya bisa disiapkan lebih dulu dan tidak menumpuk
   // di menit terakhir saat semua orang mau mulai bersamaan.
   if (!f.sudahTestimoni) form.hidden = false;
@@ -764,7 +770,7 @@ function renderFinalTest(materials) {
   } else if (terbuka.length > 0) {
     status.textContent = 'Kerjakan bagian yang sudah terbuka sebelum waktunya habis. Semoga lancar.';
   } else if (belumBuka.length > 0) {
-    status.textContent = 'Testimonimu sudah masuk, terima kasih. Tinggal menunggu bagian berikutnya dibuka.';
+    status.textContent = 'Ceritamu sudah masuk, terima kasih. Tinggal menunggu bagian berikutnya dibuka.';
   } else {
     status.textContent = 'Semua bagian Final Test sudah ditutup.';
   }
@@ -816,12 +822,25 @@ function gambarBagianFinal(wadah, f, urls) {
     if (b.sudahTutup) {
       baris.dataset.keadaan = 'tutup';
       ket.textContent = 'Ditutup ' + waktuFinalTerbaca(b.tutupPada);
+      baris.appendChild(tandaBagian('Selesai'));
     } else if (!b.sudahWaktunya) {
       baris.dataset.keadaan = 'nanti';
       ket.textContent = 'Dibuka ' + waktuFinalTerbaca(b.bukaPada);
+      // Syarat kedua disebut DI BARISNYA, bukan cuma di kalimat status
+      // di atas kartu. Sebelumnya baris ini cuma menyebut jadwal, jadi
+      // yang membacanya wajar mengira tinggal menunggu jam segitu --
+      // lalu datang tepat waktu dan menemukan tombolnya tetap tidak
+      // ada. Syarat yang cuma disebut sekali di tempat lain sama saja
+      // dengan syarat yang tidak disebut.
+      if (!f.sudahTestimoni) kiri.appendChild(syaratCerita());
+      baris.appendChild(tandaBagian('Terkunci'));
     } else if (!f.sudahTestimoni) {
       baris.dataset.keadaan = 'terkunci';
-      ket.textContent = 'Sudah dibuka, isi testimoni dulu di bawah';
+      ket.textContent = b.tutupPada
+        ? 'Waktunya sudah tiba, ditutup ' + waktuFinalTerbaca(b.tutupPada)
+        : 'Waktunya sudah tiba';
+      kiri.appendChild(syaratCerita());
+      baris.appendChild(tandaBagian('Terkunci'));
     } else {
       baris.dataset.keadaan = 'buka';
       // Sisa waktu sampai TUTUP. Inilah yang paling dibutuhkan orang
@@ -851,6 +870,37 @@ function gambarBagianFinal(wadah, f, urls) {
   });
 }
 
+/**
+ * Lencana keadaan di ujung kanan baris, di tempat yang sama dengan
+ * tombol "Kerjakan" pada baris yang terbuka.
+ *
+ * Sengaja menempati posisi tombol: yang dicari mata di baris seperti ini
+ * adalah "ada tombolnya atau tidak", jadi di situlah jawabannya harus
+ * berada. Kata, bukan gambar gembok, supaya sejalan dengan lencana lain
+ * di halaman ini (LIVE, JADWAL, FINAL TEST) dan tetap terbaca pembaca
+ * layar tanpa teks alternatif tambahan.
+ */
+function tandaBagian(teks) {
+  var t = document.createElement('span');
+  t.className = 'final-bagian-tanda';
+  t.textContent = teks;
+  return t;
+}
+
+/**
+ * Baris kedua yang menyebut syarat yang belum terpenuhi.
+ *
+ * Ditulis sebagai ajakan ("tinggal isi ceritamu"), bukan penolakan
+ * ("kamu belum mengisi"), karena yang membacanya sedang menunggu ujian
+ * dan tidak sedang melakukan kesalahan apa pun.
+ */
+function syaratCerita() {
+  var s = document.createElement('span');
+  s.className = 'final-bagian-syarat';
+  s.textContent = 'Tinggal isi ceritamu di bawah, lalu tombolnya muncul sendiri.';
+  return s;
+}
+
 function pasangHitungMundurTutup(el, iso, baris) {
   var target = new Date(iso).getTime();
   if (!Number.isFinite(target)) return;
@@ -867,6 +917,12 @@ function pasangHitungMundurTutup(el, iso, baris) {
       if (tombol) tombol.remove();
       baris.dataset.keadaan = 'tutup';
       el.textContent = 'Waktunya sudah habis.';
+      // Lencana menggantikan tombol yang barusan dicabut, supaya barisnya
+      // tidak berakhir kosong sebelah kanan dan terlihat seperti gagal
+      // memuat, bukan seperti ujian yang memang sudah selesai.
+      if (!baris.querySelector('.final-bagian-tanda')) {
+        baris.appendChild(tandaBagian('Selesai'));
+      }
       return;
     }
 
@@ -995,7 +1051,7 @@ async function kirimTestimoni(e) {
     if (res.ok && data.ok) {
       document.getElementById('final-form').hidden = true;
       status.dataset.state = 'ok';
-      status.textContent = 'Terima kasih, testimonimu sudah masuk.';
+      status.textContent = 'Terima kasih, ceritamu sudah masuk.';
 
       // Materi diminta ULANG ke server, bukan ditebak sendiri di sini.
       // Link ujiannya memang belum pernah dikirim ke browser ini (server
